@@ -199,7 +199,7 @@ object IntegrationTests {
       println("========== Graph: Symmetric 4-Cycle, Algorithm: SSSP ==========")
       val et1 = List((0, 1), (1, 2), (2, 3), (3, 0))
       def verify(v: interfaces.Vertex[_, _]) {
-        println("Correct: " + (v.id == v.state.asInstanceOf[Int]) + " Id: " + v.id + " State: " + v.state)
+        println("Correct: " + (v.id == v.state.asInstanceOf[Option[Int]].get) + " Id: " + v.id + " State: " + v.state)
       }
       val gp1: List[Int => ComputeGraph] = for (cgFactory <- computeGraphFactories) yield { workers: Int => buildSsspGraph(0, cgFactory(workers), et1) }
       test(graphProviders = gp1, verify _, numberOfWorkers = List(1, 2, 4, 8), signalThreshold = 0, collectThreshold = 0)
@@ -210,9 +210,9 @@ object IntegrationTests {
       val et2 = List((0, 4), (4, 0), (1, 4), (4, 1), (2, 4), (4, 2), (3, 4), (4, 3))
       def verify(v: interfaces.Vertex[_, _]) {
         if (v.id.asInstanceOf[Int] == 4) {
-          println("Correct: " + (v.state.asInstanceOf[Int] == 0) + " Id: " + v.id + " State: " + v.state)
+          println("Correct: " + (v.state.asInstanceOf[Option[Int]].get == 0) + " Id: " + v.id + " State: " + v.state)
         } else {
-          println("Correct: " + (v.state.asInstanceOf[Int] == 1) + " Id: " + v.id + " State: " + v.state)
+          println("Correct: " + (v.state.asInstanceOf[Option[Int]].get == 1) + " Id: " + v.id + " State: " + v.state)
         }
       }
       val gp2: List[Int => ComputeGraph] = for (cgFactory <- computeGraphFactories) yield { workers: Int => buildSsspGraph(4, cgFactory(workers), et2) }
@@ -224,10 +224,10 @@ object IntegrationTests {
       val et3 = new Grid(2, 2)
       def verify(v: interfaces.Vertex[_, _]) {
         v.id.asInstanceOf[Int] match {
-          case 1 => println("Correct: " + (v.state.asInstanceOf[Int] == 0) + " Id: " + v.id + " State: " + v.state)
-          case 2 => println("Correct: " + (v.state.asInstanceOf[Int] == 1) + " Id: " + v.id + " State: " + v.state)
-          case 3 => println("Correct: " + (v.state.asInstanceOf[Int] == 1) + " Id: " + v.id + " State: " + v.state)
-          case 4 => println("Correct: " + (v.state.asInstanceOf[Int] == 2) + " Id: " + v.id + " State: " + v.state)
+          case 1 => println("Correct: " + (v.state.asInstanceOf[Option[Int]].get == 0) + " Id: " + v.id + " State: " + v.state)
+          case 2 => println("Correct: " + (v.state.asInstanceOf[Option[Int]].get == 1) + " Id: " + v.id + " State: " + v.state)
+          case 3 => println("Correct: " + (v.state.asInstanceOf[Option[Int]].get == 1) + " Id: " + v.id + " State: " + v.state)
+          case 4 => println("Correct: " + (v.state.asInstanceOf[Option[Int]].get == 2) + " Id: " + v.id + " State: " + v.state)
         }
       }
       val gp3: List[Int => ComputeGraph] = for (cgFactory <- computeGraphFactories) yield { workers: Int => buildSsspGraph(1, cgFactory(workers), et3) }
@@ -239,14 +239,14 @@ object IntegrationTests {
     edgeTuples foreach {
       case (sourceId, targetId) =>
         if (sourceId.equals(pathSourceId)) {
-          cg.addVertex[Location](sourceId.asInstanceOf[AnyRef], 0)
+          cg.addVertex[Location](sourceId.asInstanceOf[AnyRef], Some(0))
         } else {
-          cg.addVertex[Location](sourceId.asInstanceOf[AnyRef], Int.MaxValue)
+          cg.addVertex[Location](sourceId.asInstanceOf[AnyRef], None)
         }
         if (targetId.equals(pathSourceId)) {
-          cg.addVertex[Location](targetId.asInstanceOf[AnyRef], 0)
+          cg.addVertex[Location](targetId.asInstanceOf[AnyRef], Some(0))
         } else {
-          cg.addVertex[Location](targetId.asInstanceOf[AnyRef], Int.MaxValue)
+          cg.addVertex[Location](targetId.asInstanceOf[AnyRef], None)
         }
         cg.addEdge[Path](sourceId, targetId)
     }
