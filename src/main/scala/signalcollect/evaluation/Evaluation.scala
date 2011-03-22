@@ -17,40 +17,40 @@
  *  
  */
 
-package ch.uzh.ifi.ddis.signalcollect.evaluation
+package signalcollect.evaluation
 
-import ch.uzh.ifi.ddis.signalcollect.api.ComputationStatistics
-import ch.uzh.ifi.ddis.signalcollect.api.SynchronousComputeGraph
-import ch.uzh.ifi.ddis.signalcollect.api.AsynchronousComputeGraph
-import ch.uzh.ifi.ddis.signalcollect.api.ComputeGraph
-import ch.uzh.ifi.ddis.signalcollect.api.Workers
+import signalcollect.api.ComputationStatistics
+import signalcollect.api.SynchronousComputeGraph
+import signalcollect.api.AsynchronousComputeGraph
+import signalcollect.api.ComputeGraph
+import signalcollect.api.Workers
 import scala.concurrent.forkjoin.LinkedTransferQueue
 import java.util.concurrent.LinkedBlockingQueue
-import ch.uzh.ifi.ddis.signalcollect.implementations.messaging.DefaultMessageBus
-import ch.uzh.ifi.ddis.signalcollect.implementations.messaging.Verbosity
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.synthetic.Partitions
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.synthetic.FullyConnected
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.synthetic.Star
-import ch.uzh.ifi.ddis.signalcollect.algorithms.ColoredVertex
-import ch.uzh.ifi.ddis.signalcollect.algorithms.Path
-import ch.uzh.ifi.ddis.signalcollect.algorithms.Location
-//import ch.uzh.ifi.ddis.signalcollect.algorithms.Link
-//import ch.uzh.ifi.ddis.signalcollect.algorithms.Page
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.SparqlTuples
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.SesameSparql
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.SparqlAccessor
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.synthetic.LogNormal
+import signalcollect.implementations.messaging.DefaultMessageBus
+import signalcollect.implementations.messaging.Verbosity
+import signalcollect.graphproviders.synthetic.Partitions
+import signalcollect.graphproviders.synthetic.FullyConnected
+import signalcollect.graphproviders.synthetic.Star
+import signalcollect.algorithms.ColoredVertex
+import signalcollect.algorithms.Path
+import signalcollect.algorithms.Location
+//import signalcollect.algorithms.Link
+//import signalcollect.algorithms.Page
+import signalcollect.graphproviders.SparqlTuples
+import signalcollect.graphproviders.SesameSparql
+import signalcollect.graphproviders.SparqlAccessor
+import signalcollect.graphproviders.synthetic.LogNormal
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.FileWriter
-import ch.uzh.ifi.ddis.signalcollect.api._
-import ch.uzh.ifi.ddis.signalcollect.api.vertices._
-import ch.uzh.ifi.ddis.signalcollect.api.edges._
+import signalcollect.api._
+import signalcollect.api.vertices._
+import signalcollect.api.edges._
 import org.clapper.argot.{ ArgotUsageException, ArgotParser }
 import org.clapper.argot.ArgotConverters._
-import ch.uzh.ifi.ddis.signalcollect.implementations.messaging.MultiQueue
+import signalcollect.implementations.messaging.MultiQueue
 import java.util.concurrent.ArrayBlockingQueue
-import ch.uzh.ifi.ddis.signalcollect.implementations.worker.DirectDeliveryAsynchronousWorker
+import signalcollect.implementations.worker.DirectDeliveryAsynchronousWorker
 
 /*
  * execute with command: java -Xms5000m -Xmx5000m -jar evaluation-0.0.1-SNAPSHOT-jar-with-dependencies.jar

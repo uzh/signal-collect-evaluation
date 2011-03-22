@@ -54,8 +54,8 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>ch.uzh.ifi.ddis.signalcollect.evaluation.Evaluation</mainClass>
-							<packageName>ch.uzh.ifi.ddis.signalcollect.evaluation</packageName>
+							<mainClass>signalcollect.evaluation.Evaluation</mainClass>
+							<packageName>signalcollect.evaluation</packageName>
 						</manifest>
 					</archive>
 				</configuration>

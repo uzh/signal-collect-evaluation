@@ -17,12 +17,12 @@
  *  
  */
 
-package ch.uzh.ifi.ddis.signalcollect.evaluation
+package signalcollect.evaluation
 
-import ch.uzh.ifi.ddis.signalcollect.implementations.graph.SumOfOutWeights
-import ch.uzh.ifi.ddis.signalcollect.api._
-import ch.uzh.ifi.ddis.signalcollect.api.vertices._
-import ch.uzh.ifi.ddis.signalcollect.api.edges._
+import signalcollect.implementations.graph.SumOfOutWeights
+import signalcollect.api._
+import signalcollect.api.vertices._
+import signalcollect.api.edges._
 
 /** Represents an edge in a PageRank compute graph
  * 

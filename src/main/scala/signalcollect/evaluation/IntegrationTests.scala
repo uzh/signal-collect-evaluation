@@ -17,28 +17,28 @@
  *  
  */
 
-package ch.uzh.ifi.ddis.signalcollect.evaluation
+package signalcollect.evaluation
 
-import ch.uzh.ifi.ddis.signalcollect.interfaces.Logging
-import ch.uzh.ifi.ddis.signalcollect.api._
-import ch.uzh.ifi.ddis.signalcollect._
-import ch.uzh.ifi.ddis.signalcollect.evaluation.{ EfficientLink => Link, EfficientPage => Page }
-//import ch.uzh.ifi.ddis.signalcollect.algorithms.Link
-//import ch.uzh.ifi.ddis.signalcollect.algorithms.Page
-import ch.uzh.ifi.ddis.signalcollect.algorithms.Path
-import ch.uzh.ifi.ddis.signalcollect.algorithms.Location
-import ch.uzh.ifi.ddis.signalcollect.algorithms.ColoredVertex
-import ch.uzh.ifi.ddis.signalcollect.graphproviders.synthetic.Grid
+import signalcollect.interfaces.Logging
+import signalcollect.api._
+import signalcollect._
+import signalcollect.evaluation.{ EfficientLink => Link, EfficientPage => Page }
+//import signalcollect.algorithms.Link
+//import signalcollect.algorithms.Page
+import signalcollect.algorithms.Path
+import signalcollect.algorithms.Location
+import signalcollect.algorithms.ColoredVertex
+import signalcollect.graphproviders.synthetic.Grid
 import scala.collection.mutable.HashMap
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.FileWriter
-import ch.uzh.ifi.ddis.signalcollect.api.vertices._
-import ch.uzh.ifi.ddis.signalcollect.api.edges._
-import ch.uzh.ifi.ddis.signalcollect.implementations.messaging.MultiQueue
+import signalcollect.api.vertices._
+import signalcollect.api.edges._
+import signalcollect.implementations.messaging.MultiQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ArrayBlockingQueue
-import ch.uzh.ifi.ddis.signalcollect.implementations.worker.DirectDeliveryAsynchronousWorker
+import signalcollect.implementations.worker.DirectDeliveryAsynchronousWorker
 
 /*
  * execute with command: java -Xms5000m -Xmx5000m -jar algorithms-0.0.1-SNAPSHOT-jar-with-dependencies.jar
