@@ -19,12 +19,13 @@
 
 package signalcollect.evaluation
 
+import signalcollect.interfaces.ComputeGraph
 import signalcollect.interfaces.Logging
-import signalcollect.api._
 import signalcollect._
-import signalcollect.evaluation.{ EfficientLink => Link, EfficientPage => Page }
-//import signalcollect.algorithms.Link
-//import signalcollect.algorithms.Page
+import signalcollect.api._
+import signalcollect.interfaces._
+import signalcollect.algorithms.Link
+import signalcollect.algorithms.Page
 import signalcollect.algorithms.Path
 import signalcollect.algorithms.Location
 import signalcollect.algorithms.ColoredVertex
@@ -46,27 +47,26 @@ import signalcollect.implementations.worker.DirectDeliveryAsynchronousWorker
 object IntegrationTests {
 
   val computeGraphFactories: List[Int => ComputeGraph] = List(
-        { workers: Int => new SynchronousComputeGraph(workers) },
+    { workers: Int => new SynchronousComputeGraph(workers) },
     //    		   { workers: Int => new SynchronousComputeGraph(workers, logger = Some(Loggers.createDefault)) }
-//        { workers: Int => new SynchronousComputeGraph(workers, messageBusFactory = MessageBuses.verboseMessageBusFactory, logger = Some(Loggers.createDefault)) }
-            		   { workers: Int => new AsynchronousComputeGraph(workers) },
-//    		  			{ workers: Int => new AsynchronousComputeGraph(workers, messageBusFactory = MessageBuses.verboseMessageBusFactory, logger = Some(Loggers.createDefault)) }
+    //        { workers: Int => new SynchronousComputeGraph(workers, messageBusFactory = MessageBuses.verboseMessageBusFactory, logger = Some(Loggers.createDefault)) }
+    { workers: Int => new AsynchronousComputeGraph(workers) },
+    //    		  			{ workers: Int => new AsynchronousComputeGraph(workers, messageBusFactory = MessageBuses.verboseMessageBusFactory, logger = Some(Loggers.createDefault)) }
     //    		   { workers: Int => new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new MultiQueue[Any]({ () => new LinkedBlockingQueue[Any] }) } ) },
     //    		   { workers: Int => new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new MultiQueue[Any]({ () => new ArrayBlockingQueue[Any](1000) }) } ) },
     //    		   { workers: Int => new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new ArrayBlockingQueue[Any](1000) }) },
     //        		   { workers: Int => new AsynchronousComputeGraph(workers, workerFactory = { (mB, qF) => new DirectDeliveryAsynchronousWorker(mB, qF) }, messageInboxFactory= { () => new ArrayBlockingQueue[Any](100000) }) }
-//		  	{ workers: Int => new AsynchronousComputeGraph(workers, workerFactory = { (mB, qF) => new DirectDeliveryAsynchronousWorker(mB, qF) }, messageBusFactory = MessageBuses.verboseMessageBusFactory, logger = Some(Loggers.createDefault)) }
-//		  	{ workers: Int => new AsynchronousComputeGraph(workers, workerFactory = { (mB, qF) => new DirectDeliveryAsynchronousWorker(mB, qF) }) }
-		  	{ workers: Int => new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousPriorityWorkerFactory) }
-		  	)
+    //		  	{ workers: Int => new AsynchronousComputeGraph(workers, workerFactory = { (mB, qF) => new DirectDeliveryAsynchronousWorker(mB, qF) }, messageBusFactory = MessageBuses.verboseMessageBusFactory, logger = Some(Loggers.createDefault)) }
+    //		  	{ workers: Int => new AsynchronousComputeGraph(workers, workerFactory = { (mB, qF) => new DirectDeliveryAsynchronousWorker(mB, qF) }) }
+    { workers: Int => new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousPriorityWorkerFactory) })
 
   /**
    * @param args the command line arguments
    */
   def main(args: Array[String]): Unit =
     {
-//	  profilerHook
-	  
+      //	  profilerHook
+
       testPagerank
       testVertexColoring
       testSssp
@@ -131,7 +131,7 @@ object IntegrationTests {
   }
 
   class VerifiedColoredVertex(id: Int, numColors: Int) extends ColoredVertex(id, numColors, 0, false) {
-	// only necessary to allow access to vertex internals
+    // only necessary to allow access to vertex internals
     def publicMostRecentSignals: Iterable[Int] = mostRecentSignals
   }
 
@@ -260,7 +260,9 @@ object IntegrationTests {
       for (graphProvider <- graphProviders) {
         val cg = graphProvider.apply(workers)
         //print("\tMode: " + cg)
-        cg.execute(signalThreshold, collectThreshold)
+        cg.setSignalThreshold(signalThreshold)
+        cg.setCollectThreshold(collectThreshold)
+        cg.execute
         println("\tWorkers: " + workers)
         val correct = cg foreach (verify(_))
         cg.shutDown

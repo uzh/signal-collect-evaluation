@@ -19,11 +19,9 @@
 
 package signalcollect.evaluation
 
-import signalcollect.api.ComputationStatistics
+import signalcollect.interfaces.ComputeGraph
 import signalcollect.api.SynchronousComputeGraph
 import signalcollect.api.AsynchronousComputeGraph
-import signalcollect.api.ComputeGraph
-import signalcollect.api.Workers
 import scala.concurrent.forkjoin.LinkedTransferQueue
 import java.util.concurrent.LinkedBlockingQueue
 import signalcollect.implementations.messaging.DefaultMessageBus
@@ -34,8 +32,8 @@ import signalcollect.graphproviders.synthetic.Star
 import signalcollect.algorithms.ColoredVertex
 import signalcollect.algorithms.Path
 import signalcollect.algorithms.Location
-//import signalcollect.algorithms.Link
-//import signalcollect.algorithms.Page
+import signalcollect.algorithms.Link
+import signalcollect.algorithms.Page
 import signalcollect.graphproviders.SparqlTuples
 import signalcollect.graphproviders.SesameSparql
 import signalcollect.graphproviders.SparqlAccessor
@@ -44,6 +42,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.FileWriter
 import signalcollect.api._
+import signalcollect.interfaces._
 import signalcollect.api.vertices._
 import signalcollect.api.edges._
 import org.clapper.argot.{ ArgotUsageException, ArgotParser }
@@ -169,7 +168,7 @@ class Evaluation {
     //            val et = new SparqlTuples(sa, edgeQuery)
     val gp: Map[String, Int => ComputeGraph] = Map(
       //      "Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers), et) },
-      "Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
+      "Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
       //    	    "Linked Blocking Queue Thread Local Direct Delivery Async" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousDirectDeliveryWorkerFactory), et) },
       //    		"Linked Blocking Queue Thread Local Asynchronous" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) }
       //    		"Array Blocking Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new ArrayBlockingQueue[Any](10000000) }), et) },
@@ -186,9 +185,9 @@ class Evaluation {
   def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Int, Int]]): ComputeGraph = {
     edgeTuples foreach {
       case (sourceId, targetId) =>
-        cg.addVertex[EfficientPage](sourceId, 0.85)
-        cg.addVertex[EfficientPage](targetId, 0.85)
-        cg.addEdge[EfficientLink](sourceId, targetId)
+        cg.addVertex[Page](sourceId, 0.85)
+        cg.addVertex[Page](targetId, 0.85)
+        cg.addEdge[Link](sourceId, targetId)
     }
     cg
   }
@@ -270,7 +269,10 @@ class Evaluation {
           println("Building graph...")
           val computeGraph = graphProviders(graphName).apply(workers)
           println("Executing warmup...")
-          println(computeGraph.execute(signalThreshold, collectThreshold)) // warmup
+          computeGraph.setSignalThreshold(signalThreshold)
+          computeGraph.setCollectThreshold(collectThreshold)
+          val stat = computeGraph.execute
+          println(stat) // warmup
           computeGraph.shutDown
           var stats = List[ComputationStatistics]()
           for (i <- 1 to repetitions) {
@@ -281,7 +283,9 @@ class Evaluation {
             println("Building graph...")
             val computeGraph = graphProviders(graphName).apply(workers)
             println("Executing...")
-            val newStat = computeGraph.execute(signalThreshold, collectThreshold)
+            computeGraph.setSignalThreshold(signalThreshold)
+            computeGraph.setCollectThreshold(collectThreshold)
+            val newStat = computeGraph.execute
             computeGraph.shutDown
             println(newStat)
             stats = newStat :: stats
