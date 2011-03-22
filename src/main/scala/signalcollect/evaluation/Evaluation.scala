@@ -145,7 +145,7 @@ class Evaluation {
   }
 
   class PingPongVertex(id: Any, iterations: Int) extends SignalMapVertex(id, 0) {
-    def collect: Int = math.min(iterations, mostRecentSignals[Int].foldLeft(state)(math.max(_, _)))
+    def collect: Int = math.min(iterations, typeFilteredSignals[Int].foldLeft(state)(math.max(_, _)))
     //	  override def processResult = println(id + ": " + state)
   }
 
@@ -220,10 +220,11 @@ class Evaluation {
   def buildSsspGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Any, Any]]): ComputeGraph = {
     edgeTuples foreach {
       case (sourceId, targetId) =>
-        if (sourceId.equals(ssspZero))
+        if (sourceId.equals(ssspZero)) {
           cg.addVertex[Location](sourceId.toString, 0)
-        else
+        } else {
           cg.addVertex[Location](sourceId.toString, Int.MaxValue)
+        }
         cg.addVertex[Location](targetId.toString, Int.MaxValue)
         cg.addEdge[Path](sourceId.toString, targetId.toString)
     }

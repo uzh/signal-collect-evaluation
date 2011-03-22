@@ -131,7 +131,8 @@ object IntegrationTests {
   }
 
   class VerifiedColoredVertex(id: Int, numColors: Int) extends ColoredVertex(id, numColors, 0, false) {
-    def recentSignalIterator = mostRecentSignalMap.values.iterator
+	// only necessary to allow access to vertex internals
+    def publicMostRecentSignals: Iterable[Int] = mostRecentSignals
   }
 
   def testVertexColoring {
@@ -144,7 +145,7 @@ object IntegrationTests {
       val et1 = List((0, 1), (1, 0), (1, 2), (2, 1), (2, 3), (3, 2), (3, 0), (0, 3))
       def verify(v: interfaces.Vertex[_, _]) {
         println("Correct: " + (v match {
-          case c: VerifiedColoredVertex => !c.recentSignalIterator.contains(c.state)
+          case c: VerifiedColoredVertex => !c.publicMostRecentSignals.iterator.contains(c.state)
           case other => false
         }) + " Id: " + v.id + " State: " + v.state)
       }
@@ -158,7 +159,7 @@ object IntegrationTests {
       val et2 = List((0, 4), (4, 0), (1, 4), (4, 1), (2, 4), (4, 2), (3, 4), (4, 3))
       def verify(v: interfaces.Vertex[_, _]) {
         println("Correct: " + (v match {
-          case c: VerifiedColoredVertex => !c.recentSignalIterator.contains(c.state)
+          case c: VerifiedColoredVertex => !c.publicMostRecentSignals.iterator.contains(c.state)
           case other => false
         }) + " Id: " + v.id + " State: " + v.state)
       }
@@ -171,7 +172,7 @@ object IntegrationTests {
       val et3 = new Grid(2, 2)
       def verify(v: interfaces.Vertex[_, _]) {
         println("Correct: " + (v match {
-          case c: VerifiedColoredVertex => !c.recentSignalIterator.contains(c.state)
+          case c: VerifiedColoredVertex => !c.publicMostRecentSignals.iterator.contains(c.state)
           case other => false
         }) + " Id: " + v.id + " State: " + v.state)
       }
