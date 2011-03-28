@@ -36,7 +36,7 @@ import signalcollect.algorithms.Link
 import signalcollect.algorithms.Page
 import signalcollect.graphproviders.SparqlTuples
 import signalcollect.graphproviders.SesameSparql
-import signalcollect.graphproviders.SparqlAccessor
+import signalcollect.graphproviders.SparqlEndpoint
 import signalcollect.graphproviders.synthetic.LogNormal
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -144,7 +144,7 @@ class Evaluation {
   }
 
   class PingPongVertex(id: Any, iterations: Int) extends SignalMapVertex(id, 0) {
-    def collect: Int = math.min(iterations, typeFilteredSignals[Int].foldLeft(state)(math.max(_, _)))
+    def collect: Int = math.min(iterations, signals[Int].foldLeft(state)(math.max(_, _)))
     //	  override def processResult = println(id + ": " + state)
   }
 
