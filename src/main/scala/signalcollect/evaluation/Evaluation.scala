@@ -154,7 +154,7 @@ class Evaluation {
     //    class MyMessageBus extends MessageBus[Any, Any] with Verbosity[Any, Any] with ProfilingMessageBus[Any, Any]
     println("Evaluating PageRank")
     //    val et = new LogNormal(1000000, 0, 1, 3)
-    val et = new LogNormal(1000000, 0, 1, 3)
+    val et = new LogNormal(1000000, 0, 1, 2)
     //    val et = new Partitions(8, 100000, 0, 1.3, 4)
     //    val et = new LogNormal(200000, 0, .9, .9)
     //            val et = new EightPartitions(100000, 10, .2, .5)
@@ -174,7 +174,7 @@ class Evaluation {
       //      "NQAsynchronous Blocking Queue" -> { workers: Int => buildPageRankGraph(new NQAsynchronousComputeGraph(workers), et) }
       //      "Asynchronous Blocking Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageBusFactory = { new MyMessageBus }), et) }
       )
-    evaluate(graphProviders = gp, fileName = "pagerank.csv", repetitions = repetitions, numberOfWorkers = workers, signalThreshold = 0.001, collectThreshold = 0)
+    evaluate(graphProviders = gp, fileName = "pagerank.csv", repetitions = repetitions, numberOfWorkers = workers, signalThreshold = 0.01, collectThreshold = 0)
   }
 
   def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Int, Int]]): ComputeGraph = {
