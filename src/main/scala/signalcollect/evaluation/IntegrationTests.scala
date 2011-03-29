@@ -29,7 +29,7 @@ import signalcollect.algorithms.Page
 import signalcollect.algorithms.Path
 import signalcollect.algorithms.Location
 import signalcollect.algorithms.ColoredVertex
-import signalcollect.graphproviders.synthetic.Grid
+import signalcollect.graphproviders.synthetic._
 import scala.collection.mutable.HashMap
 import java.io.BufferedReader
 import java.io.InputStreamReader

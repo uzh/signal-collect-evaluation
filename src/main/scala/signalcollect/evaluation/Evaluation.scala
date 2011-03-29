@@ -26,18 +26,13 @@ import scala.concurrent.forkjoin.LinkedTransferQueue
 import java.util.concurrent.LinkedBlockingQueue
 import signalcollect.implementations.messaging.DefaultMessageBus
 import signalcollect.implementations.messaging.Verbosity
-import signalcollect.graphproviders.synthetic.Partitions
-import signalcollect.graphproviders.synthetic.FullyConnected
-import signalcollect.graphproviders.synthetic.Star
+import signalcollect.graphproviders.synthetic._
+import signalcollect.graphproviders.sparql._
 import signalcollect.algorithms.ColoredVertex
 import signalcollect.algorithms.Path
 import signalcollect.algorithms.Location
 import signalcollect.algorithms.Link
 import signalcollect.algorithms.Page
-import signalcollect.graphproviders.SparqlTuples
-import signalcollect.graphproviders.SesameSparql
-import signalcollect.graphproviders.SparqlEndpoint
-import signalcollect.graphproviders.synthetic.LogNormal
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.FileWriter
@@ -152,14 +147,14 @@ class Evaluation {
     def signal: Int = source.state.asInstanceOf[Int] + 1
   }
 
-  def evaluatePagerank(workers: List[Int] = List(1, 2, 4, 8), repetitions: Int = 10) {
+  def evaluatePagerank(workers: List[Int] = List(1, 2, 3, 4, 5, 6, 7, 8), repetitions: Int = 10) {
 
-    profilerHook
+//    profilerHook
 
     //    class MyMessageBus extends MessageBus[Any, Any] with Verbosity[Any, Any] with ProfilingMessageBus[Any, Any]
     println("Evaluating PageRank")
     //    val et = new LogNormal(1000000, 0, 1, 3)
-    val et = new LogNormal(100000, 0, 1, 3)
+    val et = new LogNormal(1000000, 0, 1, 3)
     //    val et = new Partitions(8, 100000, 0, 1.3, 4)
     //    val et = new LogNormal(200000, 0, .9, .9)
     //            val et = new EightPartitions(100000, 10, .2, .5)
