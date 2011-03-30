@@ -34,8 +34,6 @@ import scala.collection.mutable.HashMap
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.FileWriter
-import signalcollect.api.vertices._
-import signalcollect.api.edges._
 import signalcollect.implementations.messaging.MultiQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ArrayBlockingQueue

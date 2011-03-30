@@ -36,10 +36,8 @@ import signalcollect.algorithms.Page
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.FileWriter
-import signalcollect.api._
 import signalcollect.interfaces._
-import signalcollect.api.vertices._
-import signalcollect.api.edges._
+import signalcollect.api._
 import org.clapper.argot.{ ArgotUsageException, ArgotParser }
 import org.clapper.argot.ArgotConverters._
 import signalcollect.implementations.messaging.MultiQueue
