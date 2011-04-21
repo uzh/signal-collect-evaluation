@@ -6,10 +6,15 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<repositories>
 		<repository>
-			<id>scala-tools.org</id>
-			<name>Scala-Tools Maven2 Releases Repository</name>
-			<url>http://scala-tools.org/repo-snapshots/</url>
-		</repository>
+<id>snapshotsrepo</id>
+<name>snapshots-repo</name>
+<url>http://scala-tools.org/repo-snapshots/</url>
+</repository>
+<repository>
+<id>ScalaToolsMaven2Repository</id>
+<name>Scala-Tools Maven2 Repository</name>
+<url>http://scala-tools.org/repo-releases/</url>
+</repository>
 	</repositories>
 	<modules>
 	</modules>
@@ -39,6 +44,11 @@
 			<version>0.0.1-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+  <groupId>org.specs2</groupId>
+  <artifactId>specs2_2.9.0.RC1</artifactId>
+  <version>1.1</version>
+</dependency>
 	</dependencies>
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
