@@ -34,12 +34,6 @@
 		</dependency>
 		<dependency>
 			<groupId>signal-collect</groupId>
-			<artifactId>algorithms</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>signal-collect</groupId>
 			<artifactId>graph-providers</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 			<scope>compile</scope>
