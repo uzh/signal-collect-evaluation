@@ -40,7 +40,6 @@ import signalcollect.interfaces._
 import signalcollect.api._
 import org.clapper.argot.{ ArgotUsageException, ArgotParser }
 import org.clapper.argot.ArgotConverters._
-import signalcollect.implementations.messaging.MultiQueue
 import java.util.concurrent.ArrayBlockingQueue
 import signalcollect.implementations.worker.DirectDeliveryAsynchronousWorker
 
