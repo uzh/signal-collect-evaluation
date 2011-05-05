@@ -58,9 +58,25 @@ object Evaluation {
     //    val dev = parser.flag[Boolean](List("d", "dev"), "Use defaults for all options.")
     //    val input = parser.option[String](List("i", "input"), "path", "The file to read the ontology from.")(convertString)
     //    val output = parser.option[String](List("o", "output"), "path", "The file to write the results into.")(convertString)
-    val workers = parser.option[Int](List("w", "workers"), "number", "The number of workers to use.")(convertInt)
+    
+    /*
+     * Specify the number of workers as a multioption parameter eg.: -w 1 -w 4 -w 8 -w 16
+     */
+    val workers = parser.multiOption[Int](List("w", "workers"), "number", "The number of workers to use.")
+    //val workers = parser.option[Int](List("w", "workers"), "number", "The number of workers to use.")(convertInt)
+    
     val algorithm = parser.option[String](List("a", "algorithm"), "name", "The name of the algorithm to use.")(convertString)
     val queue = parser.option[String](List("q", "queue"), "name", "The name of the queue to use.")(convertString)
+
+    /*
+     * Specify the size of the graph for the page rank algorithm eg.: -s 5000
+     */
+    val size = parser.option[Int](List("s", "size"), "size", "Graph size for PageRank")(convertInt)
+    
+    /*
+     * Specify the number of repetitions for the run eg.: -r 10
+     */
+    val rep = parser.option[Int](List("r", "repetitions"), "repetitions", "How many repetitions to run")(convertInt)
 
     try {
       parser.parse(args) // parse command line arguments
@@ -69,13 +85,48 @@ object Evaluation {
     }
 
     val eval = new Evaluation
-    if (workers.value.isDefined) {
-      println("Workers: " + workers.value.get)
-      eval.evaluatePagerank(List(workers.value.get))
-    } else {
-      eval.evaluatePagerank()
+
+    //if (!workers.value.isEmpty) {
+
+    //println("Workers: " + workers.value)
+
+    val workersList = workers.value.toList
+    
+    // terrible code below, wanted to do something that will work for all combinations of parameters
+
+    workersList.headOption match {
+      case Some(w) =>
+        size.value match {
+          case Some(s) =>
+            rep.value match {
+              case Some(r) =>
+                println(r)
+                println(s)
+                eval.evaluatePagerank(workersList, repetitions = r, size = s)
+              case None =>
+                println(s)
+                eval.evaluatePagerank(workersList, size = s)
+            }
+          case None => eval.evaluatePagerank(workersList)
+        }
+      case None =>
+        size.value match {
+          case Some(s) =>
+            rep.value match {
+              case Some(r) =>
+                println(r)
+                println(s)
+                eval.evaluatePagerank(repetitions = r, size = s)
+              case None =>
+                println(s)
+                eval.evaluatePagerank(size = s)
+            }
+          case None => eval.evaluatePagerank()
+        }
     }
   }
+  
+  
 }
 
 class Evaluation {
@@ -128,9 +179,9 @@ class Evaluation {
   def buildPingPongGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Any, Any]]): ComputeGraph = {
     edgeTuples foreach {
       case (sourceId, targetId) =>
-        cg.addVertex[PingPongVertex](sourceId, 10)
-        cg.addVertex[PingPongVertex](targetId, 10)
-        cg.addEdge[PingPongEdge](sourceId, targetId)
+        cg.addVertex(classOf[PingPongVertex], sourceId, 10)
+        cg.addVertex(classOf[PingPongVertex], targetId, 10)
+        cg.addEdge(classOf[PingPongEdge], sourceId, targetId)
     }
     cg
   }
@@ -144,14 +195,17 @@ class Evaluation {
     def signal: Int = source.state.asInstanceOf[Int] + 1
   }
 
-  def evaluatePagerank(workers: List[Int] = List(1, 2, 3, 4, 5, 6, 7, 8), repetitions: Int = 10) {
+  /*
+   * List of workers: Minimum of 1
+   */
+  def evaluatePagerank(workers: List[Int] = /*(1 to 8).toList*/ List(1, 4, 8, 16, 32, 64), repetitions: Int = 5, size: Int = 1000) {
 
-//    profilerHook
+    //    profilerHook
 
     //    class MyMessageBus extends MessageBus[Any, Any] with Verbosity[Any, Any] with ProfilingMessageBus[Any, Any]
     println("Evaluating PageRank")
     //    val et = new LogNormal(1000000, 0, 1, 3)
-    val et = new LogNormal(1000000, 0, 1, 2)
+    val et = new LogNormal(size, 0, 1, 3)
     //    val et = new Partitions(8, 100000, 0, 1.3, 4)
     //    val et = new LogNormal(200000, 0, .9, .9)
     //            val et = new EightPartitions(100000, 10, .2, .5)
@@ -159,8 +213,8 @@ class Evaluation {
     //            val edgeQuery = "select ?source ?target { ?source <http://lsdis.cs.uga.edu/projects/semdis/opus#cites> ?target }"
     //            val et = new SparqlTuples(sa, edgeQuery)
     val gp: Map[String, Int => ComputeGraph] = Map(
-      //      "Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers), et) },
-      "Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
+      "Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers, workerFactory = Worker.synchronousWorkerFactory), et) },
+      "Akka Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers, workerFactory = Worker.akkaSyncWorker), et) } //"Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
       //    	    "Linked Blocking Queue Thread Local Direct Delivery Async" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousDirectDeliveryWorkerFactory), et) },
       //    		"Linked Blocking Queue Thread Local Asynchronous" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) }
       //    		"Array Blocking Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new ArrayBlockingQueue[Any](10000000) }), et) },
@@ -177,9 +231,9 @@ class Evaluation {
   def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Int, Int]]): ComputeGraph = {
     edgeTuples foreach {
       case (sourceId, targetId) =>
-        cg.addVertex[Page](sourceId, 0.85)
-        cg.addVertex[Page](targetId, 0.85)
-        cg.addEdge[Link](sourceId, targetId)
+        cg.addVertex(classOf[Page], sourceId, 0.85)
+        cg.addVertex(classOf[Page], targetId, 0.85)
+        cg.addEdge(classOf[Link], sourceId, targetId)
     }
     cg
   }
@@ -212,12 +266,12 @@ class Evaluation {
     edgeTuples foreach {
       case (sourceId, targetId) =>
         if (sourceId.equals(ssspZero)) {
-          cg.addVertex[Location](sourceId.toString, 0)
+          cg.addVertex(classOf[Location], sourceId.toString, 0)
         } else {
-          cg.addVertex[Location](sourceId.toString, Int.MaxValue)
+          cg.addVertex(classOf[Location], sourceId.toString, Int.MaxValue)
         }
-        cg.addVertex[Location](targetId.toString, Int.MaxValue)
-        cg.addEdge[Path](sourceId.toString, targetId.toString)
+        cg.addVertex(classOf[Location], targetId.toString, Int.MaxValue)
+        cg.addEdge(classOf[Path], sourceId.toString, targetId.toString)
     }
     cg
   }
@@ -239,10 +293,10 @@ class Evaluation {
   def buildGraphColoringGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Any, Any]]): ComputeGraph = {
     edgeTuples foreach {
       case (sourceId, targetId) =>
-        cg.addVertex[ColoredVertex](sourceId, numColors)
-        cg.addVertex[ColoredVertex](targetId, numColors)
-        cg.addEdge[StateForwarderEdge](sourceId, targetId)
-        cg.addEdge[StateForwarderEdge](targetId, sourceId)
+        cg.addVertex(classOf[ColoredVertex], sourceId, numColors)
+        cg.addVertex(classOf[ColoredVertex], targetId, numColors)
+        cg.addEdge(classOf[StateForwarderEdge], sourceId, targetId)
+        cg.addEdge(classOf[StateForwarderEdge], targetId, sourceId)
     }
     cg
   }
@@ -290,28 +344,61 @@ class Evaluation {
         saveStats(computationStatistics, graphProviders.keys, workers)
         fw.flush
       }
-      analyzeSpeedup(computationStatistics, graphProviders.keys)
+      var speedup = analyzeSpeedup(computationStatistics, graphProviders.keys)
+      fw.write(speedup.replace(tab, sep))
     } finally {
       fw.close
     }
 
-    def analyzeSpeedup(computationStatistics: Map[String, List[ComputationStatistics]], evalNames: Iterable[String]) {
+    /**
+     * Map[String, List[ComputationStatistics]]:
+     * 	String: eval name as the key for the map
+     * 	List[ComputationStatistics] has the stats from all the runs with different number of workers
+     *
+     * The comparison is always made with the baseline (speedup)
+     *
+     */
+    def analyzeSpeedup(computationStatistics: Map[String, List[ComputationStatistics]], evalNames: Iterable[String]): String = {
+
+      var result: String = ""
+
+      //print the results for all the evaluations selected
       for (evalName <- evalNames) {
-        println(evalName)
+
+        result += ">>>>>>> " + evalName + newLine
+
+        // get the list with the stats
         val statsForEval = computationStatistics.get(evalName).get
-        val t_1: Double = round(averageTimeWithXWorkers(statsForEval, 1), 2)
-        println("Workers" + tab + "Time" + tab + "Speedup" + tab + "S/W") // speedup_w = t_1/t_w, w/s = speedup/workers
-        println(1 + tab + t_1 + tab + 1.0 + tab + 1.0)
-        if (t_1 > 0) {
-          for (workers <- 2 to 1000) {
-            val t_w: Double = round(averageTimeWithXWorkers(statsForEval, workers), 2)
-            if (t_w > 0) {
-              val speedup_w: Double = round(t_1 / t_w, 2)
-              println(workers + tab + t_w + tab + speedup_w + tab + round(speedup_w / workers, 2))
-            }
+
+        var numWorkers = statsForEval(0).numberOfWorkers.get
+
+        // get baseline (first stats) average time for comparison
+        val baseline: Double = round(averageTimeWithXWorkers(statsForEval, numWorkers), 2)
+
+        // print out the baseline
+        result += "Workers" + tab + "Time" + tab + "Speedup" + tab + "S/W" + newLine // speedup_w = t_1/t_w, w/s = speedup/workers
+        result += numWorkers + tab + baseline + tab + 1.0 + tab + 1.0 + newLine
+
+        // for each stats
+        for (stat <- repetitions to statsForEval.size - 1 by repetitions) {
+
+          // how many workers for this stat
+          numWorkers = statsForEval(stat).numberOfWorkers.get
+
+          // get average time
+          val workerAvgTime: Double = round(averageTimeWithXWorkers(statsForEval, numWorkers), 2)
+
+          if (workerAvgTime > 0) {
+            // calculate the speed up compared with baseline
+            val speedup: Double = round(baseline / workerAvgTime, 2)
+            result += numWorkers + tab + workerAvgTime + tab + speedup + tab + round(speedup / numWorkers, 2) + newLine
           }
         }
       }
+
+      println(result)
+      result
+
     }
 
     def round(number: Double, decimals: Int): Double = {
@@ -319,11 +406,14 @@ class Evaluation {
       (number * factor + .5).toInt / factor
     }
 
+    /**
+     * This will average all the computation time taken for all the repetitions
+     */
     def averageTimeWithXWorkers(l: List[ComputationStatistics], x: Int) = avg(l filter (_.numberOfWorkers.get == x) map (_.computationTimeInMilliseconds.get))
 
     def saveStats(computationStatistics: Map[String, List[ComputationStatistics]], evalNames: Iterable[String], workers: Int) = {
       fw.write("=========================================" + newLine)
-      fw.write("Data: " + computationStatistics.mkString(sep) + newLine)
+      //fw.write("Data: " + computationStatistics.mkString(sep) + newLine)
       fw.write("Workers: " + workers + newLine)
       fw.write("Average Computation Time (ms)" + sep + "Average" + sep + "DiffUp" + sep + "DiffDown" + newLine)
       for (evalName <- evalNames) {
@@ -352,6 +442,7 @@ class Evaluation {
         fw.write(name + sep + avg + sep + diffUp + sep + diffDown + sep + sep + "Values:" + sep + values.mkString(sep) + newLine)
       }
     }
+
   }
 
   def calculateStats(l: Traversable[Long]): (String, String, String) = {
