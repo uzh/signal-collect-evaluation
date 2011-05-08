@@ -19,9 +19,6 @@
 
 package signalcollect.evaluation
 
-import signalcollect.interfaces.ComputeGraph
-import signalcollect.api.SynchronousComputeGraph
-import signalcollect.api.AsynchronousComputeGraph
 import scala.concurrent.forkjoin.LinkedTransferQueue
 import java.util.concurrent.LinkedBlockingQueue
 import signalcollect.implementations.messaging.DefaultMessageBus
@@ -38,6 +35,7 @@ import java.io.InputStreamReader
 import java.io.FileWriter
 import signalcollect.interfaces._
 import signalcollect.api._
+import signalcollect.api.Factory._
 import org.clapper.argot.{ ArgotUsageException, ArgotParser }
 import org.clapper.argot.ArgotConverters._
 import java.util.concurrent.ArrayBlockingQueue
@@ -58,13 +56,13 @@ object Evaluation {
     //    val dev = parser.flag[Boolean](List("d", "dev"), "Use defaults for all options.")
     //    val input = parser.option[String](List("i", "input"), "path", "The file to read the ontology from.")(convertString)
     //    val output = parser.option[String](List("o", "output"), "path", "The file to write the results into.")(convertString)
-    
+
     /*
      * Specify the number of workers as a multioption parameter eg.: -w 1 -w 4 -w 8 -w 16
      */
     val workers = parser.multiOption[Int](List("w", "workers"), "number", "The number of workers to use.")
     //val workers = parser.option[Int](List("w", "workers"), "number", "The number of workers to use.")(convertInt)
-    
+
     val algorithm = parser.option[String](List("a", "algorithm"), "name", "The name of the algorithm to use.")(convertString)
     val queue = parser.option[String](List("q", "queue"), "name", "The name of the queue to use.")(convertString)
 
@@ -72,7 +70,7 @@ object Evaluation {
      * Specify the size of the graph for the page rank algorithm eg.: -s 5000
      */
     val size = parser.option[Int](List("s", "size"), "size", "Graph size for PageRank")(convertInt)
-    
+
     /*
      * Specify the number of repetitions for the run eg.: -r 10
      */
@@ -91,7 +89,7 @@ object Evaluation {
     //println("Workers: " + workers.value)
 
     val workersList = workers.value.toList
-    
+
     // terrible code below, wanted to do something that will work for all combinations of parameters
 
     workersList.headOption match {
@@ -125,8 +123,7 @@ object Evaluation {
         }
     }
   }
-  
-  
+
 }
 
 class Evaluation {
@@ -145,7 +142,7 @@ class Evaluation {
     val gp: Map[String, Int => ComputeGraph] = Map(
       //      "Threshold Asynchronous Default Queue" -> { workers: Int => buildPingPongGraph(new AsynchronousComputeGraph(workers), et) }
       //      "Threshold Asynchronous Multi Queue" -> { workers: Int => buildPingPongGraph(new AsynchronousComputeGraphWithMultiQueue(workers), et) }
-      "Threshold Synchronous" -> { workers: Int => buildPingPongGraph(new SynchronousComputeGraph(workers), et) })
+      "Threshold Synchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
     evaluate(graphProviders = gp, fileName = "fullyConnectedTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 4, 8, 64), signalThreshold = 0.001, collectThreshold = 0)
   }
 
@@ -153,8 +150,8 @@ class Evaluation {
     println("Evaluating: " + resultName)
     val et = new LogNormal(vertices, 0, .9, .9)
     val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous" -> { workers: Int => buildPingPongGraph(new AsynchronousComputeGraph(workers), et) } //      "Threshold Synchronous" -> { workers: Int => buildPingPongGraph(new SynchronousComputeGraph(workers), et) }
-      )
+      "Threshold Asynchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
+
     evaluate(graphProviders = gp, fileName = "fullyConnectedTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 50, 100), signalThreshold = 0.001, collectThreshold = 0)
   }
 
@@ -162,8 +159,8 @@ class Evaluation {
     println("Evaluating: " + resultName)
     val et = new FullyConnected(vertices)
     val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous" -> { workers: Int => buildPingPongGraph(new AsynchronousComputeGraph(workers), et) },
-      "Threshold Synchronous" -> { workers: Int => buildPingPongGraph(new SynchronousComputeGraph(workers), et) })
+      "Threshold Asynchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) },
+      "Threshold Synchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
     evaluate(graphProviders = gp, fileName = "fullyConnectedTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 50, 100), signalThreshold = 0.001, collectThreshold = 0)
   }
 
@@ -171,8 +168,8 @@ class Evaluation {
     println("Evaluating: " + resultName)
     val et = new Star(vertices, true)
     val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous" -> { workers: Int => buildPingPongGraph(new AsynchronousComputeGraph(workers), et) },
-      "Threshold Synchronous" -> { workers: Int => buildPingPongGraph(new SynchronousComputeGraph(workers), et) })
+      "Threshold Asynchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) },
+      "Threshold Synchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
     evaluate(graphProviders = gp, fileName = "starTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 50, 100), signalThreshold = 0.001, collectThreshold = 0)
   }
 
@@ -187,7 +184,7 @@ class Evaluation {
   }
 
   class PingPongVertex(id: Any, iterations: Int) extends SignalMapVertex(id, 0) {
-    def collect: Int = math.min(iterations, signals[Int].foldLeft(state)(math.max(_, _)))
+    def collect: Int = math.min(iterations, signals(classOf[Int]).foldLeft(state)(math.max(_, _)))
     //	  override def processResult = println(id + ": " + state)
   }
 
@@ -213,8 +210,8 @@ class Evaluation {
     //            val edgeQuery = "select ?source ?target { ?source <http://lsdis.cs.uga.edu/projects/semdis/opus#cites> ?target }"
     //            val et = new SparqlTuples(sa, edgeQuery)
     val gp: Map[String, Int => ComputeGraph] = Map(
-      "Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers, workerFactory = Worker.synchronousWorkerFactory), et) },
-      "Akka Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers, workerFactory = Worker.akkaSyncWorker), et) } //"Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
+      "Synchronous" -> { numberOfWorkers: Int => buildPageRankGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).withWorkerFactory(Factory.Worker.Synchronous).build, et) } 
+      //      "Akka Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers, workerFactory = Worker.akkaSyncWorker), et) } //"Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
       //    	    "Linked Blocking Queue Thread Local Direct Delivery Async" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousDirectDeliveryWorkerFactory), et) },
       //    		"Linked Blocking Queue Thread Local Asynchronous" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) }
       //    		"Array Blocking Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new ArrayBlockingQueue[Any](10000000) }), et) },
@@ -256,7 +253,7 @@ class Evaluation {
     val gp: Map[String, Int => ComputeGraph] = Map(
       //      "Synchronous" -> { workers: Int => buildSsspGraph(new SynchronousComputeGraph(workers), et) },
       //      "AsynchronousAA" -> { workers: Int => buildSsspGraph(new AsynchronousAboveAverageComputeGraph(workers), et) },
-      "Eager Asynchronous" -> { workers: Int => buildSsspGraph(new AsynchronousComputeGraph(workers), et) })
+      "Eager Asynchronous" -> { numberOfWorkers: Int => buildSsspGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
     evaluate(graphProviders = gp, fileName = "sssp.csv", repetitions = 4, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 8), signalThreshold = 0.001, collectThreshold = 0)
   }
 
@@ -283,7 +280,7 @@ class Evaluation {
     //	  val et = new Chain(10)
     //    val et = List((1,2), (2,3), (3,4),(1,3))
     val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous (\"Eager\" Scheduling)" -> { workers: Int => buildGraphColoringGraph(new AsynchronousComputeGraph(workers), et) } //      "Score-guided Synchronous" -> { workers: Int => buildGraphColoringGraph(new SynchronousComputeGraph(workers), et) }
+      "Threshold Asynchronous (\"Eager\" Scheduling)" -> { numberOfWorkers: Int => buildGraphColoringGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) } //      "Score-guided Synchronous" -> { workers: Int => buildGraphColoringGraph(new SynchronousComputeGraph(workers), et) }
       )
     evaluate(graphProviders = gp, fileName = "coloring.csv", repetitions = 4, numberOfWorkers = List(1, 2, 4, 8), signalThreshold = 0.001, collectThreshold = 0)
   }
