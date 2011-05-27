@@ -39,7 +39,6 @@ import signalcollect.api.Factory._
 import org.clapper.argot.{ ArgotUsageException, ArgotParser }
 import org.clapper.argot.ArgotConverters._
 import java.util.concurrent.ArrayBlockingQueue
-import signalcollect.implementations.worker.DirectDeliveryAsynchronousWorker
 
 /*
  * execute with command: java -Xms5000m -Xmx5000m -jar evaluation-0.0.1-SNAPSHOT-jar-with-dependencies.jar
@@ -84,44 +83,13 @@ object Evaluation {
 
     val eval = new Evaluation
 
-    //if (!workers.value.isEmpty) {
+    // get the workers list from command line parsing
+    val workersList = if (workers.value.toList == List()) None else Some(workers.value.toList)
 
-    //println("Workers: " + workers.value)
-
-    val workersList = workers.value.toList
-
-    // terrible code below, wanted to do something that will work for all combinations of parameters
-
-    workersList.headOption match {
-      case Some(w) =>
-        size.value match {
-          case Some(s) =>
-            rep.value match {
-              case Some(r) =>
-                println(r)
-                println(s)
-                eval.evaluatePagerank(workersList, repetitions = r, size = s)
-              case None =>
-                println(s)
-                eval.evaluatePagerank(workersList, size = s)
-            }
-          case None => eval.evaluatePagerank(workersList)
-        }
-      case None =>
-        size.value match {
-          case Some(s) =>
-            rep.value match {
-              case Some(r) =>
-                println(r)
-                println(s)
-                eval.evaluatePagerank(repetitions = r, size = s)
-              case None =>
-                println(s)
-                eval.evaluatePagerank(size = s)
-            }
-          case None => eval.evaluatePagerank()
-        }
-    }
+    eval.evaluatePagerank(
+      workers = workersList.getOrElse((1 to 8).toList),
+      repetitions = rep.value.getOrElse(1),
+      size = size.value.getOrElse(1000))
   }
 
 }
@@ -197,6 +165,10 @@ class Evaluation {
    */
   def evaluatePagerank(workers: List[Int] = /*(1 to 8).toList*/ List(1, 4, 8, 16, 32, 64), repetitions: Int = 5, size: Int = 1000) {
 
+    println("Workers = " + workers)
+    println("Repetitions = " + repetitions)
+    println("Graph Size = " + size)
+
     //    profilerHook
 
     //    class MyMessageBus extends MessageBus[Any, Any] with Verbosity[Any, Any] with ProfilingMessageBus[Any, Any]
@@ -210,7 +182,10 @@ class Evaluation {
     //            val edgeQuery = "select ?source ?target { ?source <http://lsdis.cs.uga.edu/projects/semdis/opus#cites> ?target }"
     //            val et = new SparqlTuples(sa, edgeQuery)
     val gp: Map[String, Int => ComputeGraph] = Map(
-      "Synchronous" -> { numberOfWorkers: Int => buildPageRankGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).withWorkerFactory(Factory.Worker.Synchronous).build, et) } 
+      //"Synchronous" -> { numberOfWorkers: Int => buildPageRankGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(SynchronousExecutionMode).withWorkerFactory(Factory.Worker.Synchronous).build, et) },
+      "Akka Synchronous" -> { numberOfWorkers: Int => buildPageRankGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(SynchronousExecutionMode).withWorkerFactory(Factory.Worker.AkkaSynchronous).build, et) } //,  
+      //"ASynchronous" -> { numberOfWorkers: Int => buildPageRankGraph( DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(AsynchronousExecutionMode).withWorkerFactory(Factory.Worker.Asynchronous).build, et) },
+      //"Akka ASynchronous" -> { numberOfWorkers: Int => buildPageRankGraph( DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(AsynchronousExecutionMode).withWorkerFactory(Factory.Worker.AkkaAsynchronous).build, et) }//, 
       //      "Akka Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers, workerFactory = Worker.akkaSyncWorker), et) } //"Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
       //    	    "Linked Blocking Queue Thread Local Direct Delivery Async" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousDirectDeliveryWorkerFactory), et) },
       //    		"Linked Blocking Queue Thread Local Asynchronous" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) }
@@ -362,7 +337,7 @@ class Evaluation {
       //print the results for all the evaluations selected
       for (evalName <- evalNames) {
 
-        result += ">>>>>>> " + evalName + newLine
+        result += evalName + newLine
 
         // get the list with the stats
         val statsForEval = computationStatistics.get(evalName).get
