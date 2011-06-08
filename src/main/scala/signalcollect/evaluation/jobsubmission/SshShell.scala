@@ -39,7 +39,9 @@ class SshShell(
   def execute(command: String): String = {
     val session = connection.openSession
     session.execCommand(command)
-    IoUtil.streamToString(new StreamGobbler(session.getStdout))
+    val result = IoUtil.streamToString(new StreamGobbler(session.getStdout))
+    session.close
+    result
   }
 
   def exit {

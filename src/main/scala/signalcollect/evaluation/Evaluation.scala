@@ -75,10 +75,10 @@ object Evaluation extends App {
 			  }
         submitSpreadsheetRow(configuration.gmailAccount, configuration.gmailPassword, configuration.spreadsheetName, configuration.worksheetName, statsMap)
       /** ADD OTHER ALGORITHMS HERE */
-      case other => statsMap += (("Exception", "Unknown algorithm: " + other))
+      case other => statsMap += (("exception", "Unknown algorithm: " + other))
     }
   } catch {
-    case e: Exception => statsMap += (("Exception", e.getMessage + "\n" + e.getStackTraceString))
+    case e: Exception => statsMap += (("exception", e.getMessage + "\n" + e.getStackTraceString))
   }
 
   def submitSpreadsheetRow(gmailAccount: String, gmailPassword: String, spreadsheetName: String, worksheetName: String, rowData: Map[String, String]) {

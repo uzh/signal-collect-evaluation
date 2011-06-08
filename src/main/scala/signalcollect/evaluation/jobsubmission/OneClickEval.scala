@@ -27,7 +27,7 @@ import signalcollect.api.ComputeGraphBuilder
 import signalcollect.evaluation.configuration.Configuration
 import signalcollect.evaluation.util.Serializer
 
-abstract class OneClickEval {
+abstract class OneClickEval(krakenUsername: String) {
 
   def createConfigurations: List[Configuration]
 
@@ -53,7 +53,7 @@ abstract class OneClickEval {
     IoUtil.printStream(execution.getInputStream)
 
     /** LOG INTO KRAKEN WITH SSH */
-    val kraken = new SshShell
+    val kraken = new SshShell(username = krakenUsername)
 
     /** IMPLEMENT THIS FUNCTION: CREATES ALL THE EVALUATION CONFIGURATIONS */
     val configurations = createConfigurations

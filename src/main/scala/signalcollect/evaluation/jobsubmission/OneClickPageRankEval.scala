@@ -1,6 +1,6 @@
 package signalcollect.evaluation.jobsubmission
 
-import signalcollect.api.DefaultBuilder
+import signalcollect.api._
 import scala.util.Random
 import signalcollect.evaluation.configuration._
 
@@ -11,14 +11,18 @@ import signalcollect.evaluation.configuration._
  * REQUIRES CERTIFICATE FOR LOGIN ON KRAKEN 
  */
 object OneClickPageRankEval extends App {
-  val eval = new OneClickPageRankEval(args(0), args(1))
+  var krakenUsername = System.getProperty("user.name")
+  if (args.size == 3) {
+    krakenUsername = args(2)
+  }
+  val eval = new OneClickPageRankEval(args(0), args(1), krakenUsername)
   eval.executeEvaluation
 }
 
-class OneClickPageRankEval(gmailAccount: String, gmailPassword: String) extends OneClickEval {
-  val computeGraphBuilders = List(DefaultBuilder) //, DefaultSynchronousBuilder)
-  val numberOfRepetitions = 1
-  val numberOfWorkers = List(24)
+class OneClickPageRankEval(gmailAccount: String, gmailPassword: String, krakenUsername: String = "stutz") extends OneClickEval(krakenUsername) {
+  val computeGraphBuilders = List(DefaultBuilder, DefaultSynchronousBuilder)
+  val numberOfRepetitions = 10
+  val numberOfWorkers = (1 to 24).toList //List(24)
   def createConfigurations: List[Configuration] = {
     var configurations = List[Configuration]()
     for (computeGraphBuilder <- computeGraphBuilders) {
