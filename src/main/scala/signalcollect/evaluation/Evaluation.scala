@@ -1,7 +1,10 @@
 /*
  *  @author Philip Stutz
+ *  @author Daniel Strebel
+ *  @author Francisco de Freitas
+ *  @author Lorenz Fischer
  *  
- *  Copyright 2010 University of Zurich
+ *  Copyright 2011 University of Zurich
  *      
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,413 +22,97 @@
 
 package signalcollect.evaluation
 
-import scala.concurrent.forkjoin.LinkedTransferQueue
-import java.util.concurrent.LinkedBlockingQueue
-import signalcollect.implementations.messaging.DefaultMessageBus
-import signalcollect.implementations.messaging.Verbosity
-import signalcollect.graphproviders.synthetic._
-import signalcollect.graphproviders.sparql._
-import signalcollect.algorithms.ColoredVertex
-import signalcollect.algorithms.Path
-import signalcollect.algorithms.Location
+import org.apache.commons.codec.binary.Base64
+import signalcollect.interfaces.ComputeGraph
 import signalcollect.algorithms.Link
 import signalcollect.algorithms.Page
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.FileWriter
-import signalcollect.interfaces._
-import signalcollect.api._
-import signalcollect.api.Factory._
-import org.clapper.argot.{ ArgotUsageException, ArgotParser }
-import org.clapper.argot.ArgotConverters._
-import java.util.concurrent.ArrayBlockingQueue
+import signalcollect.benchmark.LogNormal
+import signalcollect.api.DefaultSynchronousBuilder
+import signalcollect.interfaces.ComputationStatistics
+import signalcollect.evaluation.util.Serializer
+import signalcollect.evaluation.spreadsheets._
+import java.util.Date
+import java.text.SimpleDateFormat
+import signalcollect.evaluation.configuration._
 
-/*
- * execute with command: java -Xms5000m -Xmx5000m -jar evaluation-0.0.1-SNAPSHOT-jar-with-dependencies.jar
- */
-object Evaluation {
+object Evaluation extends App {
+  var statsMap = Map[String, String]()
+  
+  val startDate = new Date
+  val dateFormat = new SimpleDateFormat("dd-MM-yyyy")
+  val timeFormat = new SimpleDateFormat("HH:mm:ss")
+  
+  try {
+    statsMap += (("startDate", dateFormat.format(startDate)))
+    statsMap += (("startTime", timeFormat.format(startDate)))
+    val configurationBase64 = args(0)
+    val configurationBytes = Base64.decodeBase64(configurationBase64)
+    val configuration = Serializer.read[Configuration](configurationBytes)
+    statsMap += (("evaluationDescription", configuration.evaluationDescription))
+    statsMap += (("submittedByUser", configuration.submittedByUser))
+    statsMap += (("jobId", configuration.jobId.toString))
+    statsMap += (("executionHostname", java.net.InetAddress.getLocalHost.getHostName))
 
-  /**
-   * @param args the command line arguments
-   */
-  def main(args: Array[String]): Unit = {
-    // create cli (command line interface) parser
-    val parser = new ArgotParser("Evaluation")
-
-    //    val dev = parser.flag[Boolean](List("d", "dev"), "Use defaults for all options.")
-    //    val input = parser.option[String](List("i", "input"), "path", "The file to read the ontology from.")(convertString)
-    //    val output = parser.option[String](List("o", "output"), "path", "The file to write the results into.")(convertString)
-
-    /*
-     * Specify the number of workers as a multioption parameter eg.: -w 1 -w 4 -w 8 -w 16
-     */
-    val workers = parser.multiOption[Int](List("w", "workers"), "number", "The number of workers to use.")
-    //val workers = parser.option[Int](List("w", "workers"), "number", "The number of workers to use.")(convertInt)
-
-    val algorithm = parser.option[String](List("a", "algorithm"), "name", "The name of the algorithm to use.")(convertString)
-    val queue = parser.option[String](List("q", "queue"), "name", "The name of the queue to use.")(convertString)
-
-    /*
-     * Specify the size of the graph for the page rank algorithm eg.: -s 5000
-     */
-    val size = parser.option[Int](List("s", "size"), "size", "Graph size for PageRank")(convertInt)
-
-    /*
-     * Specify the number of repetitions for the run eg.: -r 10
-     */
-    val rep = parser.option[Int](List("r", "repetitions"), "repetitions", "How many repetitions to run")(convertInt)
-
-    try {
-      parser.parse(args) // parse command line arguments
-    } catch {
-      case e: ArgotUsageException => println(e.message)
+    configuration match {
+      case pageRankConfig: PageRankConfiguration =>
+        statsMap += (("algorithm", "PageRank"))
+        val computeGraph = pageRankConfig.builder.build
+        val seed = 0
+        val sigma = 1.0
+        val mu = 3.0
+        statsMap += (("graphStructure", "LogNormal(" + pageRankConfig.graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"))
+        val edgeTuples = new LogNormal(pageRankConfig.graphSize, seed, sigma, mu)
+        buildPageRankGraph(computeGraph, edgeTuples)
+        benchmark(computeGraph)
+			  def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Int, Int]]): ComputeGraph = {
+			    edgeTuples foreach {
+			      case (sourceId, targetId) =>
+			        cg.addVertex(classOf[Page], sourceId, 0.85)
+			        cg.addVertex(classOf[Page], targetId, 0.85)
+			        cg.addEdge(classOf[Link], sourceId, targetId)
+			    }
+			    cg
+			  }
+        submitSpreadsheetRow(configuration.gmailAccount, configuration.gmailPassword, configuration.spreadsheetName, configuration.worksheetName, statsMap)
+      /** ADD OTHER ALGORITHMS HERE */
+      case other => statsMap += (("Exception", "Unknown algorithm: " + other))
     }
-
-    val eval = new Evaluation
-
-    // get the workers list from command line parsing
-    val workersList = if (workers.value.toList == List()) None else Some(workers.value.toList)
-
-    eval.evaluatePagerank(
-      workers = workersList.getOrElse((1 to 8).toList),
-      repetitions = rep.value.getOrElse(1),
-      size = size.value.getOrElse(1000))
+  } catch {
+    case e: Exception => statsMap += (("Exception", e.getMessage + "\n" + e.getStackTraceString))
   }
 
-}
-
-class Evaluation {
-
-  def profilerHook = {
-    println("Connect the profiler and press any key to continue:")
-    val in = new InputStreamReader(System.in)
-    val reader = new BufferedReader(in)
-    reader.readLine
-    println("Starting ...")
+  def submitSpreadsheetRow(gmailAccount: String, gmailPassword: String, spreadsheetName: String, worksheetName: String, rowData: Map[String, String]) {
+	  val api = new SpreadsheetApi(gmailAccount, gmailPassword)
+	  val spreadsheet = api.getSpreadsheet(spreadsheetName)
+	  val worksheet = api.getWorksheetInSpreadsheet(worksheetName, spreadsheet)
+	  api.insertRow(worksheet, statsMap)
   }
-
-  def evaluateLogNormalManyConnections(resultName: String, vertices: Int = 20000) {
-    println("Evaluating: " + resultName)
-    val et = new LogNormal(vertices)
-    val gp: Map[String, Int => ComputeGraph] = Map(
-      //      "Threshold Asynchronous Default Queue" -> { workers: Int => buildPingPongGraph(new AsynchronousComputeGraph(workers), et) }
-      //      "Threshold Asynchronous Multi Queue" -> { workers: Int => buildPingPongGraph(new AsynchronousComputeGraphWithMultiQueue(workers), et) }
-      "Threshold Synchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
-    evaluate(graphProviders = gp, fileName = "fullyConnectedTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 4, 8, 64), signalThreshold = 0.001, collectThreshold = 0)
+  
+  def benchmark(computeGraph: ComputeGraph) {
+    val stats = computeGraph.execute
+    statsMap += (("numberOfWorkers", stats.numberOfWorkers.getOrElse("-").toString))
+    statsMap += (("computationTimeInMilliseconds", stats.computationTimeInMilliseconds.getOrElse("-").toString))
+    statsMap += (("jvmCpuTimeInMilliseconds", stats.jvmCpuTimeInMilliseconds.getOrElse("-").toString))
+    statsMap += (("graphLoadingWaitInMilliseconds", stats.graphLoadingWaitInMilliseconds.getOrElse("-").toString))
+    statsMap += (("computeGraph", stats.computeGraph.getOrElse("-")))
+    statsMap += (("storage", stats.storage.getOrElse("-")))
+    statsMap += (("worker", stats.worker.getOrElse("-")))
+    statsMap += (("messageBus", stats.messageBus.getOrElse("-")))
+    statsMap += (("messageInbox", stats.messageInbox.getOrElse("-")))
+    statsMap += (("logger", stats.logger.getOrElse("-")))
+    statsMap += (("signalCollectSteps", stats.signalCollectSteps.getOrElse("-").toString))
+    statsMap += (("numberOfVertices", stats.numberOfVertices.getOrElse("-").toString))
+    statsMap += (("numberOfEdges", stats.numberOfEdges.getOrElse("-").toString))
+    statsMap += (("vertexCollectOperations", stats.vertexCollectOperations.getOrElse("-").toString))
+    statsMap += (("vertexSignalOperations", stats.vertexSignalOperations.getOrElse("-").toString))
+    statsMap += (("stepsLimit", stats.stepsLimit.getOrElse("-").toString))
+    statsMap += (("signalThreshold", stats.signalThreshold.getOrElse("-").toString))
+    statsMap += (("collectThreshold", stats.collectThreshold.getOrElse("-").toString))
+    statsMap += (("stallingDetectionCycles", stats.stallingDetectionCycles.getOrElse("-").toString))
+    val endDate = new Date
+    statsMap += (("endDate", dateFormat.format(endDate)))
+    statsMap += (("endTime", timeFormat.format(endDate)))
+    computeGraph.shutdown
   }
-
-  def evaluateLogNormalFewConnections(resultName: String, vertices: Int = 20000) {
-    println("Evaluating: " + resultName)
-    val et = new LogNormal(vertices, 0, .9, .9)
-    val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
-
-    evaluate(graphProviders = gp, fileName = "fullyConnectedTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 50, 100), signalThreshold = 0.001, collectThreshold = 0)
-  }
-
-  def evaluateFullyConnected(resultName: String, vertices: Int = 5000) {
-    println("Evaluating: " + resultName)
-    val et = new FullyConnected(vertices)
-    val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) },
-      "Threshold Synchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
-    evaluate(graphProviders = gp, fileName = "fullyConnectedTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 50, 100), signalThreshold = 0.001, collectThreshold = 0)
-  }
-
-  def evaluateStar(resultName: String, vertices: Int = 100000) {
-    println("Evaluating: " + resultName)
-    val et = new Star(vertices, true)
-    val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) },
-      "Threshold Synchronous" -> { numberOfWorkers: Int => buildPingPongGraph(DefaultSynchronousBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
-    evaluate(graphProviders = gp, fileName = "starTopology" + resultName + ".csv", repetitions = 1, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 50, 100), signalThreshold = 0.001, collectThreshold = 0)
-  }
-
-  def buildPingPongGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Any, Any]]): ComputeGraph = {
-    edgeTuples foreach {
-      case (sourceId, targetId) =>
-        cg.addVertex(classOf[PingPongVertex], sourceId, 10)
-        cg.addVertex(classOf[PingPongVertex], targetId, 10)
-        cg.addEdge(classOf[PingPongEdge], sourceId, targetId)
-    }
-    cg
-  }
-
-  class PingPongVertex(id: Any, iterations: Int) extends SignalMapVertex(id, 0) {
-    def collect: Int = math.min(iterations, signals(classOf[Int]).foldLeft(state)(math.max(_, _)))
-    //	  override def processResult = println(id + ": " + state)
-  }
-
-  class PingPongEdge(s: Any, t: Any) extends DefaultEdge(s, t) {
-    def signal: Int = source.state.asInstanceOf[Int] + 1
-  }
-
-  /*
-   * List of workers: Minimum of 1
-   */
-  def evaluatePagerank(workers: List[Int] = /*(1 to 8).toList*/ List(1, 4, 8, 16, 32, 64), repetitions: Int = 5, size: Int = 1000) {
-
-    println("Workers = " + workers)
-    println("Repetitions = " + repetitions)
-    println("Graph Size = " + size)
-
-    //    profilerHook
-
-    //    class MyMessageBus extends MessageBus[Any, Any] with Verbosity[Any, Any] with ProfilingMessageBus[Any, Any]
-    println("Evaluating PageRank")
-    //    val et = new LogNormal(1000000, 0, 1, 3)
-    val et = new LogNormal(size, 0, 1, 3)
-    //    val et = new Partitions(8, 100000, 0, 1.3, 4)
-    //    val et = new LogNormal(200000, 0, .9, .9)
-    //            val et = new EightPartitions(100000, 10, .2, .5)
-    //            val sa: SparqlAccessor = new SesameSparql("http://athena.ifi.uzh.ch:8080/openrdf-sesame", "swetodblp")
-    //            val edgeQuery = "select ?source ?target { ?source <http://lsdis.cs.uga.edu/projects/semdis/opus#cites> ?target }"
-    //            val et = new SparqlTuples(sa, edgeQuery)
-    val gp: Map[String, Int => ComputeGraph] = Map(
-      //"Synchronous" -> { numberOfWorkers: Int => buildPageRankGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(SynchronousExecutionMode).withWorkerFactory(Factory.Worker.Synchronous).build, et) },
-      "Akka Synchronous" -> { numberOfWorkers: Int => buildPageRankGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(SynchronousExecutionMode).withWorkerFactory(Factory.Worker.AkkaSynchronous).build, et) } //,  
-      //"ASynchronous" -> { numberOfWorkers: Int => buildPageRankGraph( DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(AsynchronousExecutionMode).withWorkerFactory(Factory.Worker.Asynchronous).build, et) },
-      //"Akka ASynchronous" -> { numberOfWorkers: Int => buildPageRankGraph( DefaultBuilder.withNumberOfWorkers(numberOfWorkers).withExecutionMode(AsynchronousExecutionMode).withWorkerFactory(Factory.Worker.AkkaAsynchronous).build, et) }//, 
-      //      "Akka Synchronous" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers, workerFactory = Worker.akkaSyncWorker), et) } //"Direct Delivery Async" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Worker.asynchronousDirectDeliveryWorkerFactory), et) } //      "Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, workerFactory = Workers.asynchronousWorkerFactory), et) } //    		"Linked Blocking Queue Asynchronous" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) },
-      //    	    "Linked Blocking Queue Thread Local Direct Delivery Async" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousDirectDeliveryWorkerFactory), et) },
-      //    		"Linked Blocking Queue Thread Local Asynchronous" -> { workers: Int => buildThreadLocalPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory = Queues.linkedBlockingQueueFactory, workerFactory = Workers.asynchronousWorkerFactory), et) }
-      //    		"Array Blocking Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new ArrayBlockingQueue[Any](10000000) }), et) },
-      //    		"Array Blocking Multi-Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new MultiQueue[Any](16, { () => new ArrayBlockingQueue[Any](1000000) }) } ), et) }
-      //      "Linked Blocking Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers), et) }
-      //      "Linked Blocking Multi-Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageInboxFactory= { () => new MultiQueue[Any](16, { () => new LinkedBlockingQueue[Any] }) } ), et) }
-      //      "Synchronous Blocking Queue" -> { workers: Int => buildPageRankGraph(new SynchronousComputeGraph(workers), et) },
-      //      "NQAsynchronous Blocking Queue" -> { workers: Int => buildPageRankGraph(new NQAsynchronousComputeGraph(workers), et) }
-      //      "Asynchronous Blocking Queue" -> { workers: Int => buildPageRankGraph(new AsynchronousComputeGraph(workers, messageBusFactory = { new MyMessageBus }), et) }
-      )
-    evaluate(graphProviders = gp, fileName = "pagerank.csv", repetitions = repetitions, numberOfWorkers = workers, signalThreshold = 0.01, collectThreshold = 0)
-  }
-
-  def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Int, Int]]): ComputeGraph = {
-    edgeTuples foreach {
-      case (sourceId, targetId) =>
-        cg.addVertex(classOf[Page], sourceId, 0.85)
-        cg.addVertex(classOf[Page], targetId, 0.85)
-        cg.addEdge(classOf[Link], sourceId, targetId)
-    }
-    cg
-  }
-
-  //  def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Any, Any]]): ComputeGraph = {
-  //    edgeTuples foreach {
-  //      case (sourceId, targetId) =>
-  //        cg.addVertex[Page](sourceId, 0.85)
-  //        cg.addVertex[Page](targetId, 0.85)
-  //        cg.addEdge[Link](sourceId, targetId)
-  //    }
-  //    cg
-  //  }
-
-  def evaluateSssp {
-    println("Evaluating SSSP")
-    //    val et = new ErdosRenyi(100000, 4, 0)
-    val et = new LogNormal(5000, 0, 2.6, 0) // used for eval 1
-    //    val et = new EightPartitions(10000000, 10, .3, 1)
-    val gp: Map[String, Int => ComputeGraph] = Map(
-      //      "Synchronous" -> { workers: Int => buildSsspGraph(new SynchronousComputeGraph(workers), et) },
-      //      "AsynchronousAA" -> { workers: Int => buildSsspGraph(new AsynchronousAboveAverageComputeGraph(workers), et) },
-      "Eager Asynchronous" -> { numberOfWorkers: Int => buildSsspGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) })
-    evaluate(graphProviders = gp, fileName = "sssp.csv", repetitions = 4, numberOfWorkers = List(1, 2, 3, 4, 5, 6, 7, 8), signalThreshold = 0.001, collectThreshold = 0)
-  }
-
-  val ssspZero = 0
-
-  def buildSsspGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Any, Any]]): ComputeGraph = {
-    edgeTuples foreach {
-      case (sourceId, targetId) =>
-        if (sourceId.equals(ssspZero)) {
-          cg.addVertex(classOf[Location], sourceId.toString, 0)
-        } else {
-          cg.addVertex(classOf[Location], sourceId.toString, Int.MaxValue)
-        }
-        cg.addVertex(classOf[Location], targetId.toString, Int.MaxValue)
-        cg.addEdge(classOf[Path], sourceId.toString, targetId.toString)
-    }
-    cg
-  }
-
-  def evaluateGraphColoring {
-    println("Evaluating Graph Coloring")
-    val et = new LogNormal(100000, 10, 0.2, 1)
-    //    val et = new EightPartitions(100000, 10, .2, 1)
-    //	  val et = new Chain(10)
-    //    val et = List((1,2), (2,3), (3,4),(1,3))
-    val gp: Map[String, Int => ComputeGraph] = Map(
-      "Threshold Asynchronous (\"Eager\" Scheduling)" -> { numberOfWorkers: Int => buildGraphColoringGraph(DefaultBuilder.withNumberOfWorkers(numberOfWorkers).build, et) } //      "Score-guided Synchronous" -> { workers: Int => buildGraphColoringGraph(new SynchronousComputeGraph(workers), et) }
-      )
-    evaluate(graphProviders = gp, fileName = "coloring.csv", repetitions = 4, numberOfWorkers = List(1, 2, 4, 8), signalThreshold = 0.001, collectThreshold = 0)
-  }
-
-  val numColors = 9 // works in 8 seconds with 15
-
-  def buildGraphColoringGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Any, Any]]): ComputeGraph = {
-    edgeTuples foreach {
-      case (sourceId, targetId) =>
-        cg.addVertex(classOf[ColoredVertex], sourceId, numColors)
-        cg.addVertex(classOf[ColoredVertex], targetId, numColors)
-        cg.addEdge(classOf[StateForwarderEdge], sourceId, targetId)
-        cg.addEdge(classOf[StateForwarderEdge], targetId, sourceId)
-    }
-    cg
-  }
-
-  val sep = ","
-  val newLine = "\n"
-  val tab = "\t"
-
-  def evaluate(graphProviders: Map[String, Int => ComputeGraph], fileName: String = "eval.cvs", repetitions: Int = 1, numberOfWorkers: Traversable[Int] = List(8), signalThreshold: Double = 0.001, collectThreshold: Double = 0) {
-    val fw = new FileWriter(fileName)
-    try {
-      var computationStatistics = Map[String, List[ComputationStatistics]]()
-      for (workers <- numberOfWorkers) {
-        for (graphName <- graphProviders.keys) {
-          println(graphName)
-          println("Building graph...")
-          val computeGraph = graphProviders(graphName).apply(workers)
-          println("Executing warmup...")
-          computeGraph.setSignalThreshold(signalThreshold)
-          computeGraph.setCollectThreshold(collectThreshold)
-          val stat = computeGraph.execute
-          println(stat) // warmup
-          computeGraph.shutDown
-          var stats = List[ComputationStatistics]()
-          for (i <- 1 to repetitions) {
-            println
-            println("GC ...")
-            System.gc
-            println
-            println("Building graph...")
-            val computeGraph = graphProviders(graphName).apply(workers)
-            println("Executing...")
-            computeGraph.setSignalThreshold(signalThreshold)
-            computeGraph.setCollectThreshold(collectThreshold)
-            val newStat = computeGraph.execute
-            computeGraph.shutDown
-            println(newStat)
-            stats = newStat :: stats
-          }
-          if (computationStatistics.contains(graphName))
-            computationStatistics += ((graphName, computationStatistics(graphName) ::: stats))
-          else
-            computationStatistics += ((graphName, stats))
-        }
-        saveStats(computationStatistics, graphProviders.keys, workers)
-        fw.flush
-      }
-      var speedup = analyzeSpeedup(computationStatistics, graphProviders.keys)
-      fw.write(speedup.replace(tab, sep))
-    } finally {
-      fw.close
-    }
-
-    /**
-     * Map[String, List[ComputationStatistics]]:
-     * 	String: eval name as the key for the map
-     * 	List[ComputationStatistics] has the stats from all the runs with different number of workers
-     *
-     * The comparison is always made with the baseline (speedup)
-     *
-     */
-    def analyzeSpeedup(computationStatistics: Map[String, List[ComputationStatistics]], evalNames: Iterable[String]): String = {
-
-      var result: String = ""
-
-      //print the results for all the evaluations selected
-      for (evalName <- evalNames) {
-
-        result += evalName + newLine
-
-        // get the list with the stats
-        val statsForEval = computationStatistics.get(evalName).get
-
-        var numWorkers = statsForEval(0).numberOfWorkers.get
-
-        // get baseline (first stats) average time for comparison
-        val baseline: Double = round(averageTimeWithXWorkers(statsForEval, numWorkers), 2)
-
-        // print out the baseline
-        result += "Workers" + tab + "Time" + tab + "Speedup" + tab + "S/W" + newLine // speedup_w = t_1/t_w, w/s = speedup/workers
-        result += numWorkers + tab + baseline + tab + 1.0 + tab + 1.0 + newLine
-
-        // for each stats
-        for (stat <- repetitions to statsForEval.size - 1 by repetitions) {
-
-          // how many workers for this stat
-          numWorkers = statsForEval(stat).numberOfWorkers.get
-
-          // get average time
-          val workerAvgTime: Double = round(averageTimeWithXWorkers(statsForEval, numWorkers), 2)
-
-          if (workerAvgTime > 0) {
-            // calculate the speed up compared with baseline
-            val speedup: Double = round(baseline / workerAvgTime, 2)
-            result += numWorkers + tab + workerAvgTime + tab + speedup + tab + round(speedup / numWorkers, 2) + newLine
-          }
-        }
-      }
-
-      println(result)
-      result
-
-    }
-
-    def round(number: Double, decimals: Int): Double = {
-      val factor = math.pow(10, decimals)
-      (number * factor + .5).toInt / factor
-    }
-
-    /**
-     * This will average all the computation time taken for all the repetitions
-     */
-    def averageTimeWithXWorkers(l: List[ComputationStatistics], x: Int) = avg(l filter (_.numberOfWorkers.get == x) map (_.computationTimeInMilliseconds.get))
-
-    def saveStats(computationStatistics: Map[String, List[ComputationStatistics]], evalNames: Iterable[String], workers: Int) = {
-      fw.write("=========================================" + newLine)
-      //fw.write("Data: " + computationStatistics.mkString(sep) + newLine)
-      fw.write("Workers: " + workers + newLine)
-      fw.write("Average Computation Time (ms)" + sep + "Average" + sep + "DiffUp" + sep + "DiffDown" + newLine)
-      for (evalName <- evalNames) {
-        val values: List[Long] = computationStatistics(evalName) filter (_.numberOfWorkers.get == workers) map (_.computationTimeInMilliseconds.get)
-        val stats = calculateStats(values)
-        writeStats(evalName, stats._1, stats._2, stats._3, values)
-      }
-      fw.write(newLine)
-      fw.write("Signal Operations Executed" + sep + "Average" + sep + "DiffUp" + sep + "DiffDown" + newLine)
-      for (evalName <- evalNames) {
-        val values: List[Long] = computationStatistics(evalName) filter (_.numberOfWorkers.get == workers) map (_.vertexSignalOperations.get)
-        val stats = calculateStats(values)
-        writeStats(evalName, stats._1, stats._2, stats._3, values)
-      }
-      fw.write(newLine)
-      fw.write("Collect Operations Executed" + sep + "Average" + sep + "DiffUp" + sep + "DiffDown" + newLine)
-      for (evalName <- evalNames) {
-        val values: List[Long] = computationStatistics(evalName) filter (_.numberOfWorkers.get == workers) map (_.vertexCollectOperations.get)
-        val stats = calculateStats(values)
-        writeStats(evalName, stats._1, stats._2, stats._3, values)
-      }
-      fw.write("=========================================" + newLine)
-      fw.write(newLine)
-
-      def writeStats(name: String, avg: String, diffUp: String, diffDown: String, values: List[_]) {
-        fw.write(name + sep + avg + sep + diffUp + sep + diffDown + sep + sep + "Values:" + sep + values.mkString(sep) + newLine)
-      }
-    }
-
-  }
-
-  def calculateStats(l: Traversable[Long]): (String, String, String) = {
-    val diffUp = max(l) - avg(l)
-    val diffDown = avg(l) - min(l)
-    (avg(l).toString, diffUp.toString, diffDown.toString)
-  }
-
-  def avg(l: Traversable[Long]) = if (l.size > 0) l.foldLeft(0l)(_ + _) / l.size else 0
-  def min(l: Traversable[Long]) = l.foldLeft(Long.MaxValue)(math.min(_, _))
-  def max(l: Traversable[Long]) = l.foldLeft(Long.MinValue)(math.max(_, _))
-
 }
 

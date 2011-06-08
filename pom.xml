@@ -11,27 +11,20 @@
 			<url>http://scala-tools.org/repo-releases</url>
 		</repository>
 		<repository>
-			<id>scala-tools.org.snapshots</id>
-			<name>Scala Tools Maven2 Repository</name>
-			<url>http://scala-tools.org/repo-snapshots</url>
-			<snapshots />
+			<id>project</id>
+			<name>Project Maven Repository</name>
+			<layout>default</layout>
+			<url>file://${basedir}/lib</url>
 		</repository>
 	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>scala-tools.org</id>
-			<name>Scala-Tools Maven2 Snapshots Repository</name>
-			<url>http://scala-tools.org/repo-snapshots</url>
-		</pluginRepository>
-	</pluginRepositories>
 	<modules>
 	</modules>
 	<dependencies>
 		<!-- Commmand Line Parser -->
 		<dependency>
 			<groupId>org.clapper</groupId>
-			<artifactId>argot_2.8.1</artifactId>
-			<version>0.2</version>
+			<artifactId>argot_2.9.0</artifactId>
+			<version>0.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
@@ -47,10 +40,23 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-  <groupId>org.specs2</groupId>
-  <artifactId>specs2_2.9.0.RC1</artifactId>
-  <version>1.1</version>
-  <scope>test</scope>
+			<groupId>com.google.gdata</groupId>
+			<artifactId>spreadsheet</artifactId>
+			<version>3.0</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.gdata</groupId>
+			<artifactId>core</artifactId>
+			<version>1.0</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.collections</groupId>
+			<artifactId>google-collections</artifactId>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>signal-collect</groupId>
@@ -58,6 +64,18 @@
 			<version>0.0.1-SNAPSHOT</version>
 			<type>jar</type>
 			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.ethz.ganymed</groupId>
+			<artifactId>ganymed-ssh2</artifactId>
+			<version>build210</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.5</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -199,7 +217,7 @@
 		<project.reporting.outputEncoding>
 			UTF-8
         </project.reporting.outputEncoding>
-		<scala.version>2.9.0</scala.version>
+		<scala.version>2.9.0-1</scala.version>
 	</properties>
 	<name>evaluation</name>
 </project>
