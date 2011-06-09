@@ -26,19 +26,43 @@ import signalcollect.api.DefaultSynchronousBuilder
 import signalcollect.api.ComputeGraphBuilder
 import signalcollect.evaluation.configuration.Configuration
 import signalcollect.evaluation.util.Serializer
+import scala.util.Random
+import signalcollect.evaluation.Evaluation
 
-abstract class OneClickEval(krakenUsername: String) {
+sealed trait ExecutionLocation
+object LocalHost extends ExecutionLocation
+case class Kraken(username: String = System.getProperty("user.name")) extends ExecutionLocation
+
+abstract class OneClickEval {
 
   def createConfigurations: List[Configuration]
-
-  val mainClass = "signalcollect.evaluation.Evaluation"
-  val packagename = "evaluation-0.0.1-SNAPSHOT"
-  val jarSuffix = "-jar-with-dependencies.jar"
-  val fileSpearator = System.getProperty("file.separator")
-  val jarname = packagename + jarSuffix
-  val localJarpath = "." + fileSpearator + "target" + fileSpearator + jarname
+  lazy val jobDescription: String = Random.nextInt.abs.toString
+  lazy val executionLocation: ExecutionLocation = LocalHost 
+  
+  lazy val mainClass = "signalcollect.evaluation.Evaluation"
+  lazy val packagename = "evaluation-0.0.1-SNAPSHOT"
+  lazy val jarSuffix = "-jar-with-dependencies.jar"
+  lazy val fileSpearator = System.getProperty("file.separator")
+  lazy val localhostJarname = packagename + jarSuffix
+  lazy val krakenJarname = packagename + "-" + jobDescription + jarSuffix
+  lazy val localJarpath = "." + fileSpearator + "target" + fileSpearator + localhostJarname
 
   def executeEvaluation {
+	executionLocation match {
+	  case LocalHost => executeLocally
+	  case Kraken(username) => executeKraken(username)
+	}
+  }
+  
+  def executeLocally {
+    val configurations = createConfigurations
+    for (configuration <- configurations) {
+    	val eval = new Evaluation
+    	eval.execute(configuration)
+    }
+  }
+  
+  def executeKraken(krakenUsername: String) {
     /** PACKAGE EVAL CODE AS JAR */
     val commandPackage = "mvn -Dmaven.test.skip=true clean package"
     println(commandPackage)
@@ -46,8 +70,7 @@ abstract class OneClickEval(krakenUsername: String) {
     IoUtil.printStream(execution.getInputStream)
 
     /** COPY EVAL JAR TO KRAKEN */
-
-    val commandCopy = "scp -v " + localJarpath + " kraken.ifi.uzh.ch:"
+    val commandCopy = "scp -v " + localJarpath + " kraken.ifi.uzh.ch:" + krakenJarname
     println(commandCopy)
     execution = Runtime.getRuntime.exec(commandCopy)
     IoUtil.printStream(execution.getInputStream)
@@ -60,33 +83,22 @@ abstract class OneClickEval(krakenUsername: String) {
     
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (configuration <- configurations) {
-      val jobJarname = packagename + "-" + configuration.jobId + jarSuffix
-      val copyCommand = "cp " + jarname + " " + jobJarname
-      println(copyCommand)
-      println(kraken.execute(copyCommand))
       val serializedConfig = Serializer.write(configuration)
       val base64Config = Base64.encodeBase64String(serializedConfig)
-      val script = getShellScript(jobJarname, mainClass, base64Config)
+      val script = getShellScript(configuration.jobId.toString, krakenJarname, mainClass, base64Config)
       val scriptBase64 = Base64.encodeBase64String(script.getBytes)
-      println("ENCODED STRING: " + scriptBase64)
       val qsubCommand = """echo """" + scriptBase64 + """" | base64 -d | qsub"""
-      println(qsubCommand)
       println(kraken.execute(qsubCommand))
     }
-
-    /** CLEAN UP ON KRAKEN */
-    val deleteJarCommand = "rm " + jarname
-    println(deleteJarCommand)
-    println(kraken.execute(deleteJarCommand))
 
     /** LOG OUT OF KRAKEN */
     kraken.exit
   }
 
-  def getShellScript(jarname: String, mainClass: String, serializedConfiguration: String): String = {
+  def getShellScript(jobId: String, jarname: String, mainClass: String, serializedConfiguration: String): String = {
     val script = """
 #!/bin/bash
-#PBS -N """ + jarname + """
+#PBS -N """ + jobId + """
 #PBS -l nodes=1:ppn=24
 #PBS -l walltime=604800,cput=2400000,mem=55000mb
 #PBS -j oe
@@ -102,7 +114,7 @@ working_dir=`mktemp -d --tmpdir=/var/tmp`
 vm_args="-Xmx35000m -Xms35000m"
 
 # copy jar
-mv ~/$jarname $working_dir/
+cp ~/$jarname $working_dir/
 
 # run test
 cmd="java $vm_args -cp $working_dir/$jarname $mainClass $serializedConfiguration"
