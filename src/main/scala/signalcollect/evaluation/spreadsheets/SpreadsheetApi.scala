@@ -11,7 +11,7 @@ class SpreadsheetApi(
   gmailPassword: String) {
 
   val service = new SpreadsheetService("uzh-signalcollect-0.0.1")
-  service.setUserCredentials("evaluate.signalcollect@gmail.com", "tcelloclangis")
+  service.setUserCredentials(gmailAccount, gmailPassword)
 
   val evaluationSpreadsheet = getSpreadsheet("evaluation")
   val dataWorksheet = getWorksheetInSpreadsheet("data", evaluationSpreadsheet)

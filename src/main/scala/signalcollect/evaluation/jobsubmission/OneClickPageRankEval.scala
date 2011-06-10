@@ -3,6 +3,7 @@ package signalcollect.evaluation.jobsubmission
 import signalcollect.api._
 import scala.util.Random
 import signalcollect.evaluation.configuration._
+import signalcollect.implementations.logging.DefaultLogger
 
 /*
  * Packages the application, deploys the benchmarking jar/script to kraken
@@ -19,9 +20,9 @@ class OneClickPageRankEval(gmailAccount: String, gmailPassword: String) extends 
   override lazy val jobDescription: String = "bughunting"
   override lazy val executionLocation = LocalHost //Kraken(System.getProperty("user.name"))
   
-  lazy val computeGraphBuilders = List(DefaultBuilder, DefaultSynchronousBuilder)
-  lazy val numberOfRepetitions = 3
-  lazy val numberOfWorkers = List(1) //(1 to 24).toList //List(24)
+  lazy val computeGraphBuilders = List(DefaultSynchronousBuilder.withLogger(new DefaultLogger).withMessageBusFactory(Factory.MessageBus.Verbose)) //List(DefaultBuilder, DefaultSynchronousBuilder)
+  lazy val numberOfRepetitions = 10
+  lazy val numberOfWorkers = List(20) //(1 to 24).toList //List(24)
 
   def createConfigurations: List[Configuration] = {
     var configurations = List[Configuration]()
