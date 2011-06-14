@@ -70,10 +70,14 @@ abstract class OneClickEval {
     IoUtil.printStream(execution.getInputStream)
 
     /** COPY EVAL JAR TO KRAKEN */
-    val commandCopy = "scp -v " + localJarpath + " kraken.ifi.uzh.ch:" + krakenJarname
+    val commandCopy = "scp -v " + localJarpath + " " + krakenUsername + "@kraken.ifi.uzh.ch:" + krakenJarname
     println(commandCopy)
     execution = Runtime.getRuntime.exec(commandCopy)
     IoUtil.printStream(execution.getInputStream)
+    execution.waitFor
+    if(execution.exitValue!=0) {
+      IoUtil.printStream(execution.getErrorStream)
+    }
 
     /** LOG INTO KRAKEN WITH SSH */
     val kraken = new SshShell(username = krakenUsername)
