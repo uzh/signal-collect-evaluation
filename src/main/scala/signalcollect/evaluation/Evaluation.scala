@@ -34,13 +34,26 @@ import signalcollect.evaluation.spreadsheets._
 import java.util.Date
 import java.text.SimpleDateFormat
 import signalcollect.evaluation.configuration._
+import scala.util.Random
+import signalcollect.api.DefaultBuilder
 
 object Evaluation extends App {
-  val configurationBase64 = args(0)
-  val configurationBytes = Base64.decodeBase64(configurationBase64)
-  val configuration = Serializer.read[Configuration](configurationBytes)
+  var configuration: Option[Configuration] = None
+  if (args.size > 0) {
+    val configurationBase64 = args(0)
+    val configurationBytes = Base64.decodeBase64(configurationBase64)
+    configuration = Some(Serializer.read[Configuration](configurationBytes))
+  } else {
+    configuration = Some(new PageRankConfiguration(
+      spreadsheetConfiguration = None,
+      submittedByUser = System.getProperty("user.name"),
+      builder = DefaultBuilder.withNumberOfWorkers(8),
+      graphSize = 1000,
+      jobId = Random.nextInt.abs,
+      evaluationDescription = "default"))
+  }
   val eval = new Evaluation
-  eval.execute(configuration)
+  eval.execute(configuration.get)
 }
 
 class Evaluation {
@@ -79,7 +92,11 @@ class Evaluation {
             }
             cg
           }
-          submitSpreadsheetRow(configuration.gmailAccount, configuration.gmailPassword, configuration.spreadsheetName, configuration.worksheetName, statsMap)
+          if (pageRankConfig.spreadsheetConfiguration.isDefined) {
+            submitSpreadsheetRow(pageRankConfig.spreadsheetConfiguration.get, statsMap)
+          } else {
+            println(statsMap)
+          }
         /** ADD OTHER ALGORITHMS HERE */
         case other => statsMap += (("exception", "Unknown algorithm: " + other))
       }
@@ -87,10 +104,10 @@ class Evaluation {
       case e: Exception => statsMap += (("exception", e.getMessage + "\n" + e.getStackTraceString))
     }
 
-    def submitSpreadsheetRow(gmailAccount: String, gmailPassword: String, spreadsheetName: String, worksheetName: String, rowData: Map[String, String]) {
-      val api = new SpreadsheetApi(gmailAccount, gmailPassword)
-      val spreadsheet = api.getSpreadsheet(spreadsheetName)
-      val worksheet = api.getWorksheetInSpreadsheet(worksheetName, spreadsheet)
+    def submitSpreadsheetRow(spreadsheetConfig: SpreadsheetConfiguration, rowData: Map[String, String]) {
+      val api = new SpreadsheetApi(spreadsheetConfig.gmailAccount, spreadsheetConfig.gmailPassword)
+      val spreadsheet = api.getSpreadsheet(spreadsheetConfig.spreadsheetName)
+      val worksheet = api.getWorksheetInSpreadsheet(spreadsheetConfig.worksheetName, spreadsheet)
       api.insertRow(worksheet, statsMap)
     }
 
