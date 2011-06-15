@@ -13,9 +13,6 @@ class SpreadsheetApi(
   val service = new SpreadsheetService("uzh-signalcollect-0.0.1")
   service.setUserCredentials(gmailAccount, gmailPassword)
 
-  val evaluationSpreadsheet = getSpreadsheet("evaluation")
-  val dataWorksheet = getWorksheetInSpreadsheet("data", evaluationSpreadsheet)
-
   def insertRow(worksheet: WorksheetEntry, dataMap: Map[String, String]) {
     val newEntry = new ListEntry
     val elem = newEntry.getCustomElements
