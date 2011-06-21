@@ -101,7 +101,9 @@ class Evaluation {
         case other => statsMap += (("exception", "Unknown algorithm: " + other))
       }
     } catch {
-      case e: Exception => statsMap += (("exception", e.getMessage + "\n" + e.getStackTraceString))
+      case e: Exception =>
+        statsMap += (("exception", e.getMessage + "\n" + e.getStackTraceString))
+        println(statsMap)
     }
 
     def submitSpreadsheetRow(spreadsheetConfig: SpreadsheetConfiguration, rowData: Map[String, String]) {

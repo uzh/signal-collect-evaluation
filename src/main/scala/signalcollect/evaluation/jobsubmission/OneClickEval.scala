@@ -92,6 +92,7 @@ abstract class OneClickEval {
       val script = getShellScript(configuration.jobId.toString, krakenJarname, mainClass, base64Config)
       val scriptBase64 = Base64.encodeBase64String(script.getBytes)
       val qsubCommand = """echo """" + scriptBase64 + """" | base64 -d | qsub"""
+      println(qsubCommand)
       println(kraken.execute(qsubCommand))
     }
 
@@ -103,8 +104,8 @@ abstract class OneClickEval {
     val script = """
 #!/bin/bash
 #PBS -N """ + jobId + """
-#PBS -l nodes=1:ppn=24
-#PBS -l walltime=604800,cput=2400000,mem=55000mb
+#PBS -l nodes=1:ppn=23
+#PBS -l walltime=604800,cput=2400000,mem=20gb
 #PBS -j oe
 #PBS -m b
 #PBS -m e

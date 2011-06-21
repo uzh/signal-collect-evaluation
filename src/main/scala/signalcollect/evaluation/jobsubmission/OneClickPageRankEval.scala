@@ -17,7 +17,7 @@ object OneClickPageRankEval extends App {
 }
 
 class OneClickPageRankEval(gmailAccount: String, gmailPassword: String) extends OneClickEval {
-  override lazy val jobDescription: String = "improvedGraphApi"
+  override lazy val jobDescription: String = "newArchitecture"
   override lazy val executionLocation = Kraken(System.getProperty("user.name")) //LocalHost
 
   lazy val computeGraphBuilders = List(DefaultBuilder, DefaultSynchronousBuilder) //List(DefaultSynchronousBuilder.withLogger(new DefaultLogger).withMessageBusFactory(Factory.MessageBus.Verbose))
