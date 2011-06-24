@@ -8,4 +8,4 @@ class PageRankConfiguration(
   submittedByUser: String,
   evaluationDescription: String,
   var builder: ComputeGraphBuilder,
-  var graphSize: Int) extends Configuration(jobId, spreadsheetConfiguration, submittedByUser, evaluationDescription)
+  var graphSize: Int) extends JobConfiguration(jobId, spreadsheetConfiguration, submittedByUser, evaluationDescription)

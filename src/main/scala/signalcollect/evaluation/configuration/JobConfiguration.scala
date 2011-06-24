@@ -2,7 +2,7 @@ package signalcollect.evaluation.configuration
 
 import signalcollect.api.ComputeGraphBuilder
 
-class Configuration(
+class JobConfiguration(
   var jobId: Int,
   var spreadsheetConfiguration: Option[SpreadsheetConfiguration],
   var submittedByUser: String,

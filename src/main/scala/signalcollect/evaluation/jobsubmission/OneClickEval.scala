@@ -22,9 +22,8 @@ package signalcollect.evaluation.jobsubmission
 
 import org.apache.commons.codec.binary.Base64
 import signalcollect.api.DefaultBuilder
-import signalcollect.api.DefaultSynchronousBuilder
 import signalcollect.api.ComputeGraphBuilder
-import signalcollect.evaluation.configuration.Configuration
+import signalcollect.evaluation.configuration.JobConfiguration
 import signalcollect.evaluation.util.Serializer
 import scala.util.Random
 import signalcollect.evaluation.Evaluation
@@ -35,7 +34,7 @@ case class Kraken(username: String = System.getProperty("user.name")) extends Ex
 
 abstract class OneClickEval {
 
-  def createConfigurations: List[Configuration]
+  def createConfigurations: List[JobConfiguration]
   lazy val jobDescription: String = Random.nextInt.abs.toString
   lazy val executionLocation: ExecutionLocation = LocalHost 
   
