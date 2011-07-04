@@ -27,6 +27,7 @@ import signalcollect.evaluation.configuration.JobConfiguration
 import signalcollect.evaluation.util.Serializer
 import scala.util.Random
 import signalcollect.evaluation.Evaluation
+import scala.sys.process._
 
 sealed trait ExecutionLocation
 object LocalHost extends ExecutionLocation
@@ -65,21 +66,15 @@ abstract class OneClickEval {
     /** PACKAGE EVAL CODE AS JAR */
     val commandPackage = "mvn -Dmaven.test.skip=true clean package"
     println(commandPackage)
-    var execution = Runtime.getRuntime.exec(commandPackage)
-    IoUtil.printStream(execution.getInputStream)
+    commandPackage !!
 
     /** COPY EVAL JAR TO KRAKEN */
     val commandCopy = "scp -v " + localJarpath + " " + krakenUsername + "@kraken.ifi.uzh.ch:" + krakenJarname
     println(commandCopy)
-    execution = Runtime.getRuntime.exec(commandCopy)
-    IoUtil.printStream(execution.getInputStream)
-    execution.waitFor
-    if (execution.exitValue != 0) {
-      IoUtil.printStream(execution.getErrorStream)
-    }
+    commandCopy !!
 
     /** LOG INTO KRAKEN WITH SSH */
-    val kraken = new SshShell(username = krakenUsername)
+    val krakenShell = new SshShell(username = krakenUsername)
 
     /** IMPLEMENT THIS FUNCTION: CREATES ALL THE EVALUATION CONFIGURATIONS */
     val configurations = createConfigurations
@@ -87,15 +82,15 @@ abstract class OneClickEval {
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (configuration <- configurations) {
       val serializedConfig = Serializer.write(configuration)
-      val base64Config = Base64.encodeBase64String(serializedConfig)
+      val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n","").replace("\r","")
       val script = getShellScript(configuration.jobId.toString, krakenJarname, mainClass, base64Config)
-      val scriptBase64 = Base64.encodeBase64String(script.getBytes)
-      val qsubCommand = """echo """" + scriptBase64 + """" | tr -d '\r'| base64 -d | qsub"""
-      println(kraken.execute(qsubCommand))
+      val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n","").replace("\r","")
+      val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
+      println(krakenShell.execute(qsubCommand))
     }
 
     /** LOG OUT OF KRAKEN */
-    kraken.exit
+    krakenShell.exit
   }
 
   def getShellScript(jobId: String, jarname: String, mainClass: String, serializedConfiguration: String): String = {
@@ -103,7 +98,9 @@ abstract class OneClickEval {
 #!/bin/bash
 #PBS -N """ + jobId + """
 #PBS -l nodes=1:ppn=23
-#PBS -l walltime=604800,cput=2400000,mem=20gb
+#PBS -l walltime=604800
+#PBS -l cput=2400000
+#PBS -l mem=20gb, vmem=20gb
 #PBS -j oe
 #PBS -m b
 #PBS -m e
@@ -112,7 +109,7 @@ abstract class OneClickEval {
 
 jarname=""" + jarname + """
 mainClass=""" + mainClass + """
-serializedConfiguration=""" + serializedConfiguration.toString.replace("\r", "") + """
+serializedConfiguration=""" + serializedConfiguration + """
 working_dir=`mktemp -d --tmpdir=/var/tmp`
 vm_args="-Xmx35000m -Xms35000m"
 
