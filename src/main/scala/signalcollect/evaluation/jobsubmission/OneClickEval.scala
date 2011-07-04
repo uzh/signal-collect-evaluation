@@ -98,9 +98,7 @@ abstract class OneClickEval {
 #!/bin/bash
 #PBS -N """ + jobId + """
 #PBS -l nodes=1:ppn=23
-#PBS -l walltime=604800
-#PBS -l cput=2400000
-#PBS -l mem=20gb, vmem=20gb
+#PBS -l walltime=604800,cput=2400000,mem=20gb
 #PBS -j oe
 #PBS -m b
 #PBS -m e
