@@ -36,8 +36,8 @@ abstract class OneClickEval {
 
   def createConfigurations: List[JobConfiguration]
   lazy val jobDescription: String = Random.nextInt.abs.toString
-  lazy val executionLocation: ExecutionLocation = LocalHost 
-  
+  lazy val executionLocation: ExecutionLocation = LocalHost
+
   lazy val mainClass = "signalcollect.evaluation.Evaluation"
   lazy val packagename = "evaluation-0.0.1-SNAPSHOT"
   lazy val jarSuffix = "-jar-with-dependencies.jar"
@@ -47,20 +47,20 @@ abstract class OneClickEval {
   lazy val localJarpath = "." + fileSpearator + "target" + fileSpearator + localhostJarname
 
   def executeEvaluation {
-	executionLocation match {
-	  case LocalHost => executeLocally
-	  case Kraken(username) => executeKraken(username)
-	}
+    executionLocation match {
+      case LocalHost => executeLocally
+      case Kraken(username) => executeKraken(username)
+    }
   }
-  
+
   def executeLocally {
     val configurations = createConfigurations
     for (configuration <- configurations) {
-    	val eval = new Evaluation
-    	eval.execute(configuration)
+      val eval = new Evaluation
+      eval.execute(configuration)
     }
   }
-  
+
   def executeKraken(krakenUsername: String) {
     /** PACKAGE EVAL CODE AS JAR */
     val commandPackage = "mvn -Dmaven.test.skip=true clean package"
@@ -74,7 +74,7 @@ abstract class OneClickEval {
     execution = Runtime.getRuntime.exec(commandCopy)
     IoUtil.printStream(execution.getInputStream)
     execution.waitFor
-    if(execution.exitValue!=0) {
+    if (execution.exitValue != 0) {
       IoUtil.printStream(execution.getErrorStream)
     }
 
@@ -83,15 +83,14 @@ abstract class OneClickEval {
 
     /** IMPLEMENT THIS FUNCTION: CREATES ALL THE EVALUATION CONFIGURATIONS */
     val configurations = createConfigurations
-    
+
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (configuration <- configurations) {
       val serializedConfig = Serializer.write(configuration)
       val base64Config = Base64.encodeBase64String(serializedConfig)
       val script = getShellScript(configuration.jobId.toString, krakenJarname, mainClass, base64Config)
       val scriptBase64 = Base64.encodeBase64String(script.getBytes)
-      val qsubCommand = """echo """" + scriptBase64 + """" | base64 -d | qsub"""
-      println(qsubCommand)
+      val qsubCommand = """echo """" + scriptBase64 + """" | tr -d '\r'| base64 -d | qsub"""
       println(kraken.execute(qsubCommand))
     }
 
@@ -113,7 +112,7 @@ abstract class OneClickEval {
 
 jarname=""" + jarname + """
 mainClass=""" + mainClass + """
-serializedConfiguration=""" + serializedConfiguration + """
+serializedConfiguration=""" + serializedConfiguration.toString.replace("\r", "") + """
 working_dir=`mktemp -d --tmpdir=/var/tmp`
 vm_args="-Xmx35000m -Xms35000m"
 
