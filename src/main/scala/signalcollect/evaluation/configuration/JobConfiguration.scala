@@ -1,7 +1,5 @@
 package signalcollect.evaluation.configuration
 
-import signalcollect.api.ComputeGraphBuilder
-
 class JobConfiguration(
   var jobId: Int,
   var spreadsheetConfiguration: Option[SpreadsheetConfiguration],

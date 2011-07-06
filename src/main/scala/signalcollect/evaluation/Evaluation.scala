@@ -24,13 +24,13 @@ package signalcollect.evaluation
 
 import org.apache.commons.codec.binary.Base64
 import signalcollect.interfaces._
+import signalcollect.configuration._
 import signalcollect.evaluation.util.Serializer
 import signalcollect.evaluation.spreadsheets._
 import java.util.Date
 import java.text.SimpleDateFormat
 import signalcollect.evaluation.configuration._
 import scala.util.Random
-import signalcollect.api.DefaultBuilder
 import signalcollect.graphproviders.synthetic.LogNormal
 import signalcollect.algorithms.Page
 import signalcollect.algorithms.Link
@@ -45,7 +45,7 @@ object Evaluation extends App {
     configuration = new PageRankConfiguration(
       spreadsheetConfiguration = None,
       submittedByUser = System.getProperty("user.name"),
-      builder = DefaultBuilder.withNumberOfWorkers(8),
+      builder = DefaultComputeGraphBuilder.withNumberOfWorkers(8),
       graphSize = 1000,
       jobId = Random.nextInt.abs,
       evaluationDescription = "default")
@@ -113,23 +113,23 @@ class Evaluation {
 
     def benchmark(computeGraph: ComputeGraph) {
       val stats = computeGraph.execute
-      statsMap += (("numberOfWorkers", stats.computeGraphConfiguration.numberOfWorkers.toString))
+      statsMap += (("numberOfWorkers", stats.config.numberOfWorkers.toString))
       statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTimeInMilliseconds.toString))
       statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTimeInMilliseconds.toString))
       statsMap += (("graphLoadingWaitInMilliseconds", stats.executionStatistics.graphLoadingWaitInMilliseconds.toString))
-      statsMap += (("executionMode", stats.computeGraphConfiguration.executionMode.toString))
-      statsMap += (("storageFactory", stats.computeGraphConfiguration.storageFactory.name))
-      statsMap += (("messageBusFactory", stats.computeGraphConfiguration.messageBusFactory.name))
-      statsMap += (("optionalLogger", stats.computeGraphConfiguration.optionalLogger.toString))
+      statsMap += (("executionMode", stats.parameters.executionMode.toString))
+      statsMap += (("storageFactory", stats.config.graphConfiguration.storageFactory.name))
+      statsMap += (("messageBusFactory", stats.config.graphConfiguration.messageBusFactory.name))
+      statsMap += (("optionalLogger", stats.config.optionalLogger.toString))
       statsMap += (("signalSteps", stats.executionStatistics.signalSteps.toString))
       statsMap += (("collectSteps", stats.executionStatistics.collectSteps.toString))
       statsMap += (("numberOfVertices", stats.aggregatedWorkerStatistics.numberOfVertices.toString))
       statsMap += (("numberOfEdges", stats.aggregatedWorkerStatistics.numberOfOutgoingEdges.toString))
       statsMap += (("collectOperationsExecuted", stats.aggregatedWorkerStatistics.collectOperationsExecuted.toString))
       statsMap += (("signalOperationsExecuted", stats.aggregatedWorkerStatistics.signalOperationsExecuted.toString))
-      statsMap += (("stepsLimit", stats.executionParameters.stepsLimit.toString))
-      statsMap += (("signalThreshold", stats.executionParameters.signalThreshold.toString))
-      statsMap += (("collectThreshold", stats.executionParameters.collectThreshold.toString))
+      statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
+      statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString))
+      statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString))
       val endDate = new Date
       statsMap += (("endDate", dateFormat.format(endDate)))
       statsMap += (("endTime", timeFormat.format(endDate)))

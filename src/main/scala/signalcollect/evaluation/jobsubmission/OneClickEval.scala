@@ -21,8 +21,7 @@
 package signalcollect.evaluation.jobsubmission
 
 import org.apache.commons.codec.binary.Base64
-import signalcollect.api.DefaultBuilder
-import signalcollect.api.ComputeGraphBuilder
+import signalcollect.configuration._
 import signalcollect.evaluation.configuration.JobConfiguration
 import signalcollect.evaluation.util.Serializer
 import scala.util.Random
@@ -82,9 +81,9 @@ abstract class OneClickEval {
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (configuration <- configurations) {
       val serializedConfig = Serializer.write(configuration)
-      val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n","").replace("\r","")
+      val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n", "").replace("\r", "")
       val script = getShellScript(configuration.jobId.toString, krakenJarname, mainClass, base64Config)
-      val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n","").replace("\r","")
+      val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
       val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
       println(krakenShell.execute(qsubCommand))
     }

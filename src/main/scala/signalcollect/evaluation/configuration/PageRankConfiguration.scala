@@ -1,6 +1,6 @@
 package signalcollect.evaluation.configuration
 
-import signalcollect.api.ComputeGraphBuilder
+import signalcollect.configuration._
 
 class PageRankConfiguration(
   jobId: Int,
