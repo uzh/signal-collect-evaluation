@@ -42,13 +42,7 @@ object Evaluation extends App {
     val configurationBytes = Base64.decodeBase64(configurationBase64)
     configuration = Serializer.read[JobConfiguration](configurationBytes)
   } else {
-    configuration = new PageRankConfiguration(
-      spreadsheetConfiguration = None,
-      submittedByUser = System.getProperty("user.name"),
-      builder = DefaultComputeGraphBuilder.withNumberOfWorkers(8),
-      graphSize = 1000,
-      jobId = Random.nextInt.abs,
-      evaluationDescription = "default")
+	  throw new Exception("No evaluation configuration specified.")
   }
   val eval = new Evaluation
   eval.execute(configuration)
@@ -80,7 +74,7 @@ class Evaluation {
           statsMap += (("graphStructure", "LogNormal(" + pageRankConfig.graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"))
           val edgeTuples = new LogNormal(pageRankConfig.graphSize, seed, sigma, mu)
           buildPageRankGraph(computeGraph, edgeTuples)
-          benchmark(computeGraph)
+          benchmark(computeGraph, pageRankConfig.executionConfiguration)
           def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Int, Int]]): ComputeGraph = {
             edgeTuples foreach {
               case (sourceId, targetId) =>
@@ -111,8 +105,8 @@ class Evaluation {
       api.insertRow(worksheet, statsMap)
     }
 
-    def benchmark(computeGraph: ComputeGraph) {
-      val stats = computeGraph.execute
+    def benchmark(computeGraph: ComputeGraph, executionConfiguration: ExecutionConfiguration) {
+      val stats = computeGraph.execute(executionConfiguration)
       statsMap += (("numberOfWorkers", stats.config.numberOfWorkers.toString))
       statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTimeInMilliseconds.toString))
       statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTimeInMilliseconds.toString))

@@ -25,23 +25,26 @@ class OneClickPageRankEval(gmailAccount: String, gmailPassword: String) extends 
   lazy val computeGraphBuilders = List(DefaultComputeGraphBuilder) //List(DefaultSynchronousBuilder.withLogger(new DefaultLogger).withMessageBusFactory(Factory.MessageBus.Verbose))
   lazy val numberOfRepetitions = 1
   lazy val numberOfWorkers = List(24) //(1 to 24).toList //List(24)
-//  lazy val executionConfigurations = List()
+  lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
 
   def createConfigurations: List[JobConfiguration] = {
     var configurations = List[JobConfiguration]()
     for (computeGraphBuilder <- computeGraphBuilders) {
+    for (executionConfiguration <- executionConfigurations) {  
       for (workers <- numberOfWorkers) {
         for (repetition <- 1 to numberOfRepetitions) {
           val config = new PageRankConfiguration(
             spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
             submittedByUser = System.getProperty("user.name"),
             builder = computeGraphBuilder.withNumberOfWorkers(workers),
-            graphSize = 100,
+            executionConfiguration = executionConfiguration,
+            graphSize = 200000,
             jobId = Random.nextInt.abs,
             evaluationDescription = jobDescription)
           configurations = config :: configurations
         }
       }
+    }
     }
     configurations
   }
