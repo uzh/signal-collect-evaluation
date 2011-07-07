@@ -107,18 +107,15 @@ abstract class OneClickEval {
 jarname=""" + jarname + """
 mainClass=""" + mainClass + """
 serializedConfiguration=""" + serializedConfiguration + """
-working_dir=`mktemp -d --tmpdir=/var/tmp`
+workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}
 vm_args="-Xmx35000m -Xms35000m"
 
 # copy jar
-cp ~/$jarname $working_dir/
+cp ~/$jarname $workingDir/
 
 # run test
-cmd="java $vm_args -cp $working_dir/$jarname $mainClass $serializedConfiguration"
+cmd="java $vm_args -cp $workingDir/$jarname $mainClass $serializedConfiguration"
 $cmd
-
-# remove temporary directory
-rm -rdf $working_dir
 """
     script
   }

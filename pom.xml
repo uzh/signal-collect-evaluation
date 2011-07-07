@@ -22,11 +22,6 @@
 	<dependencies>
 		<!-- Commmand Line Parser -->
 		<dependency>
-			<groupId>org.clapper</groupId>
-			<artifactId>argot_2.9.0</artifactId>
-			<version>0.3.1</version>
-		</dependency>
-		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
 			<version>${scala.version}</version>
@@ -85,7 +80,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2.1</version>
+				<version>2.2-beta-5</version>
 				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
