@@ -78,9 +78,9 @@ class Evaluation {
           def buildPageRankGraph(cg: ComputeGraph, edgeTuples: Traversable[Tuple2[Int, Int]]): ComputeGraph = {
             edgeTuples foreach {
               case (sourceId, targetId) =>
-                cg.add(new Page(sourceId, 0.85))
-                cg.add(new Page(targetId, 0.85))
-                cg.add(new Link(sourceId, targetId))
+                cg.addVertex(new Page(sourceId, 0.85))
+                cg.addVertex(new Page(targetId, 0.85))
+                cg.addEdge(new Link(sourceId, targetId))
             }
             cg
           }
