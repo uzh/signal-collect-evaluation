@@ -21,6 +21,7 @@ class OneClickPageRankEval(gmailAccount: String, gmailPassword: String) extends 
   override lazy val jobDescription: String = "scalabilityEvaluation"
   //  override lazy val executionLocation = LocalHost
   override lazy val executionLocation = Kraken(System.getProperty("user.name"))
+//  override lazy val executionLocation = Remote("hostname123.ifi.uzh.ch", System.getProperty("user.name"))
 
   lazy val computeGraphBuilders = List(DefaultComputeGraphBuilder) //List(DefaultSynchronousBuilder.withLogger(new DefaultLogger).withMessageBusFactory(Factory.MessageBus.Verbose))
   lazy val numberOfRepetitions = 1

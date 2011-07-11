@@ -31,6 +31,7 @@ import scala.sys.process._
 sealed trait ExecutionLocation
 object LocalHost extends ExecutionLocation
 case class Kraken(username: String = System.getProperty("user.name")) extends ExecutionLocation
+case class Remote(hostname: String, username: String) extends ExecutionLocation
 
 abstract class OneClickEval {
 
@@ -43,13 +44,14 @@ abstract class OneClickEval {
   lazy val jarSuffix = "-jar-with-dependencies.jar"
   lazy val fileSpearator = System.getProperty("file.separator")
   lazy val localhostJarname = packagename + jarSuffix
-  lazy val krakenJarname = packagename + "-" + jobDescription + jarSuffix
+  lazy val remoteJarname = packagename + "-" + jobDescription + jarSuffix
   lazy val localJarpath = "." + fileSpearator + "target" + fileSpearator + localhostJarname
 
   def executeEvaluation {
     executionLocation match {
       case LocalHost => executeLocally
       case Kraken(username) => executeKraken(username)
+      case Remote(hostname, username) => executeRemote(hostname, username)
     }
   }
 
@@ -62,15 +64,9 @@ abstract class OneClickEval {
   }
 
   def executeKraken(krakenUsername: String) {
-    /** PACKAGE EVAL CODE AS JAR */
-    val commandPackage = "mvn -Dmaven.test.skip=true clean package"
-    println(commandPackage)
-    commandPackage !!
 
-    /** COPY EVAL JAR TO KRAKEN */
-    val commandCopy = "scp -v " + localJarpath + " " + krakenUsername + "@kraken.ifi.uzh.ch:" + krakenJarname
-    println(commandCopy)
-    commandCopy !!
+    /** PACKAGE CODE AND COPY IT TO KRAKEN */
+    buildJarAndCopy(krakenUsername, "kraken.ifi.uzh.ch")
 
     /** LOG INTO KRAKEN WITH SSH */
     val krakenShell = new SshShell(username = krakenUsername)
@@ -82,7 +78,7 @@ abstract class OneClickEval {
     for (configuration <- configurations) {
       val serializedConfig = Serializer.write(configuration)
       val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n", "").replace("\r", "")
-      val script = getShellScript(configuration.jobId.toString, krakenJarname, mainClass, base64Config)
+      val script = getShellScript(configuration.jobId.toString, remoteJarname, mainClass, base64Config)
       val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
       val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
       println(krakenShell.execute(qsubCommand))
@@ -90,6 +86,28 @@ abstract class OneClickEval {
 
     /** LOG OUT OF KRAKEN */
     krakenShell.exit
+  }
+
+  def executeRemote(hostname: String, username: String) {
+
+    /** PACKAGE CODE AND COPY IT TO REMOTE MACHINE*/
+    buildJarAndCopy(username, hostname)
+
+    /** LOG INTO REMOTE MACHINE WITH SSH */
+    val remoteShell = new SshShell(username, hostname)
+
+    /** IMPLEMENT THIS FUNCTION: CREATES ALL THE EVALUATION CONFIGURATIONS */
+    val configurations = createConfigurations
+
+    /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
+    for (configuration <- configurations) {
+      val serializedConfig = Serializer.write(configuration)
+      val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n", "").replace("\r", "")
+      val script = getNoClusterScript(configuration.jobId.toString, remoteJarname, mainClass, base64Config)
+      println(remoteShell.execute(script))
+    }
+
+    remoteShell.exit
   }
 
   def getShellScript(jobId: String, jarname: String, mainClass: String, serializedConfiguration: String): String = {
@@ -120,4 +138,40 @@ $cmd
     script
   }
 
+  def getNoClusterScript(jobId: String, jarname: String, mainClass: String, serializedConfiguration: String): String = {
+    val script = """
+#!/bin/bash
+jarname=""" + jarname + """
+mainClass=""" + mainClass + """
+serializedConfiguration=""" + serializedConfiguration + """
+mkdir ~/signalcollect
+workingDir=~/signalcollect
+vm_args="-Xmx35000m -Xms35000m"
+
+# copy jar
+cp ~/$jarname $workingDir/
+
+# run test
+cmd="java $vm_args -cp $workingDir/$jarname $mainClass $serializedConfiguration"
+$cmd
+
+find $workingDir/* -print0 | xargs -0 rm -rdf
+
+"""
+    script
+  }
+
+  private def buildJarAndCopy(username: String, host: String) {
+    /** PACKAGE EVAL CODE AS JAR */
+    val commandPackage = "mvn -Dmaven.test.skip=true clean package"
+    println(commandPackage)
+    commandPackage !!
+
+    /** COPY EVAL JAR TO REMOTE MACHINE */
+    val commandCopy = "scp -v " + localJarpath + " " + username + "@" + host + ":" + remoteJarname
+    println(commandCopy)
+    commandCopy !!
+  }
+
 }
+
