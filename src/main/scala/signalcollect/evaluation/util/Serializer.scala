@@ -18,6 +18,11 @@
 
 package signalcollect.evaluation.util
 
+/**
+ * Serializable errors are hard to diagnose:
+ * 	- Use http://svn.apache.org/repos/asf/wicket/releases/wicket-1.5-RC3/wicket-core/src/main/java/org/apache/wicket/util/io/SerializableChecker.java
+ *  - Or use this: http://herebebeasties.com/2007-02-08/javaionotserializableexception-in-your-httpsession/
+ */
 object Serializer {
   
   def write[A](inputObject: A): Array[Byte] = {
