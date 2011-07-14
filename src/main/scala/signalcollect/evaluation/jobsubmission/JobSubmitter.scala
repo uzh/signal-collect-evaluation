@@ -102,7 +102,7 @@ jarname=""" + jarname + """
 mainClass=""" + mainClass + """
 serializedConfiguration=""" + serializedConfiguration + """
 workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}
-vm_args="-Xmx35000m -Xms35000m"
+vm_args="-Xmx35000m -Xms35000m -d64"
 
 # copy jar
 cp ~/$jarname $workingDir/
