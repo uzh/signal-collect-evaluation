@@ -95,7 +95,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                 statsMap += (("workerFactory", stats.config.workerConfiguration.workerFactory.name))
                 statsMap += (("storageFactory", stats.config.workerConfiguration.storageFactory.name))
                 statsMap += (("messageBusFactory", stats.config.workerConfiguration.messageBusFactory.name))
-                statsMap += (("optionalLogger", stats.config.customLogger.toString))
+                statsMap += (("customLogger", stats.config.customLogger.toString))
                 statsMap += (("signalSteps", stats.executionStatistics.signalSteps.toString))
                 statsMap += (("collectSteps", stats.executionStatistics.collectSteps.toString))
                 statsMap += (("numberOfVertices", stats.aggregatedWorkerStatistics.numberOfVertices.toString))

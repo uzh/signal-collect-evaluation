@@ -27,6 +27,7 @@ import signalcollect.evaluation.util.Serializer
 import scala.util.Random
 import scala.sys.process._
 import signalcollect.evaluation.JobExecutor
+import java.io.File
 
 sealed trait ExecutionLocation
 object LocalHost extends ExecutionLocation
@@ -35,6 +36,7 @@ case class Kraken(username: String = System.getProperty("user.name")) extends Ex
 class JobSubmitter(
   executionLocation: ExecutionLocation = Kraken(),
   val jarDescription: String = Random.nextInt.abs.toString,
+  val pathToSignalcollectCorePom: String = new File("../core/pom.xml").getCanonicalPath, // maven -file CLI parameter can't relative paths
   val mainClass: String = "signalcollect.evaluation.JobExecutor",
   val packagename: String = "evaluation-0.0.1-SNAPSHOT") {
 
@@ -59,31 +61,41 @@ class JobSubmitter(
   }
 
   def executeKraken(krakenUsername: String, jobs: List[Job]) {
-    /** PACKAGE EVAL CODE AS JAR */
-    val commandPackage = "mvn -Dmaven.test.skip=true clean package"
-    println(commandPackage)
-    commandPackage !!
+//    try {
+      val commandInstallCore = "mvn -file " + pathToSignalcollectCorePom + " -Dmaven.test.skip=true clean install"
+      println(commandInstallCore)
+      println(commandInstallCore !!)
 
-    /** COPY EVAL JAR TO KRAKEN */
-    val commandCopy = "scp -v " + localJarpath + " " + krakenUsername + "@kraken.ifi.uzh.ch:" + krakenJarname
-    println(commandCopy)
-    commandCopy !!
+      /** PACKAGE EVAL CODE AS JAR */
+      val commandPackage = "mvn -Dmaven.test.skip=true clean package"
+      println(commandPackage)
+      println(commandPackage !!)
 
-    /** LOG INTO KRAKEN WITH SSH */
-    val krakenShell = new SshShell(username = krakenUsername)
+      /** COPY EVAL JAR TO KRAKEN */
+      val commandCopy = "scp -v " + localJarpath + " " + krakenUsername + "@kraken.ifi.uzh.ch:" + krakenJarname
+      println(commandCopy)
+      println(commandCopy !!)
 
-    /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
-    for (job <- jobs) {
-      val serializedConfig = Serializer.write(job)
-      val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n", "").replace("\r", "")
-      val script = getShellScript(job.jobId.toString, krakenJarname, mainClass, base64Config)
-      val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
-      val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
-      println(krakenShell.execute(qsubCommand))
-    }
+      /** LOG INTO KRAKEN WITH SSH */
+      val krakenShell = new SshShell(username = krakenUsername)
 
-    /** LOG OUT OF KRAKEN */
-    krakenShell.exit
+      /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
+      for (job <- jobs) {
+        val serializedConfig = Serializer.write(job)
+        val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n", "").replace("\r", "")
+        val script = getShellScript(job.jobId.toString, krakenJarname, mainClass, base64Config)
+        val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
+        val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
+        println(krakenShell.execute(qsubCommand))
+      }
+      /** LOG OUT OF KRAKEN */
+      krakenShell.exit
+//    } catch {
+//      case t: Throwable =>
+////        sys.error(t.getMessage)
+//        println("MOO")
+//        sys.error(t.getStackTraceString)
+//    }
   }
 
   def getShellScript(jobId: String, jarname: String, mainClass: String, serializedConfiguration: String): String = {
