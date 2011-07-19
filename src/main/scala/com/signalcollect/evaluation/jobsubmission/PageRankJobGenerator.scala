@@ -20,15 +20,18 @@
 package com.signalcollect.evaluation.jobsubmission
 
 import com.signalcollect.api._
-import scala.util.Random
+import com.signalcollect.api.factory._
 import com.signalcollect.configuration._
 import com.signalcollect.evaluation.configuration._
 import com.signalcollect.implementations.logging.DefaultLogger
 import com.signalcollect.graphproviders.synthetic.LogNormal
 import com.signalcollect.examples.Page
 import com.signalcollect.examples.Link
+
 import java.util.Date
 import java.text.SimpleDateFormat
+
+import scala.util.Random
 
 /*
  * Packages the application, deploys the benchmarking jar/script to kraken
@@ -47,7 +50,7 @@ object PageRankEvaluation extends App {
 }
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
-  lazy val computeGraphBuilders = List(DefaultComputeGraphBuilder) //List(DefaultSynchronousBuilder.withLogger(new DefaultLogger).withMessageBusFactory(Factory.MessageBus.Verbose))
+  lazy val computeGraphBuilders = List(DefaultComputeGraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
   lazy val numberOfRepetitions = 1
 //  lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)
@@ -68,7 +71,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
               spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
               submittedByUser = System.getProperty("user.name"),
               jobId = Random.nextInt.abs,
-              jobDescription = "testing new jobsubmission",
+              jobDescription = "test run",
               execute = { () =>
                 var statsMap = Map[String, String]()
                 statsMap += (("algorithm", "PageRank"))
