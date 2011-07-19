@@ -17,7 +17,7 @@
  *  
  */
 
-package signalcollect.evaluation.jobsubmission
+package com.signalcollect.evaluation.jobsubmission
 
 import java.io.File
 import java.io.ByteArrayInputStream

@@ -17,7 +17,7 @@
  *  
  */
 
-package signalcollect.evaluation.configuration
+package com.signalcollect.evaluation.configuration
 
 class Job(
   var jobId: Int,

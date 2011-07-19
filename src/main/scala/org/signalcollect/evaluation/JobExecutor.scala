@@ -20,20 +20,20 @@
  *  
  */
 
-package signalcollect.evaluation
+package com.signalcollect.evaluation
 
 import org.apache.commons.codec.binary.Base64
-import signalcollect.interfaces._
-import signalcollect.configuration._
-import signalcollect.evaluation.util.Serializer
-import signalcollect.evaluation.spreadsheets._
+import com.signalcollect.interfaces._
+import com.signalcollect.configuration._
+import com.signalcollect.evaluation.util.Serializer
+import com.signalcollect.evaluation.spreadsheets._
 import java.util.Date
 import java.text.SimpleDateFormat
-import signalcollect.evaluation.configuration._
+import com.signalcollect.evaluation.configuration._
 import scala.util.Random
-import signalcollect.graphproviders.synthetic.LogNormal
-import signalcollect.algorithms.Page
-import signalcollect.algorithms.Link
+import com.signalcollect.graphproviders.synthetic.LogNormal
+import com.signalcollect.examples.Page
+import com.signalcollect.examples.Link
 
 object JobExecutor extends App {
   var job: Job = null

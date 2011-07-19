@@ -1,4 +1,4 @@
-package signalcollect.evaluation.spreadsheets
+package com.signalcollect.evaluation.spreadsheets
 
 import java.net.URL
 import scala.collection.JavaConversions._

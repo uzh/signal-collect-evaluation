@@ -18,15 +18,15 @@
  *  
  */
 
-package signalcollect.evaluation.jobsubmission
+package com.signalcollect.evaluation.jobsubmission
 
 import org.apache.commons.codec.binary.Base64
-import signalcollect.configuration._
-import signalcollect.evaluation.configuration.Job
-import signalcollect.evaluation.util.Serializer
+import com.signalcollect.configuration._
+import com.signalcollect.evaluation.configuration.Job
+import com.signalcollect.evaluation.util.Serializer
 import scala.util.Random
 import scala.sys.process._
-import signalcollect.evaluation.JobExecutor
+import com.signalcollect.evaluation.JobExecutor
 import java.io.File
 
 sealed trait ExecutionLocation
@@ -37,7 +37,7 @@ class JobSubmitter(
   executionLocation: ExecutionLocation = Kraken(),
   val jarDescription: String = Random.nextInt.abs.toString,
   val pathToSignalcollectCorePom: String = new File("../core/pom.xml").getCanonicalPath, // maven -file CLI parameter can't relative paths
-  val mainClass: String = "signalcollect.evaluation.JobExecutor",
+  val mainClass: String = "com.signalcollect.evaluation.JobExecutor",
   val packagename: String = "evaluation-0.0.1-SNAPSHOT") {
 
   lazy val jarSuffix = "-jar-with-dependencies.jar"

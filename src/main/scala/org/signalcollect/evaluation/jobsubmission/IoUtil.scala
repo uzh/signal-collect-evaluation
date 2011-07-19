@@ -17,7 +17,7 @@
  *  
  */
 
-package signalcollect.evaluation.jobsubmission
+package com.signalcollect.evaluation.jobsubmission
 
 import java.io.InputStream
 import java.io.BufferedReader

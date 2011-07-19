@@ -1,9 +1,9 @@
-package signalcollect.evaluation.util
+package com.signalcollect.evaluation.util
 
-import signalcollect.algorithms.Page
-import signalcollect.api.SignalMapVertex
+import com.signalcollect.examples.Page
+import com.signalcollect.api.SignalMapVertex
 import scala.collection.mutable.HashSet
-import signalcollect.interfaces._
+import com.signalcollect.interfaces._
 
 class MinimalisticPage(id: Int, dampingFactor: Double = 0.85) extends Page(id, dampingFactor) {
   

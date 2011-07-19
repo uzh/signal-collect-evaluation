@@ -17,16 +17,16 @@
  *  
  */
 
-package signalcollect.evaluation.jobsubmission
+package com.signalcollect.evaluation.jobsubmission
 
-import signalcollect.api._
+import com.signalcollect.api._
 import scala.util.Random
-import signalcollect.configuration._
-import signalcollect.evaluation.configuration._
-import signalcollect.implementations.logging.DefaultLogger
-import signalcollect.graphproviders.synthetic.LogNormal
-import signalcollect.algorithms.Page
-import signalcollect.algorithms.Link
+import com.signalcollect.configuration._
+import com.signalcollect.evaluation.configuration._
+import com.signalcollect.implementations.logging.DefaultLogger
+import com.signalcollect.graphproviders.synthetic.LogNormal
+import com.signalcollect.examples.Page
+import com.signalcollect.examples.Link
 import java.util.Date
 import java.text.SimpleDateFormat
 

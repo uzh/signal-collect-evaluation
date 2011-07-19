@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package signalcollect.evaluation.util
+package com.signalcollect.evaluation.util
 
 /**
  * Serializable errors are hard to diagnose:
