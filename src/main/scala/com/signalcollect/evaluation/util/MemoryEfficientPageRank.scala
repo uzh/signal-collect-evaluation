@@ -17,7 +17,7 @@ class MinimalisticPage(id: Int, dampingFactor: Double = 0.85) extends Page(id, d
     val newEdge = e.asInstanceOf[Edge[Int, _]]
     if (!links.contains(newEdge.id._1.asInstanceOf[Int])) {
       outgoingEdgeAddedSinceSignalOperation = true
-      links.add(e.targetId.asInstanceOf[Int])
+      links.add(e.id._2.asInstanceOf[Int])
       newEdge.onAttach(this.asInstanceOf[newEdge.SourceVertexType])
       sumOfOutWeights = sumOfOutWeights + 1 //Use default weight of 1 for edges
       true
