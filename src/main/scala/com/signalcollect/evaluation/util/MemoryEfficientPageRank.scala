@@ -52,7 +52,7 @@ class MinimalisticPage(id: Int, dampingFactor: Double = 0.85) extends Page(id, d
   /**
    * Vertices directly send signals to the responsible worker of their neighbours via the messageBus
    */
-  override def doSignal {
+  override def doSignal(messageBus: MessageBus[Any]) {
     val signal = computeSignal
     links.foreach(linkedPageID => {
     messageBus.sendToWorkerForVertexIdHash(Signal(id, linkedPageID, signal), linkedPageID.hashCode)
