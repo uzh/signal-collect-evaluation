@@ -42,7 +42,7 @@ class MemoryEfficientPage(val id: Int) extends Vertex[Int, Float] {
     lastSignalState = Some(state)
   }
 
-  def executeCollectOperation(signals: List[Signal[_, _, _]], messageBus: MessageBus[Any]) {
+  def executeCollectOperation(signals: Iterable[Signal[_, _, _]], messageBus: MessageBus[Any]) {
     signals.foreach { signal =>
       val castS = signal.asInstanceOf[Signal[Int, _, UpperSignalTypeBound]]
       mostRecentSignalMap += ((castS.sourceId, castS.signal))
@@ -57,7 +57,7 @@ class MemoryEfficientPage(val id: Int) extends Vertex[Int, Float] {
     }
   }
 
-  def scoreCollect(signalList: List[Signal[_, _, _]]) = signalList.size
+  def scoreCollect(signals: Iterable[Signal[_, _, _]]) = signals.size
 
   def outgoingEdgeCount = targetIdArray.size
 
