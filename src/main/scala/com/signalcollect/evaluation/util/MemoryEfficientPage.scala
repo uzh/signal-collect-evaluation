@@ -34,6 +34,8 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
 
   protected var targetIdArray = Array[Int]()
 
+  protected var mostRecentSignalMap: Map[Int, Float] = Map[Int, Float]() // key: signal source id, value: signal
+
   override def addOutgoingEdge(e: Edge[_, _]): Boolean = {
     var edgeAdded = false
     val targetId = e.id._2.asInstanceOf[Int]
@@ -50,8 +52,6 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
   def collect: Float = {
     0.15f + 0.85f * mostRecentSignalMap.values.foldLeft(0.0f)(_ + _)
   }
-
-  protected var mostRecentSignalMap: Map[Int, Float] = Map[Int, Float]() // key: signal source id, value: signal
 
   override def executeSignalOperation(messageBus: MessageBus[Any]) {
     if (!targetIdArray.isEmpty) {
@@ -101,25 +101,34 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
      case Some(oldState) => out.writeFloat(oldState)
      case None => out.writeFloat(-1) //Safe because a page rank score should not be negative anyway
    }
+   // Write links together with their most recent signals
    out.writeInt(targetIdArray.length)
    for(i <- 0 until targetIdArray.length) {
      out.writeInt(targetIdArray(i))
-   }
+     out.writeFloat(mostRecentSignalMap.getOrElse(targetIdArray(i), -1f))
+   }   
  }
 
  def readExternal(in: ObjectInput)  {
-   id = in.readInt // TODO set ID!!!!!
+   id = in.readInt
    state = in.readFloat
    val oldSignal = in.readFloat
    oldSignal match {
      case -1 => lastSignalState = None
      case oldValue => lastSignalState = Some(oldValue)
    }
+   //read Links
    val numberOfLinks = in.readInt
    targetIdArray = new Array[Int](numberOfLinks)
+   mostRecentSignalMap = Map[Int, Float]()
    for(i <- 0 until numberOfLinks) {
      targetIdArray(i) = in.readInt
+     val mostrecentSignal = in.readFloat
+     if(mostrecentSignal>0) {
+       mostRecentSignalMap += ((targetIdArray(i), mostrecentSignal))
+     }
    }
+   
  }
 
  override def toString = "MemoryEfficientPage (" + id + ", " + state + ")"
