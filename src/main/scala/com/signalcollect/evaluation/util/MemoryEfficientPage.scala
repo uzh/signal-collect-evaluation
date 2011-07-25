@@ -64,9 +64,9 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
   }
 
   def executeCollectOperation(signals: Iterable[Signal[_, _, _]], messageBus: MessageBus[Any]) {
-    signals.foreach { signal =>
-      val castS = signal.asInstanceOf[Signal[Int, _, UpperSignalTypeBound]]
-      mostRecentSignalMap += ((castS.sourceId, castS.signal))
+    val castS = signals.asInstanceOf[Traversable[Signal[Int, _, UpperSignalTypeBound]]]
+    castS foreach { signal =>
+    	mostRecentSignalMap += ((signal.sourceId, signal.signal))      
     }
     state = collect
   }
@@ -101,34 +101,43 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
      case Some(oldState) => out.writeFloat(oldState)
      case None => out.writeFloat(-1) //Safe because a page rank score should not be negative anyway
    }
-   // Write links together with their most recent signals
+   // Write links
    out.writeInt(targetIdArray.length)
    for(i <- 0 until targetIdArray.length) {
      out.writeInt(targetIdArray(i))
-     out.writeFloat(mostRecentSignalMap.getOrElse(targetIdArray(i), -1f))
-   }   
+   } 
+   //write most recent signals
+   out.writeInt(mostRecentSignalMap.values.size)
+   mostRecentSignalMap.foreach(signal => {
+     out.writeInt(signal._1)
+     out.writeFloat(signal._2)
+   })
  }
 
  def readExternal(in: ObjectInput)  {
    id = in.readInt
    state = in.readFloat
    val oldSignal = in.readFloat
-   oldSignal match {
-     case -1 => lastSignalState = None
-     case oldValue => lastSignalState = Some(oldValue)
+
+   if(oldSignal<0) {
+     lastSignalState = None
+   }
+   else {
+     lastSignalState = Some(oldSignal)
    }
    //read Links
    val numberOfLinks = in.readInt
    targetIdArray = new Array[Int](numberOfLinks)
-   mostRecentSignalMap = Map[Int, Float]()
    for(i <- 0 until numberOfLinks) {
      targetIdArray(i) = in.readInt
-     val mostrecentSignal = in.readFloat
-     if(mostrecentSignal>0) {
-       mostRecentSignalMap += ((targetIdArray(i), mostrecentSignal))
-     }
    }
    
+   mostRecentSignalMap = Map[Int, Float]()
+   val numberOfMostRecentSignals = in.readInt
+   for(i <- 0 until numberOfMostRecentSignals) {
+	   mostRecentSignalMap += ((in.readInt, in.readFloat))
+   }
+
  }
 
  override def toString = "MemoryEfficientPage (" + id + ", " + state + ")"
