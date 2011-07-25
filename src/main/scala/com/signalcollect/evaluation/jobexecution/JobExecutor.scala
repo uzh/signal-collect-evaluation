@@ -20,7 +20,7 @@
  *  
  */
 
-package com.signalcollect.evaluation
+package com.signalcollect.evaluation.jobexecution
 
 import org.apache.commons.codec.binary.Base64
 import com.signalcollect.interfaces._
@@ -36,7 +36,7 @@ import com.signalcollect.examples.Page
 import com.signalcollect.examples.Link
 
 object JobExecutor extends App {
-  var job: Job = null
+  var job: Job = _
   if (args.size > 0) {
     val configurationBase64 = args(0)
     val configurationBytes = Base64.decodeBase64(configurationBase64)
@@ -64,8 +64,8 @@ class JobExecutor {
       }
     } catch {
       case e: Exception =>
-        sys.error("exception: " + e.getMessage + "\n" + e.getStackTraceString)
         println(statsMap)
+        sys.error(e.getMessage + "\n" + e.getStackTraceString)
     }
 
     def submitSpreadsheetRow(spreadsheetConfig: SpreadsheetConfiguration, rowData: Map[String, String]) {

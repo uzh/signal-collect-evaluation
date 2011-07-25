@@ -51,7 +51,7 @@ object PageRankEvaluation extends App {
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
   lazy val computeGraphBuilders = List(DefaultComputeGraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
-  lazy val numberOfRepetitions = 1
+  lazy val numberOfRepetitions = 10
 //  lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)
   lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
@@ -62,7 +62,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
       for (executionConfiguration <- executionConfigurations) {
         for (numberOfWorkers <- numberOfWorkersList) {
           for (repetition <- 1 to numberOfRepetitions) {
-            val graphSize = 100
+            val graphSize = 200000
             val seed = 0
             val sigma = 1.0
             val mu = 3.0
@@ -71,7 +71,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
               spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
               submittedByUser = System.getProperty("user.name"),
               jobId = Random.nextInt.abs,
-              jobDescription = "test run",
+              jobDescription = "new vertex structure and collect calls",
               execute = { () =>
                 var statsMap = Map[String, String]()
                 statsMap += (("algorithm", "PageRank"))
