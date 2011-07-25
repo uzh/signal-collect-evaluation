@@ -50,7 +50,7 @@ object PageRankEvaluation extends App {
 }
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
-  lazy val computeGraphBuilders = List(DefaultComputeGraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
+  lazy val computeGraphBuilders = List(ComputeGraphBuilder.getBuilder(LocalArchitecture())/*, ComputeGraphBuilder.getBuilder(LocalArchitecture()).withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal)*/ )
   lazy val numberOfRepetitions = 10
 //  lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)
