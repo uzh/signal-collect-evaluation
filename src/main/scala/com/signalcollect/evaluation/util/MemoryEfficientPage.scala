@@ -140,5 +140,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
 
  }
 
+  def getVertexIdsOfNeighbors: Iterable[Any] = targetIdArray
+ 
  override def toString = "MemoryEfficientPage (" + id + ", " + state + ")"
 }
