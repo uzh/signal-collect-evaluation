@@ -41,7 +41,7 @@ import scala.util.Random
  */
 object PageRankEvaluation extends App {
   //  val executionLocation = LocalHost
-  val executionLocation = Kraken(System.getProperty("user.name"))
+  val executionLocation = Kraken(/*System.getProperty("user.name")*/"defreitas")
 
   val jobSubmitter = new JobSubmitter(executionLocation = executionLocation)
   val jobGenerator = new PageRankJobGenerator(args(0), args(1))
@@ -68,14 +68,14 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
             val mu = 3.0
             val builder = computeGraphBuilder.withNumberOfWorkers(numberOfWorkers)
             val job = new Job(
-              spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
+              spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation.francisco", "data")),
               submittedByUser = System.getProperty("user.name"),
               jobId = Random.nextInt.abs,
-              jobDescription = "new performance run after commits",
+              jobDescription = "new performance run before commits, interface changes",
               execute = { () =>
                 var statsMap = Map[String, String]()
                 statsMap += (("algorithm", "PageRank"))
-                val computeGraph = builder.build
+                val computeGraph = builder.build.get
                 statsMap += (("graphStructure", "LogNormal(" + graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"))
                 val edgeTuples = new LogNormal(graphSize, seed, sigma, mu)
                 edgeTuples foreach {
