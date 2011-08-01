@@ -31,7 +31,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
   type Signal = Float
 
   var state = 0.15f
-  var lastSignalState: Option[State] = None
+  var lastSignalState: State = -1
 
   protected var targetIdArray = Array[Int]()
 
@@ -61,7 +61,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
         messageBus.sendToWorkerForVertexId(SignalMessage(id, targetId, signal), targetId)
       })
     }
-    lastSignalState = Some(state)
+    lastSignalState = state
   }
 
   def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus[Any]) {
@@ -73,9 +73,10 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
   }
 
   override def scoreSignal: Double = {
-    lastSignalState match {
-      case None => 1
-      case Some(oldState) => (state - oldState).abs
+    if (lastSignalState >= 0) {
+      (state - lastSignalState).abs
+    } else {
+      1
     }
   }
 
@@ -98,10 +99,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
   def writeExternal(out: ObjectOutput) {
     out.writeInt(id)
     out.writeFloat(state)
-    lastSignalState match {
-      case Some(oldState) => out.writeFloat(oldState)
-      case None => out.writeFloat(-1) //Safe because a page rank score should not be negative anyway
-    }
+    out.writeFloat(lastSignalState)
     // Write links
     out.writeInt(targetIdArray.length)
     for (i <- 0 until targetIdArray.length) {
@@ -118,13 +116,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
   def readExternal(in: ObjectInput) {
     id = in.readInt
     state = in.readFloat
-    val oldSignal = in.readFloat
-
-    if (oldSignal < 0) {
-      lastSignalState = None
-    } else {
-      lastSignalState = Some(oldSignal)
-    }
+    lastSignalState = in.readFloat
     //read Links
     val numberOfLinks = in.readInt
     targetIdArray = new Array[Int](numberOfLinks)
