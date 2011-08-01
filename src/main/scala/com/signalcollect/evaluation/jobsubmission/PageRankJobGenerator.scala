@@ -75,7 +75,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
               execute = { () =>
                 var statsMap = Map[String, String]()
                 statsMap += (("algorithm", "PageRank"))
-                val computeGraph = builder.build.get
+                val computeGraph = builder.build
                 statsMap += (("graphStructure", "LogNormal(" + graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"))
                 val edgeTuples = new LogNormal(graphSize, seed, sigma, mu)
                 edgeTuples foreach {

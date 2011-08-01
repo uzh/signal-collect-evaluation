@@ -21,22 +21,23 @@
 package com.signalcollect.evaluation.util
 
 import com.signalcollect.interfaces._
-import com.signalcollect.implementations.graph.MostRecentSignalsMap
 import scala.collection.mutable.ArrayBuffer
-import java.io.{ObjectInput, ObjectOutput, Externalizable}
+import java.io.{ ObjectInput, ObjectOutput, Externalizable }
 
-class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externalizable {
+class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
+
+  type Id = Int
+  type State = Float
+  type Signal = Float
 
   var state = 0.15f
-  var lastSignalState: Option[Float] = None
-
-  type UpperSignalTypeBound = Float
+  var lastSignalState: Option[State] = None
 
   protected var targetIdArray = Array[Int]()
 
   protected var mostRecentSignalMap: Map[Int, Float] = Map[Int, Float]() // key: signal source id, value: signal
 
-  override def addOutgoingEdge(e: Edge[_, _]): Boolean = {
+  override def addOutgoingEdge(e: Edge): Boolean = {
     var edgeAdded = false
     val targetId = e.id._2.asInstanceOf[Int]
     if (!targetIdArray.contains(targetId)) {
@@ -57,16 +58,16 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
     if (!targetIdArray.isEmpty) {
       val signal = state / targetIdArray.size
       targetIdArray.foreach(targetId => {
-        messageBus.sendToWorkerForVertexId(Signal(id, targetId, signal), targetId)
+        messageBus.sendToWorkerForVertexId(SignalMessage(id, targetId, signal), targetId)
       })
     }
     lastSignalState = Some(state)
   }
 
-  def executeCollectOperation(signals: Iterable[Signal[_, _, _]], messageBus: MessageBus[Any]) {
-    val castS = signals.asInstanceOf[Traversable[Signal[Int, _, UpperSignalTypeBound]]]
+  def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus[Any]) {
+    val castS = signals.asInstanceOf[Traversable[SignalMessage[Int, _, Signal]]]
     castS foreach { signal =>
-    	mostRecentSignalMap += ((signal.sourceId, signal.signal))      
+      mostRecentSignalMap += ((signal.sourceId, signal.signal))
     }
     state = collect
   }
@@ -78,7 +79,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
     }
   }
 
-  def scoreCollect(signals: Iterable[Signal[_, _, _]]) = signals.size
+  def scoreCollect(signals: Iterable[SignalMessage[_, _, _]]) = signals.size
 
   def outgoingEdgeCount = targetIdArray.size
 
@@ -91,56 +92,55 @@ class MemoryEfficientPage(var id: Int) extends Vertex[Int, Float] with Externali
   override def removeAllOutgoingEdges: Int = {
     throw new UnsupportedOperationException
   }
-  
+
   def this() = this(-1) //default constructor for serialization
- 
- def writeExternal(out: ObjectOutput) {
-   out.writeInt(id)
-   out.writeFloat(state)
-   lastSignalState match {
-     case Some(oldState) => out.writeFloat(oldState)
-     case None => out.writeFloat(-1) //Safe because a page rank score should not be negative anyway
-   }
-   // Write links
-   out.writeInt(targetIdArray.length)
-   for(i <- 0 until targetIdArray.length) {
-     out.writeInt(targetIdArray(i))
-   } 
-   //write most recent signals
-   out.writeInt(mostRecentSignalMap.values.size)
-   mostRecentSignalMap.foreach(signal => {
-     out.writeInt(signal._1)
-     out.writeFloat(signal._2)
-   })
- }
 
- def readExternal(in: ObjectInput)  {
-   id = in.readInt
-   state = in.readFloat
-   val oldSignal = in.readFloat
+  def writeExternal(out: ObjectOutput) {
+    out.writeInt(id)
+    out.writeFloat(state)
+    lastSignalState match {
+      case Some(oldState) => out.writeFloat(oldState)
+      case None => out.writeFloat(-1) //Safe because a page rank score should not be negative anyway
+    }
+    // Write links
+    out.writeInt(targetIdArray.length)
+    for (i <- 0 until targetIdArray.length) {
+      out.writeInt(targetIdArray(i))
+    }
+    //write most recent signals
+    out.writeInt(mostRecentSignalMap.values.size)
+    mostRecentSignalMap.foreach(signal => {
+      out.writeInt(signal._1)
+      out.writeFloat(signal._2)
+    })
+  }
 
-   if(oldSignal<0) {
-     lastSignalState = None
-   }
-   else {
-     lastSignalState = Some(oldSignal)
-   }
-   //read Links
-   val numberOfLinks = in.readInt
-   targetIdArray = new Array[Int](numberOfLinks)
-   for(i <- 0 until numberOfLinks) {
-     targetIdArray(i) = in.readInt
-   }
-   
-   mostRecentSignalMap = Map[Int, Float]()
-   val numberOfMostRecentSignals = in.readInt
-   for(i <- 0 until numberOfMostRecentSignals) {
-	   mostRecentSignalMap += ((in.readInt, in.readFloat))
-   }
+  def readExternal(in: ObjectInput) {
+    id = in.readInt
+    state = in.readFloat
+    val oldSignal = in.readFloat
 
- }
+    if (oldSignal < 0) {
+      lastSignalState = None
+    } else {
+      lastSignalState = Some(oldSignal)
+    }
+    //read Links
+    val numberOfLinks = in.readInt
+    targetIdArray = new Array[Int](numberOfLinks)
+    for (i <- 0 until numberOfLinks) {
+      targetIdArray(i) = in.readInt
+    }
+
+    mostRecentSignalMap = Map[Int, Float]()
+    val numberOfMostRecentSignals = in.readInt
+    for (i <- 0 until numberOfMostRecentSignals) {
+      mostRecentSignalMap += ((in.readInt, in.readFloat))
+    }
+
+  }
 
   def getVertexIdsOfNeighbors: Iterable[Any] = targetIdArray
- 
- override def toString = "MemoryEfficientPage (" + id + ", " + state + ")"
+
+  override def toString = "MemoryEfficientPage (" + id + ", " + state + ")"
 }
