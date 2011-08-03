@@ -49,6 +49,8 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
     }
     edgeAdded
   }
+  
+  def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
   def collect: Float = {
     0.15f + 0.85f * mostRecentSignalMap.values.foldLeft(0.0f)(_ + _)
