@@ -136,3 +136,27 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   override def toString = "MemoryEfficientPage (" + id + ", " + state + ")"
 }
+
+class MemoryEfficientLink(var s: Int, var t: Int) extends Edge with Externalizable {
+  
+  def this() = this(-1, -1)
+  
+  type Signal = Double
+  type SourceId = Int
+  type TargetId = Int
+  
+  def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus[Any]) = {} //Since this is handled by the Page directly
+  def signal(sourceVertex: SourceVertex): Signal =  0.0//Since this is handled by the Page directly
+  def id = (s, t ,"")
+  
+  def writeExternal(out: ObjectOutput) {
+    out.writeInt(s)
+    out.writeInt(t)
+  }
+  
+  def readExternal(in: ObjectInput) {
+    s = in.readInt
+    t = in.readInt
+  }
+  
+}
