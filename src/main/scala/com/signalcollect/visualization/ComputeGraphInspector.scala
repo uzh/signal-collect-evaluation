@@ -5,6 +5,7 @@ import java.util.LinkedList
 import scala.collection.JavaConversions._
 import scala.collection.JavaConversions
 import com.signalcollect.configuration.ExecutionConfiguration
+import com.signalcollect.configuration.SynchronousExecutionMode
 
 class ComputeGraphInspector(val cg: ComputeGraph) {
 
@@ -19,6 +20,17 @@ class ComputeGraphInspector(val cg: ComputeGraph) {
     neighbors
   }
 
+  def getEdges(v: Vertex): java.lang.Iterable[Edge] = {
+    val result = new LinkedList[Edge]()
+    val edgesOption = v.getOutgoingEdges
+    if (edgesOption.isDefined) {
+	    for (edge <- edgesOption.get) {
+	        result.add(edge)
+	    }
+    }
+    result
+  }
+  
   def searchVertex(vertexId: String): java.lang.Iterable[Vertex] = {
     cg.customAggregate(List[Vertex](), { (a: List[Vertex], b: List[Vertex]) =>
       a ++ b
@@ -41,7 +53,7 @@ class ComputeGraphInspector(val cg: ComputeGraph) {
   }
 
   def executeComputationStep {
-    cg.execute(ExecutionConfiguration(stepsLimit = Some(1)))
+    cg.execute(ExecutionConfiguration(executionMode = SynchronousExecutionMode, stepsLimit = Some(1), signalThreshold = 0.0))
   }
 
 }

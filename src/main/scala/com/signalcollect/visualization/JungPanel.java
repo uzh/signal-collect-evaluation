@@ -1,151 +1,145 @@
 package com.signalcollect.visualization;
 
 import com.signalcollect.interfaces.Vertex;
+import com.signalcollect.interfaces.Edge;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.algorithms.layout.StaticLayout;
+import edu.uci.ics.jung.algorithms.layout.util.Relaxer;
+import edu.uci.ics.jung.algorithms.layout.util.VisRunner;
+import edu.uci.ics.jung.algorithms.util.IterativeContext;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
+import edu.uci.ics.jung.visualization.layout.LayoutTransition;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
+import edu.uci.ics.jung.visualization.util.Animator;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Paint;
+import java.lang.reflect.Constructor;
+
 import javax.swing.BoxLayout;
 import org.apache.commons.collections15.Transformer;
 
 /**
- *
+ * 
  * @author stutz
  */
 public class JungPanel extends javax.swing.JPanel {
 
-    com.signalcollect.visualization.ComputeGraphInspector cgi;
+	com.signalcollect.visualization.ComputeGraphInspector cgi;
 
-    public void setComputeGraphInspector(ComputeGraphInspector cgi) {
-        this.cgi = cgi;
-    }
-    
-    /** Creates new form JungPanel */
-    public JungPanel() {
-        initComponents();
-    }
+	public void setComputeGraphInspector(ComputeGraphInspector cgi) {
+		this.cgi = cgi;
+	}
 
-    public synchronized void setPanelContent(Component c) {
-        removeAll();
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        add(c);
-        validateTree();
-        repaint();
-    }
+	/** Creates new form JungPanel */
+	public JungPanel() {
+		initComponents();
+		Transformer<Vertex, String> vertexLabeler = new Transformer<Vertex, String>() {
+			public String transform(Vertex v) {
+				return v.toString();
+			}
+		};
+		Transformer<Edge, String> edgeLabeler = new Transformer<Edge, String>() {
+			public String transform(Edge e) {
+				return e.toString();
+			}
+		};
+		vv.getRenderContext().setVertexLabelTransformer(vertexLabeler);
+		vv.getRenderContext().setEdgeLabelTransformer(edgeLabeler);
+		vv.getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
+		DefaultModalGraphMouse<Vertex, Edge> graphMouse = new DefaultModalGraphMouse<Vertex, Edge>();
+		vv.setGraphMouse(graphMouse);
+		graphMouse.setMode(ModalGraphMouse.Mode.PICKING);
+		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		add(vv);
+	}
 
-    private Boolean addVertex(Vertex v) {
-        if (currentGraph != null && !currentGraph.containsVertex(v)) {
-            currentGraph.addVertex(v);
-            return true;
-        }
-        return false;
-    }
+	public synchronized void redraw() {
+		Layout<Vertex, Edge> layout = new FRLayout<Vertex, Edge>(currentGraph,
+				getSize());
+		layout.setInitializer(vv.getGraphLayout());
+		LayoutTransition<Vertex, Edge> lt = new LayoutTransition<Vertex, Edge>(
+				vv, vv.getGraphLayout(), layout);
+		Animator animator = new Animator(lt);
+		animator.start();
+//		vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
 
-    private Boolean addEdge(String e, Vertex v, Vertex w) {
-        if (currentGraph != null && !currentGraph.containsEdge(e)) {
-            currentGraph.addEdge(e, v, w);
-            return true;
-        }
-        return false;
-    }
-    private Vertex rootVertex;
-    private DirectedSparseGraph currentGraph;
-    VisualizationViewer vv;
+		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		validateTree();
+	}
 
-    public void paintVertex(Vertex vertex, Integer depth) {
-        invalidate();
-        this.rootVertex = vertex;
-        currentGraph = new DirectedSparseGraph();
-        addVertex(vertex);
-        addVertices(vertex, depth);
+	private Boolean addVertex(Vertex v) {
+		if (currentGraph != null && !currentGraph.containsVertex(v)) {
+			currentGraph.addVertex(v);
+			return true;
+		}
+		return false;
+	}
 
-        Dimension size = getSize();
-        //Dimension paintSize = new Dimension(Math.max(size.width - 200, 0), Math.max(size.height - 200, 0));
-        Layout l = new FRLayout(currentGraph);
-        l.setSize(getSize());//paintSize);
-        vv = new VisualizationViewer(l);
-        vv.setPreferredSize(getSize());
-//        vv.getRenderContext().setVertexLabelTransformer(new SmartToStringLabeller<Vertex>(4));
-//        vv.getRenderContext().setEdgeLabelTransformer(new SmartToStringLabeller<String>(4));
-        vv.getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
+	private Boolean addEdge(Edge e, Vertex v, Vertex w) {
+		if (currentGraph != null && !currentGraph.containsEdge(e)) {
+			currentGraph.addEdge(e, v, w);
+			return true;
+		}
+		return false;
+	}
 
-//        Transformer<<Vertex<?,?>, Paint> vertexPaint = new Transformer<<Vertex<?,?>,Paint>() {
-//            public Paint transform(Vertex<?,?> v) {
-//                return Color.lightGray;
-//            };
-//        };
+	private DirectedSparseGraph<Vertex, Edge> currentGraph = new DirectedSparseGraph<Vertex, Edge>();
+	private Layout<Vertex, Edge> layout = new FRLayout<Vertex, Edge>(
+			currentGraph, getSize());
+	private VisualizationViewer<Vertex, Edge> vv = new VisualizationViewer<Vertex, Edge>(
+			layout);
 
-//
-//        // this class will provide both label drawing and vertex shapes
-//        VertexLabelAsShapeRenderer<Entity, Association> vlasr = new VertexLabelAsShapeRenderer<Entity, Association>(vv.getRenderContext());
-//
-//        // set the vertex painter to light gray
-//        vv.getRenderContext().setVertexFillPaintTransformer(vertexPaint);
-//
-//        // customize the render context
-//        vv.getRenderContext().setVertexLabelTransformer(
-//                // this chains together Transformers so that the html tags
-//                // are prepended to the toString method output
-//                new ChainedTransformer<Entity, String>(new Transformer[]{
-//                    new SmartToStringLabeller<String>(4),
-//                    new Transformer<String, String>() {
-//
-//                        public String transform(String input) {
-//                            //return "<html><center>Vertex<p>" + input;
-//                            return input;
-//                        }
-//                    }}));
-//        vv.getRenderContext().setVertexShapeTransformer(vlasr);
+	public void paintVertex(Vertex vertex, Integer depth) {
+//		invalidate();
+		currentGraph = new DirectedSparseGraph<Vertex, Edge>();
+		addVertex(vertex);
+		if (depth > 0) {
+			addVertices(vertex, depth - 1);
+		}
+		redraw();
+	}
 
-        DefaultModalGraphMouse graphMouse = new DefaultModalGraphMouse();
-        vv.setGraphMouse(graphMouse);
-        graphMouse.setMode(ModalGraphMouse.Mode.PICKING);
-        setPanelContent(vv);
-        //validate();
-    }
+	/*
+	 * Breadth first graph traversal.
+	 */
+	private void addVertices(Vertex vertex, Integer depth) {
+		for (Edge edge : ((Iterable<Edge>) cgi.getEdges(vertex))) {
+			Vertex neighborVertex = cgi.getVertexWithId(edge.id()._2());
+			addVertex(neighborVertex);
+			addEdge(edge, vertex, neighborVertex);
+			if (depth > 0) {
+				addVertices(neighborVertex, depth - 1);
+			}
+		}
+	}
 
-    /*
-     * Breadth first graph traversal.
-     * 
-     */
-    private void addVertices(Vertex vertex, Integer depth) {
-        for (Object neighborVertex : cgi.getNeighbors(vertex)) {
-            if (addVertex((Vertex) neighborVertex)) {
-                if (depth > 0) {
-                    addVertices((Vertex) neighborVertex, depth - 1);
-                }
-            }
-            addEdge("Moo", vertex, (Vertex) neighborVertex);
-        }
-    }
+	/**
+	 * This method is called from within the constructor to initialize the form.
+	 * WARNING: Do NOT modify this code. The content of this method is always
+	 * regenerated by the Form Editor.
+	 */
+	@SuppressWarnings("unchecked")
+	// <editor-fold defaultstate="collapsed"
+	// desc="Generated Code">//GEN-BEGIN:initComponents
+	private void initComponents() {
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 300, Short.MAX_VALUE)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
+		org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(
+				this);
+		this.setLayout(layout);
+		layout.setHorizontalGroup(layout.createParallelGroup(
+				org.jdesktop.layout.GroupLayout.LEADING).add(0, 400,
+				Short.MAX_VALUE));
+		layout.setVerticalGroup(layout.createParallelGroup(
+				org.jdesktop.layout.GroupLayout.LEADING).add(0, 300,
+				Short.MAX_VALUE));
+	}// </editor-fold>//GEN-END:initComponents
+		// Variables declaration - do not modify//GEN-BEGIN:variables
+		// End of variables declaration//GEN-END:variables
 }

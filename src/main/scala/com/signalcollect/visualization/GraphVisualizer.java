@@ -2,6 +2,8 @@ package com.signalcollect.visualization;
 
 import javax.swing.DefaultListModel;
 import com.signalcollect.interfaces.Vertex;
+import com.signalcollect.configuration.DefaultExecutionConfiguration;
+import com.signalcollect.configuration.SynchronousExecutionMode;
 import com.signalcollect.visualization.ComputeGraphInspector;
 
 /**
@@ -9,8 +11,6 @@ import com.signalcollect.visualization.ComputeGraphInspector;
  * @author Philip Stutz
  */
 public class GraphVisualizer extends javax.swing.JFrame {
-
-	private static final long serialVersionUID = -741069125093871533L;
 	
 	private ComputeGraphInspector cgi;
     
@@ -18,7 +18,7 @@ public class GraphVisualizer extends javax.swing.JFrame {
     public GraphVisualizer(ComputeGraphInspector cgi) {
         this.cgi = cgi;
         initComponents();
-        jungPanel1.setComputeGraphInspector(cgi);
+        jungPanel.setComputeGraphInspector(cgi);
     }
 
     /** This method is called from within the constructor to
@@ -30,7 +30,6 @@ public class GraphVisualizer extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jungPanel1 = new JungPanel();
         searchVertexField = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         vertexList = new javax.swing.JList();
@@ -38,19 +37,9 @@ public class GraphVisualizer extends javax.swing.JFrame {
         depthSpinner = new javax.swing.JSpinner();
         jLabel1 = new javax.swing.JLabel();
         computationStepButton = new javax.swing.JButton();
+        jungPanel = new com.signalcollect.visualization.JungPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        org.jdesktop.layout.GroupLayout jungPanel1Layout = new org.jdesktop.layout.GroupLayout(jungPanel1);
-        jungPanel1.setLayout(jungPanel1Layout);
-        jungPanel1Layout.setHorizontalGroup(
-            jungPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 430, Short.MAX_VALUE)
-        );
-        jungPanel1Layout.setVerticalGroup(
-            jungPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 406, Short.MAX_VALUE)
-        );
 
         vertexList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
@@ -66,7 +55,7 @@ public class GraphVisualizer extends javax.swing.JFrame {
             }
         });
 
-        depthSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, 9, 1));
+        depthSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 0, 20, 1));
         depthSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 depthSpinnerStateChanged(evt);
@@ -82,6 +71,17 @@ public class GraphVisualizer extends javax.swing.JFrame {
             }
         });
 
+        org.jdesktop.layout.GroupLayout jungPanelLayout = new org.jdesktop.layout.GroupLayout(jungPanel);
+        jungPanel.setLayout(jungPanelLayout);
+        jungPanelLayout.setHorizontalGroup(
+            jungPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 457, Short.MAX_VALUE)
+        );
+        jungPanelLayout.setVerticalGroup(
+            jungPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 408, Short.MAX_VALUE)
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -96,15 +96,15 @@ public class GraphVisualizer extends javax.swing.JFrame {
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 244, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 35, Short.MAX_VALUE)
-                        .add(jungPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(layout.createSequentialGroup()
                         .add(18, 18, 18)
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(depthSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 166, Short.MAX_VALUE)
-                        .add(computationStepButton)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 168, Short.MAX_VALUE)
+                        .add(computationStepButton))
+                    .add(layout.createSequentialGroup()
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jungPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -121,8 +121,8 @@ public class GraphVisualizer extends javax.swing.JFrame {
                         .add(depthSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jungPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE))
+                    .add(jungPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -130,7 +130,7 @@ public class GraphVisualizer extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchVertexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchVertexButtonActionPerformed
-        Iterable<Vertex> vertices = cgi.searchVertex(searchVertexField.getText());
+        Iterable<Vertex> vertices = (Iterable<Vertex>) cgi.searchVertex(searchVertexField.getText());
         DefaultListModel lm = new DefaultListModel();
         for (Vertex v : vertices) {
             lm.addElement(v);
@@ -154,29 +154,28 @@ public class GraphVisualizer extends javax.swing.JFrame {
     public void redraw() {
         Vertex selectedVertex = (Vertex) vertexList.getSelectedValue();
         if (selectedVertex != null) {
-         jungPanel1.paintVertex(selectedVertex, (Integer) depthSpinner.getValue());
+         jungPanel.paintVertex(selectedVertex, (Integer) depthSpinner.getValue());
         }
     }
     
     
-//    /**
-//     * @param args the command line arguments
-//     */
-//    public static void main(String args[]) {
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//
-//            @Override
-//            public void run() {
-//                new GraphVisualizer(new ComputeGraphInspector()).setVisible(true);
-//            }
-//        });
-//    }
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+
+            public void run() {
+                new GraphVisualizer(new ComputeGraphInspector(null)).setVisible(true);
+            }
+        });
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton computationStepButton;
     private javax.swing.JSpinner depthSpinner;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private JungPanel jungPanel1;
+    private com.signalcollect.visualization.JungPanel jungPanel;
     private javax.swing.JButton searchVertexButton;
     private javax.swing.JTextField searchVertexField;
     private javax.swing.JList vertexList;
