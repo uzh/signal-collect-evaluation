@@ -80,6 +80,21 @@
 			<type>pom</type>
 		</dependency>
 		<dependency>
+			<groupId>net.sf.jung</groupId>
+			<artifactId>jung-graph-impl</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jung</groupId>
+			<artifactId>jung-algorithms</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jung</groupId>
+			<artifactId>jung-visualization</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		<dependency>
 			<groupId>org.swinglabs</groupId>
 			<artifactId>swing-layout</artifactId>
 			<version>1.0.3</version>
@@ -156,10 +171,10 @@
 	<properties>
 		<project.build.sourceEncoding>
 			UTF-8
-        </project.build.sourceEncoding>
+		</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>
 			UTF-8
-        </project.reporting.outputEncoding>
+		</project.reporting.outputEncoding>
 		<scala.version>2.9.0-1</scala.version>
 	</properties>
 </project>
