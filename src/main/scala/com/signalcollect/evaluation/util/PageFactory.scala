@@ -23,6 +23,7 @@ package com.signalcollect.evaluation.util
 import scala.math._
 import scala.util.Random
 import com.signalcollect.interfaces.Vertex
+import scala.collection.mutable.HashSet
 
 sealed class GraphParameters
 case class LogNormalParameters(sigma: Double = 1, mu: Double = 3, graphSize: Int) extends GraphParameters
@@ -45,16 +46,14 @@ class PageFactory(params: GraphParameters) {
       case LogNormalParameters(sigma, mu, size) => {
         val page = new MemoryEfficientPage(id)
         val outDegree: Int = exp(mu + sigma * (r.nextGaussian)).round.toInt //log-normal
-        val links = new Array[Int](outDegree)
-        var j = 0
-        while (j < outDegree) {
+        val links = new HashSet[Int]
+        while (links.size < outDegree) {
           val linkId = ((r.nextDouble * (size - 1))).round.toInt
           if (id != linkId) {
-            links(j) = linkId
-            j+=1
+            links.add(linkId)
           }
         }
-        page.setTargetIdArray(links)
+        page.setTargetIdArray(links.toArray)
         page
       }
       case _ => null
