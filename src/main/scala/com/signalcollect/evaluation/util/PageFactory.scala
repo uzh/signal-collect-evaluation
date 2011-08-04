@@ -54,6 +54,7 @@ class PageFactory(params: GraphParameters) {
             j+=1
           }
         }
+        page.setTargetIdArray(links)
         page
       }
       case _ => null
