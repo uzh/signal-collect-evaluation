@@ -39,7 +39,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   override def addOutgoingEdge(e: Edge): Boolean = {
     var edgeAdded = false
-    val targetId = e.id._2.asInstanceOf[Int]
+    val targetId = e.id.targetId.asInstanceOf[Int]
     if (!targetIdArray.contains(targetId)) {
       val tmp = new ArrayBuffer[Int]()
       tmp ++= targetIdArray
@@ -60,7 +60,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
     if (!targetIdArray.isEmpty) {
       val signal = state / targetIdArray.size
       targetIdArray.foreach(targetId => {
-        messageBus.sendToWorkerForVertexId(SignalMessage(id, targetId, signal), targetId)
+        messageBus.sendToWorkerForVertexId(SignalMessage(DefaultEdgeId(id, targetId), signal), targetId)
       })
     }
     lastSignalState = state
@@ -69,7 +69,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
   def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus[Any]) {
     val castS = signals.asInstanceOf[Traversable[SignalMessage[Int, _, Signal]]]
     castS foreach { signal =>
-      mostRecentSignalMap += ((signal.sourceId, signal.signal))
+      mostRecentSignalMap += ((signal.edgeId.sourceId, signal.signal))
     }
     state = collect
   }
@@ -88,7 +88,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   def afterInitialization(messageBus: MessageBus[Any]) = {}
 
-  override def removeOutgoingEdge(edgeId: (Any, Any, String)): Boolean = {
+  override def removeOutgoingEdge(edgeId: EdgeId[_, _]): Boolean = {
     throw new UnsupportedOperationException
   }
 
@@ -134,7 +134,18 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   }
 
-  def getVertexIdsOfNeighbors: Iterable[Any] = targetIdArray
+  def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
+  
+  /**
+   * Returns the ids of all vertices from which this vertex has an incoming edge, optional.
+   */
+  def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
+
+  /**
+   * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
+   * supported or if there is no such signal.
+   */
+  def getMostRecentSignal(id: EdgeId[_, _]): Option[Any] = None
 
   override def toString = "MemoryEfficientPage (" + id + ", " + state + ")"
 }
@@ -149,7 +160,7 @@ class MemoryEfficientLink(var s: Int, var t: Int) extends Edge with Externalizab
   
   def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus[Any]) = {} //Since this is handled by the Page directly
   def signal(sourceVertex: SourceVertex): Signal =  0.0//Since this is handled by the Page directly
-  def id = (s, t ,"")
+  def id = DefaultEdgeId(s, t)
   
   def writeExternal(out: ObjectOutput) {
     out.writeInt(s)

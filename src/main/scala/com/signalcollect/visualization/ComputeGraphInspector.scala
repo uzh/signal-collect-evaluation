@@ -9,15 +9,39 @@ import com.signalcollect.configuration.SynchronousExecutionMode
 
 class ComputeGraphInspector(val cg: ComputeGraph) {
 
-  def getNeighbors(v: Vertex): java.lang.Iterable[Vertex] = {
-    val neighbors = new LinkedList[Vertex]()
-    for (neighborId <- v.getVertexIdsOfNeighbors) {
+  def getMostRecentSignal(edgeId: EdgeId[_, _]): Object = {
+    val signalOption: Option[Option[_]] = cg.forVertexWithId(edgeId.targetId, { v: Vertex => v.getMostRecentSignal(edgeId) })
+    if (signalOption.isDefined && signalOption.get.isDefined) {
+      println("MOOO")
+      signalOption.get.get.asInstanceOf[Object]
+    } else {
+      null
+    }
+  }
+  
+  def getSuccessors(v: Vertex): java.lang.Iterable[Vertex] = {
+    val result = new LinkedList[Vertex]()
+    for (neighborId <- v.getVertexIdsOfSuccessors) {
       val neighbor = cg.forVertexWithId(neighborId, { v: Vertex => v })
       if (neighbor.isDefined) {
-        neighbors.add(neighbor.get)
+        result.add(neighbor.get)
       }
     }
-    neighbors
+    result
+  }
+
+  def getPredecessors(v: Vertex): java.lang.Iterable[Vertex] = {
+    val result = new LinkedList[Vertex]()
+    val predecessors = v.getVertexIdsOfPredecessors
+    if (predecessors.isDefined) {
+      for (neighborId <- predecessors.get) {
+        val neighbor = cg.forVertexWithId(neighborId, { v: Vertex => v })
+        if (neighbor.isDefined) {
+          result.add(neighbor.get)
+        }
+      }
+    }
+    result
   }
 
   def getEdges(v: Vertex): java.lang.Iterable[Edge] = {

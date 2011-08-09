@@ -21,7 +21,7 @@ import org.apache.commons.collections15.Transformer;
 public class JungPanel extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = 3093499981293625793L;
-	
+
 	com.signalcollect.visualization.ComputeGraphInspector cgi;
 
 	public void setComputeGraphInspector(ComputeGraphInspector cgi) {
@@ -38,7 +38,7 @@ public class JungPanel extends javax.swing.JPanel {
 		};
 		Transformer<Edge, String> edgeLabeler = new Transformer<Edge, String>() {
 			public String transform(Edge e) {
-				return e.toString();
+				return cgi.getMostRecentSignal(e.id()).toString();
 			}
 		};
 		vv.getRenderContext().setVertexLabelTransformer(vertexLabeler);
@@ -59,7 +59,7 @@ public class JungPanel extends javax.swing.JPanel {
 				vv, vv.getGraphLayout(), layout);
 		Animator animator = new Animator(lt);
 		animator.start();
-//		vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
+		// vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
 
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		validateTree();
@@ -88,7 +88,7 @@ public class JungPanel extends javax.swing.JPanel {
 			layout);
 
 	public void paintVertex(Vertex vertex, Integer depth) {
-//		invalidate();
+		// invalidate();
 		currentGraph = new DirectedSparseGraph<Vertex, Edge>();
 		addVertex(vertex);
 		if (depth > 0) {
@@ -101,12 +101,23 @@ public class JungPanel extends javax.swing.JPanel {
 	 * Breadth first graph traversal.
 	 */
 	private void addVertices(Vertex vertex, Integer depth) {
-		for (Edge edge : ((Iterable<Edge>) cgi.getEdges(vertex))) {
-			Vertex neighborVertex = cgi.getVertexWithId(edge.id()._2());
+		for (Edge edge : (Iterable<Edge>) cgi.getEdges(vertex)) {
+			Vertex neighborVertex = (Vertex) cgi.getVertexWithId(edge.id()
+					.targetId());
 			addVertex(neighborVertex);
 			addEdge(edge, vertex, neighborVertex);
 			if (depth > 0) {
 				addVertices(neighborVertex, depth - 1);
+			}
+		}
+		for (Vertex predecessor : (Iterable<Vertex>) cgi
+				.getPredecessors(vertex)) {
+			addVertex(predecessor);
+			for (Edge edge : (Iterable<Edge>) cgi.getEdges(predecessor)) {
+				addEdge(edge, predecessor, vertex);
+			}
+			if (depth > 0) {
+				addVertices(predecessor, depth - 1);
 			}
 		}
 	}
