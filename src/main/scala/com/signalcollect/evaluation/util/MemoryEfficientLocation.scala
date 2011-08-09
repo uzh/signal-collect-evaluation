@@ -1,0 +1,123 @@
+/*
+ *  @author Daniel Strebel
+ *  
+ *  Copyright 2011 University of Zurich
+ *      
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  
+ */
+package com.signalcollect.evaluation.util
+
+import com.signalcollect.interfaces._
+import scala.collection.mutable.ArrayBuffer
+import java.io.{ ObjectInput, ObjectOutput, Externalizable }
+
+
+
+class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable{
+
+  type Id = Int
+  type State = Int
+  type Signal = Int
+
+  var state = if(id == 0) 0 else Int.MaxValue
+  protected var targetIdArray = Array[Int]()
+  var stateChangedSinceSignal = if(id == 0) true else false
+
+  override def addOutgoingEdge(e: Edge): Boolean = {
+    var edgeAdded = false
+    val targetId = e.id._2.asInstanceOf[Int]
+    if (!targetIdArray.contains(targetId)) {
+      val tmp = new ArrayBuffer[Int]()
+      tmp ++= targetIdArray
+      tmp += targetId
+      targetIdArray = tmp.toArray
+      edgeAdded = true
+    }
+    edgeAdded
+  }
+
+  def setTargetIdArray(links: Array[Int]) = targetIdArray = links
+
+  def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus[Any]) {
+    val castedSignals = signals.asInstanceOf[Traversable[SignalMessage[Int, _, Int]]].map(_.signal)
+    val newState = castedSignals.foldLeft(state)(math.min(_, _))
+    if(newState != state) {
+      stateChangedSinceSignal = true
+      state = newState
+    }
+  }
+  
+  override def executeSignalOperation(messageBus: MessageBus[Any]) {
+    if (!targetIdArray.isEmpty) {
+      val signal = state + 1 //default weight = 1
+      targetIdArray.foreach(targetId => {
+        messageBus.sendToWorkerForVertexId(SignalMessage(id, targetId, signal), targetId)
+      })
+    }
+    stateChangedSinceSignal = false
+  }
+  
+  override def scoreSignal: Double = {
+    if(stateChangedSinceSignal) {
+      1.0
+    }
+    else {
+      0.0
+    }
+  }
+
+  def scoreCollect(signals: Iterable[SignalMessage[_, _, _]]) = signals.size
+
+  def outgoingEdgeCount = targetIdArray.size
+
+  def afterInitialization(messageBus: MessageBus[Any]) = {}
+
+  override def removeOutgoingEdge(edgeId: (Any, Any, String)): Boolean = {
+    throw new UnsupportedOperationException
+  }
+
+  override def removeAllOutgoingEdges: Int = {
+    throw new UnsupportedOperationException
+  }
+  
+  def getVertexIdsOfNeighbors: Iterable[Any] = targetIdArray
+
+  override def toString = "MemoryEfficientLocation (" + id + ", " + state + ")"
+  
+  def this() = this(-1) //default constructor for serialization
+
+  def writeExternal(out: ObjectOutput) {
+    out.writeInt(id)
+    out.writeInt(state)
+    out.writeBoolean(stateChangedSinceSignal)
+    // Write links
+    out.writeInt(targetIdArray.length)
+    for (i <- 0 until targetIdArray.length) {
+      out.writeInt(targetIdArray(i))
+    }
+  }
+
+  def readExternal(in: ObjectInput) {
+    id = in.readInt
+    state = in.readInt
+    stateChangedSinceSignal = in.readBoolean
+    //read Links
+    val numberOfLinks = in.readInt
+    targetIdArray = new Array[Int](numberOfLinks)
+    for (i <- 0 until numberOfLinks) {
+      targetIdArray(i) = in.readInt
+    }
+  }
+
+}
