@@ -33,12 +33,17 @@ public class JungPanel extends javax.swing.JPanel {
 		initComponents();
 		Transformer<Vertex, String> vertexLabeler = new Transformer<Vertex, String>() {
 			public String transform(Vertex v) {
-				return v.toString();
+				return "<html><b>" + v.toString() + "</b></html>";
 			}
 		};
 		Transformer<Edge, String> edgeLabeler = new Transformer<Edge, String>() {
 			public String transform(Edge e) {
-				return cgi.getMostRecentSignal(e.id()).toString();
+				Object signal = cgi.getMostRecentSignal(e.id());
+				if (signal != null) {
+					return "<html><b>" + e.getClass().getSimpleName() + "(signal=" + signal.toString() + ")</b></html>";
+				} else {
+					return "<html><b>" + e.getClass().getSimpleName() + "(signal=None)</b></html>";
+				}
 			}
 		};
 		vv.getRenderContext().setVertexLabelTransformer(vertexLabeler);
@@ -59,7 +64,6 @@ public class JungPanel extends javax.swing.JPanel {
 				vv, vv.getGraphLayout(), layout);
 		Animator animator = new Animator(lt);
 		animator.start();
-		// vv.getRenderContext().getMultiLayerTransformer().setToIdentity();
 
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		validateTree();

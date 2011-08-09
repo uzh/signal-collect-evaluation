@@ -12,7 +12,6 @@ class ComputeGraphInspector(val cg: ComputeGraph) {
   def getMostRecentSignal(edgeId: EdgeId[_, _]): Object = {
     val signalOption: Option[Option[_]] = cg.forVertexWithId(edgeId.targetId, { v: Vertex => v.getMostRecentSignal(edgeId) })
     if (signalOption.isDefined && signalOption.get.isDefined) {
-      println("MOOO")
       signalOption.get.get.asInstanceOf[Object]
     } else {
       null

@@ -11,11 +11,13 @@ object VisualizerTest extends App {
   cg.addVertex(new Page(3))
   cg.addVertex(new Page(4))
   cg.addVertex(new Page(5))
+  cg.addVertex(new Page(6))
   cg.addEdge(new Link(1, 2))
   cg.addEdge(new Link(2, 3))
   cg.addEdge(new Link(3, 4))
   cg.addEdge(new Link(4, 5))
   cg.addEdge(new Link(5, 1))
+  cg.addEdge(new Link(5, 6))
   
 //  cg.addVertex(new Location(1, Some(0)))
 //  cg.addVertex(new Location(2))
