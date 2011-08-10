@@ -22,21 +22,19 @@ import com.signalcollect.interfaces._
 import scala.collection.mutable.ArrayBuffer
 import java.io.{ ObjectInput, ObjectOutput, Externalizable }
 
-
-
-class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable{
+class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable {
 
   type Id = Int
   type State = Int
   type Signal = Int
 
-  var state = if(id == 0) 0 else Int.MaxValue
+  var state = if (id == 0) 0 else Int.MaxValue
   protected var targetIdArray = Array[Int]()
-  var stateChangedSinceSignal = if(id == 0) true else false
+  var stateChangedSinceSignal = if (id == 0) true else false
 
   override def addOutgoingEdge(e: Edge): Boolean = {
     var edgeAdded = false
-    val targetId = e.id._2.asInstanceOf[Int]
+    val targetId = e.id.targetId.asInstanceOf[Int]
     if (!targetIdArray.contains(targetId)) {
       val tmp = new ArrayBuffer[Int]()
       tmp ++= targetIdArray
@@ -52,27 +50,26 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable{
   def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus[Any]) {
     val castedSignals = signals.asInstanceOf[Traversable[SignalMessage[Int, _, Int]]].map(_.signal)
     val newState = castedSignals.foldLeft(state)(math.min(_, _))
-    if(newState != state) {
+    if (newState != state) {
       stateChangedSinceSignal = true
       state = newState
     }
   }
-  
+
   override def executeSignalOperation(messageBus: MessageBus[Any]) {
     if (!targetIdArray.isEmpty) {
       val signal = state + 1 //default weight = 1
       targetIdArray.foreach(targetId => {
-        messageBus.sendToWorkerForVertexId(SignalMessage(id, targetId, signal), targetId)
+        messageBus.sendToWorkerForVertexId(SignalMessage(DefaultEdgeId(id, targetId), signal), targetId)
       })
     }
     stateChangedSinceSignal = false
   }
-  
+
   override def scoreSignal: Double = {
-    if(stateChangedSinceSignal) {
+    if (stateChangedSinceSignal) {
       1.0
-    }
-    else {
+    } else {
       0.0
     }
   }
@@ -83,18 +80,29 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable{
 
   def afterInitialization(messageBus: MessageBus[Any]) = {}
 
-  override def removeOutgoingEdge(edgeId: (Any, Any, String)): Boolean = {
+  override def removeOutgoingEdge(edgeId: EdgeId[_, _]): Boolean = {
     throw new UnsupportedOperationException
   }
 
   override def removeAllOutgoingEdges: Int = {
     throw new UnsupportedOperationException
   }
-  
-  def getVertexIdsOfNeighbors: Iterable[Any] = targetIdArray
+
+  def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
+
+  /**
+   * Returns the ids of all vertices from which this vertex has an incoming edge, optional.
+   */
+  def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
+
+  /**
+   * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
+   * supported or if there is no such signal.
+   */
+  def getMostRecentSignal(id: EdgeId[_, _]): Option[Any] = None
 
   override def toString = "MemoryEfficientLocation (" + id + ", " + state + ")"
-  
+
   def this() = this(-1) //default constructor for serialization
 
   def writeExternal(out: ObjectOutput) {

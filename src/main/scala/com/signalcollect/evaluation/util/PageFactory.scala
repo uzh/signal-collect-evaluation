@@ -45,19 +45,37 @@ class PageFactory(params: GraphParameters) {
     params match {
       case LogNormalParameters(sigma, mu, size) => {
         val page = new MemoryEfficientPage(id)
-        val outDegree: Int = exp(mu + sigma * (r.nextGaussian)).round.toInt //log-normal
-        val links = new HashSet[Int]
-        while (links.size < outDegree) {
-          val linkId = ((r.nextDouble * (size - 1))).round.toInt
-          if (id != linkId) {
-            links.add(linkId)
-          }
-        }
+        val links =  getLogNormalTargetIdArray(id, sigma, mu, size)
         page.setTargetIdArray(links.toArray)
         page
       }
       case _ => null
     }
   }
+  
+  def getLocationForId(id: Int): Vertex = {
+    params match {
+      case LogNormalParameters(sigma, mu, size) => {
+        val page = new MemoryEfficientLocation(id)
+        val links =  getLogNormalTargetIdArray(id, sigma, mu, size)
+        page.setTargetIdArray(links.toArray)
+        page
+      }
+      case _ => null
+    }
+  }
+  
+  protected def getLogNormalTargetIdArray(id: Int, sigma: Double = 1, mu: Double = 3, graphSize: Int): Array[Int] = {
+    val outDegree: Int = exp(mu + sigma * (r.nextGaussian)).round.toInt //log-normal
+    val links = new HashSet[Int]
+        while (links.size < outDegree) {
+          val linkId = ((r.nextDouble * (graphSize - 1))).round.toInt
+          if (id != linkId) {
+            links.add(linkId)
+          }
+        }
+    links.toArray
+  }
+  
 
 }
