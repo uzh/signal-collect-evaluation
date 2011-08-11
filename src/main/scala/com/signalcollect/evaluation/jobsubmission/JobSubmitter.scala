@@ -90,12 +90,6 @@ class JobSubmitter(
       }
       /** LOG OUT OF KRAKEN */
       krakenShell.exit
-//    } catch {
-//      case t: Throwable =>
-////        sys.error(t.getMessage)
-//        println("MOO")
-//        sys.error(t.getStackTraceString)
-//    }
   }
 
   def getShellScript(jobId: String, jarname: String, mainClass: String, serializedConfiguration: String): String = {

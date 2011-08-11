@@ -75,7 +75,7 @@ class ComputeGraphInspector(val cg: ComputeGraph) {
       cg.customAggregate(List[Vertex](), { (a: List[Vertex], b: List[Vertex]) =>
         a ++ b
       }, { v: Vertex =>
-        if (v.id.toString.contains(vertexId))
+        if (v.id.toString.toLowerCase.contains(vertexId.toLowerCase))
           List(v)
         else {
           List[Vertex]()
