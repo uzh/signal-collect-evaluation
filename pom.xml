@@ -139,8 +139,6 @@
 					</jvmArgs>
 					<args>
 						<arg>-optimise</arg>
-						<arg>-Xelide-below</arg>
-						<arg>900</arg>
 					</args>
 				</configuration>
 				<executions>
