@@ -1,11 +1,11 @@
 package com.signalcollect.visualization
 
-import com.signalcollect.Builder
+import com.signalcollect.GraphBuilder
 import com.signalcollect.examples._
 
 object VisualizerTest extends App {
 
-  val cg = Builder.build
+  val cg = GraphBuilder.build
   cg.addVertex(new Page(1))
   cg.addVertex(new Page(2))
   cg.addVertex(new Page(3))
