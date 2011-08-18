@@ -19,6 +19,7 @@
 package com.signalcollect.evaluation.util
 
 import com.signalcollect.interfaces._
+import com.signalcollect._
 import scala.collection.mutable.ArrayBuffer
 import java.io.{ ObjectInput, ObjectOutput, Externalizable }
 

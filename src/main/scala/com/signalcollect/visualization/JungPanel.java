@@ -1,7 +1,6 @@
 package com.signalcollect.visualization;
 
-import com.signalcollect.interfaces.Vertex;
-import com.signalcollect.interfaces.Edge;
+import com.signalcollect.*;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;

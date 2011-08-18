@@ -19,8 +19,8 @@
 
 package com.signalcollect.evaluation.jobsubmission
 
-import com.signalcollect.api._
-import com.signalcollect.api.factory._
+import com.signalcollect._
+import com.signalcollect.factory._
 import com.signalcollect.configuration._
 import com.signalcollect.evaluation.configuration._
 import com.signalcollect.evaluation.util._
@@ -51,7 +51,7 @@ object PageRankEvaluation extends App {
 }
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
-  lazy val computeGraphBuilders = List(DefaultComputeGraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
+  lazy val computeGraphBuilders = List(Builder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
   lazy val numberOfRepetitions = 10
   //  lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)

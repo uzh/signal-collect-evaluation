@@ -1,11 +1,11 @@
 package com.signalcollect.visualization
 
-import com.signalcollect.configuration.DefaultComputeGraphBuilder
+import com.signalcollect.Builder
 import com.signalcollect.examples._
 
 object VisualizerTest extends App {
 
-  val cg = DefaultComputeGraphBuilder.build
+  val cg = Builder.build
   cg.addVertex(new Page(1))
   cg.addVertex(new Page(2))
   cg.addVertex(new Page(3))

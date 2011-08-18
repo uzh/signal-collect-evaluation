@@ -1,13 +1,12 @@
 package com.signalcollect.visualization
 
+import com.signalcollect._
 import com.signalcollect.interfaces._
 import java.util.LinkedList
 import scala.collection.JavaConversions._
 import scala.collection.JavaConversions
-import com.signalcollect.configuration.ExecutionConfiguration
-import com.signalcollect.configuration.SynchronousExecutionMode
 
-class ComputeGraphInspector(val cg: ComputeGraph) {
+class ComputeGraphInspector(val cg: Graph) {
 
   def getMostRecentSignal(edgeId: EdgeId[_, _]): Object = {
     val signalOption: Option[Option[_]] = cg.forVertexWithId(edgeId.targetId, { v: Vertex => v.getMostRecentSignal(edgeId) })

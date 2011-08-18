@@ -1,8 +1,7 @@
 package com.signalcollect.visualization;
 
 import javax.swing.DefaultListModel;
-import com.signalcollect.interfaces.Vertex;
-import com.signalcollect.visualization.ComputeGraphInspector;
+import com.signalcollect.Vertex;
 
 /**
  *

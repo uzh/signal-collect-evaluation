@@ -22,7 +22,7 @@ package com.signalcollect.evaluation.util
 
 import scala.math._
 import scala.util.Random
-import com.signalcollect.interfaces.Vertex
+import com.signalcollect._
 import scala.collection.mutable.HashSet
 
 sealed class GraphParameters
