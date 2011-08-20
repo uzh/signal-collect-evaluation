@@ -1,6 +1,6 @@
 /*
- *  @author Philip Stutz
- *  
+ *  @author Daniel Strebel
+ *
  *  Copyright 2011 University of Zurich
  *      
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,49 +14,36 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *  
  */
-
 package com.signalcollect.evaluation.jobsubmission
 
 import com.signalcollect._
-import com.signalcollect.factory._
+import com.signalcollect.api.factory.storage._
 import com.signalcollect.configuration._
-import com.signalcollect.evaluation.configuration._
 import com.signalcollect.evaluation.util._
-import com.signalcollect.implementations.logging.DefaultLogger
-import com.signalcollect.graphproviders.synthetic.LogNormal
-import com.signalcollect.examples.Page
-import com.signalcollect.examples.Link
-
+import com.signalcollect.evaluation.configuration._
+import scala.util.Random
 import java.util.Date
 import java.text.SimpleDateFormat
+import java.io.{ FileWriter, BufferedWriter }
 
-import scala.util.Random
-
-/*
- * Packages the application, deploys the benchmarking jar/script to kraken
- * and then executes it via torque.
- * 
- * REQUIRES CERTIFICATE FOR LOGIN ON KRAKEN 
- */
-object PageRankEvaluation extends App {
-  //  val executionLocation = LocalHost
-  val executionLocation = Kraken(System.getProperty("user.name"))
-
+object SSSPEvaluation extends App {
+        val executionLocation = LocalHost
+//  val executionLocation = Kraken("strebel")
+//
   val jobSubmitter = new JobSubmitter(executionLocation = executionLocation)
-  val jobGenerator = new PageRankJobGenerator(args(0), args(1))
+  val jobGenerator = new SSSPJobGenerator(args(0), args(1))
   val jobs = jobGenerator.generateJobs
   jobSubmitter.submitJobs(jobs)
 }
 
-class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
+class SSSPJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
   lazy val computeGraphBuilders = List(GraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
-  lazy val numberOfRepetitions = 10
+  lazy val numberOfRepetitions = 2
   //  lazy val numberOfWorkersList = (1 to 24).toList
-  lazy val numberOfWorkersList = List(24)
+  lazy val numberOfWorkersList = List(2)
   lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
-  lazy val graphSizes = List(200000)
+  lazy val graphSizes = List(20000)
 
   def generateJobs: List[Job] = {
     var jobs = List[Job]()
@@ -66,34 +53,30 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
           for (graphSize <- graphSizes) {
             for (repetition <- 1 to numberOfRepetitions) {
               val seed = 0
-              val sigma = 1.0
-              val mu = 3.0
+              val sigma = 1.3
+              val mu = 4.0
+
               val builder = computeGraphBuilder.withNumberOfWorkers(numberOfWorkers)
+              val randomJobID = Random.nextInt.abs
               val job = new Job(
                 spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
                 submittedByUser = System.getProperty("user.name"),
-                jobId = Random.nextInt.abs,
-                jobDescription = "new performance run before commits, interface changes",
+                jobId = randomJobID,
+                jobDescription = "SSSP execution",
                 execute = { () =>
                   var statsMap = Map[String, String]()
-                  statsMap += (("algorithm", "PageRank"))
+                  statsMap += (("algorithm", "SSSP"))
                   val computeGraph = builder.build
                   statsMap += (("graphStructure", "LogNormal(" + graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"))
-                  val edgeTuples = new LogNormal(graphSize, seed, sigma, mu)
-                  edgeTuples foreach {
-                    case (sourceId, targetId) =>
-                      computeGraph.addVertex(new Page(sourceId, 0.85))
-                      computeGraph.addVertex(new Page(targetId, 0.85))
-                      computeGraph.addEdge(new Link(sourceId, targetId))
+
+                  val locationFactory = new VertexFactory(new LogNormalParameters(sigma, mu, graphSize))
+
+                  for (id <- (0 until graphSize - 1)) {
+                    val location = locationFactory.getLocationForId(id)
+                    computeGraph.addVertex(location)
                   }
-                  
-//                  //Reduced message traffic version for loading the graph
-//                  
-//                  val pageFactory = new VertexFactory(new LogNormalParameters(sigma, mu, graphSize))
-//                  for(id<-0 until graphSize) {
-//                    computeGraph.addVertex(pageFactory.getPageForId(id))
-//                  }                
-//                  
+                  computeGraph.addVertex(new MemoryEfficientLocation(graphSize - 1))
+
                   val startDate = new Date
                   val dateFormat = new SimpleDateFormat("dd-MM-yyyy")
                   val timeFormat = new SimpleDateFormat("HH:mm:ss")
