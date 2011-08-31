@@ -25,9 +25,6 @@ import scala.util.Random
 import com.signalcollect._
 import scala.collection.mutable.HashSet
 
-sealed class GraphParameters
-case class LogNormalParameters(sigma: Double = 1, mu: Double = 3, graphSize: Int) extends GraphParameters
-
 /**
  * Utility to create synthetic pages
  * 
