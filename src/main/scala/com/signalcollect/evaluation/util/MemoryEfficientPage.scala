@@ -159,6 +159,8 @@ class MemoryEfficientLink(var s: Int, var t: Int) extends Edge with Externalizab
   type SourceId = Int
   type TargetId = Int
   
+  def weight = 1.0
+  
   def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus[Any]) = {} //Since this is handled by the Page directly
   def signal(sourceVertex: SourceVertex): Signal =  0.0//Since this is handled by the Page directly
   def id = DefaultEdgeId(s, t)
