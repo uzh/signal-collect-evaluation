@@ -34,13 +34,14 @@ import scala.util.Random
 import com.signalcollect.graphproviders.synthetic.LogNormal
 import com.signalcollect.examples.Page
 import com.signalcollect.examples.Link
+import com.signalcollect.implementations.serialization.CompressingSerializer
 
 object JobExecutor extends App {
   var job: Job = _
   if (args.size > 0) {
     val configurationBase64 = args(0)
     val configurationBytes = Base64.decodeBase64(configurationBase64)
-    job = Serializer.read[Job](configurationBytes)
+    job = CompressingSerializer.read[Job](configurationBytes)
   } else {
     throw new Exception("No evaluation configuration specified.")
   }

@@ -41,10 +41,11 @@ import scala.util.Random
  * REQUIRES CERTIFICATE FOR LOGIN ON KRAKEN 
  */
 object PageRankEvaluation extends App {
-  //  val executionLocation = LocalHost
+  //    val executionLocation = LocalHost
   val executionLocation = Kraken(System.getProperty("user.name"))
+  lazy val recompileCore = false
 
-  val jobSubmitter = new JobSubmitter(executionLocation = executionLocation)
+  val jobSubmitter = new JobSubmitter(executionLocation = executionLocation, recompileCore = recompileCore)
   val jobGenerator = new PageRankJobGenerator(args(0), args(1))
   val jobs = jobGenerator.generateJobs
   jobSubmitter.submitJobs(jobs)
@@ -52,11 +53,14 @@ object PageRankEvaluation extends App {
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
   lazy val computeGraphBuilders = List(GraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
-  lazy val numberOfRepetitions = 10
-    lazy val numberOfWorkersList = (1 to 24).toList
-//  lazy val numberOfWorkersList = List(24)
-  lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
-  lazy val graphSizes = List(200000)
+  //  lazy val numberOfRepetitions = 10
+  lazy val numberOfRepetitions = 1
+  //    lazy val numberOfWorkersList = (1 to 24).toList
+  lazy val numberOfWorkersList = List(24)
+  //  lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
+  lazy val executionConfigurations = List(ExecutionConfiguration())
+  //  lazy val graphSizes = List(200000)
+  lazy val graphSizes = List(100)
 
   def generateJobs: List[Job] = {
     var jobs = List[Job]()
@@ -73,7 +77,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                 spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
                 submittedByUser = System.getProperty("user.name"),
                 jobId = Random.nextInt.abs,
-                jobDescription = "new performance run before commits, interface changes",
+                jobDescription = "all students done, let's see where we are",
                 execute = { () =>
                   var statsMap = Map[String, String]()
                   statsMap += (("algorithm", "PageRank"))
@@ -86,14 +90,14 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                       computeGraph.addVertex(new Page(targetId, 0.85))
                       computeGraph.addEdge(new Link(sourceId, targetId))
                   }
-                  
-//                  //Reduced message traffic version for loading the graph
-//                  
-//                  val pageFactory = new VertexFactory(new LogNormalParameters(sigma, mu, graphSize))
-//                  for(id<-0 until graphSize) {
-//                    computeGraph.addVertex(pageFactory.getPageForId(id))
-//                  }                
-//                  
+
+                  //                  //Reduced message traffic version for loading the graph
+                  //                  
+                  //                  val pageFactory = new VertexFactory(new LogNormalParameters(sigma, mu, graphSize))
+                  //                  for(id<-0 until graphSize) {
+                  //                    computeGraph.addVertex(pageFactory.getPageForId(id))
+                  //                  }                
+                  //                  
                   val startDate = new Date
                   val dateFormat = new SimpleDateFormat("dd-MM-yyyy")
                   val timeFormat = new SimpleDateFormat("HH:mm:ss")
