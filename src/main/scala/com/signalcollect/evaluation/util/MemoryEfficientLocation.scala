@@ -80,6 +80,8 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable {
   def outgoingEdgeCount = targetIdArray.size
 
   def afterInitialization(messageBus: MessageBus[Any]) = {}
+  def beforeRemoval(messageBus: MessageBus[Any]) = {}
+  def addIncomingEdge(e: Edge): Boolean = true
 
   override def removeOutgoingEdge(edgeId: EdgeId[_, _]): Boolean = {
     throw new UnsupportedOperationException

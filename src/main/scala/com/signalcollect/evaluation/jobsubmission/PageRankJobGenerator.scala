@@ -26,8 +26,8 @@ import com.signalcollect.evaluation.configuration._
 import com.signalcollect.evaluation.util._
 import com.signalcollect.implementations.logging.DefaultLogger
 import com.signalcollect.graphproviders.synthetic.LogNormal
-import com.signalcollect.examples.Page
-import com.signalcollect.examples.Link
+import com.signalcollect.examples.PageRankVertex
+import com.signalcollect.examples.PageRankEdge
 
 import java.util.Date
 import java.text.SimpleDateFormat
@@ -86,9 +86,9 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                   val edgeTuples = new LogNormal(graphSize, seed, sigma, mu)
                   edgeTuples foreach {
                     case (sourceId, targetId) =>
-                      computeGraph.addVertex(new Page(sourceId, 0.85))
-                      computeGraph.addVertex(new Page(targetId, 0.85))
-                      computeGraph.addEdge(new Link(sourceId, targetId))
+                      computeGraph.addVertex(new PageRankVertex(sourceId, 0.85))
+                      computeGraph.addVertex(new PageRankVertex(targetId, 0.85))
+                      computeGraph.addEdge(new PageRankEdge(sourceId, targetId))
                   }
 
                   //                  //Reduced message traffic version for loading the graph

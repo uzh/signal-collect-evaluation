@@ -32,8 +32,6 @@ import java.text.SimpleDateFormat
 import com.signalcollect.evaluation.configuration._
 import scala.util.Random
 import com.signalcollect.graphproviders.synthetic.LogNormal
-import com.signalcollect.examples.Page
-import com.signalcollect.examples.Link
 import com.signalcollect.implementations.serialization.CompressingSerializer
 
 object JobExecutor extends App {
