@@ -26,8 +26,7 @@ import com.signalcollect.evaluation.configuration._
 import com.signalcollect.evaluation.util._
 import com.signalcollect.implementations.logging.DefaultLogger
 import com.signalcollect.graphproviders.synthetic.LogNormal
-import com.signalcollect.examples.PageRankVertex
-import com.signalcollect.examples.PageRankEdge
+import com.signalcollect.evaluation.algorithms._
 
 import java.util.Date
 import java.text.SimpleDateFormat

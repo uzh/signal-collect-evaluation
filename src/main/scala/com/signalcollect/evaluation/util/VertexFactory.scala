@@ -20,6 +20,7 @@
 
 package com.signalcollect.evaluation.util
 
+import com.signalcollect.evaluation.algorithms._
 import scala.math._
 import scala.util.Random
 import scala.collection.mutable.HashSet

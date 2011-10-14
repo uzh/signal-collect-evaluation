@@ -18,6 +18,7 @@
 package com.signalcollect.evaluation.jobsubmission
 
 import com.signalcollect._
+import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.evaluation.util._
 import com.signalcollect.evaluation.configuration._
 import scala.util.Random
