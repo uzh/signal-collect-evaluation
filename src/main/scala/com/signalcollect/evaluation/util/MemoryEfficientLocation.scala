@@ -97,7 +97,9 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable {
    * Returns the ids of all vertices from which this vertex has an incoming edge, optional.
    */
   def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
-
+  def getOutgoingEdgeMap: Option[Map[EdgeId[Id, _], Edge]] = None
+  def getOutgoingEdges: Option[Iterable[Edge]] = None
+  
   /**
    * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
    * supported or if there is no such signal.

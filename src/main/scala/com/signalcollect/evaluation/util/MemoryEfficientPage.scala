@@ -50,7 +50,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
     }
     edgeAdded
   }
-  
+
   def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
   def collect: Float = {
@@ -138,11 +138,10 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
   }
 
   def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
-  
-  /**
-   * Returns the ids of all vertices from which this vertex has an incoming edge, optional.
-   */
+
   def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
+  def getOutgoingEdgeMap: Option[Map[EdgeId[Id, _], Edge]] = None
+  def getOutgoingEdges: Option[Iterable[Edge]] = None
 
   /**
    * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
@@ -154,27 +153,27 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 }
 
 class MemoryEfficientLink(var s: Int, var t: Int) extends Edge with Externalizable {
-  
+
   def this() = this(-1, -1)
-  
+
   type Signal = Double
   type SourceId = Int
   type TargetId = Int
-  
+
   def weight = 1.0
-  
+
   def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus[Any]) = {} //Since this is handled by the Page directly
-  def signal(sourceVertex: SourceVertex): Signal =  0.0//Since this is handled by the Page directly
+  def signal(sourceVertex: SourceVertex): Signal = 0.0 //Since this is handled by the Page directly
   def id = DefaultEdgeId(s, t)
-  
+
   def writeExternal(out: ObjectOutput) {
     out.writeInt(s)
     out.writeInt(t)
   }
-  
+
   def readExternal(in: ObjectInput) {
     s = in.readInt
     t = in.readInt
   }
-  
+
 }
