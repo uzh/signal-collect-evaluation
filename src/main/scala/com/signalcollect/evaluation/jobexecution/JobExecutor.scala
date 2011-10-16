@@ -25,21 +25,20 @@ package com.signalcollect.evaluation.jobexecution
 import org.apache.commons.codec.binary.Base64
 import com.signalcollect.interfaces._
 import com.signalcollect.configuration._
-import com.signalcollect.evaluation.util.Serializer
 import com.signalcollect.evaluation.spreadsheets._
 import java.util.Date
 import java.text.SimpleDateFormat
 import com.signalcollect.evaluation.configuration._
 import scala.util.Random
 import com.signalcollect.graphproviders.synthetic.LogNormal
-import com.signalcollect.implementations.serialization.CompressingSerializer
+import com.signalcollect.implementations.serialization.DefaultSerializer
 
 object JobExecutor extends App {
   var job: Job = _
   if (args.size > 0) {
     val configurationBase64 = args(0)
     val configurationBytes = Base64.decodeBase64(configurationBase64)
-    job = CompressingSerializer.read[Job](configurationBytes)
+    job = DefaultSerializer.read[Job](configurationBytes)
   } else {
     throw new Exception("No evaluation configuration specified.")
   }

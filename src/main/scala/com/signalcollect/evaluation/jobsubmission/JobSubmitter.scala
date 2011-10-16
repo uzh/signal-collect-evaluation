@@ -23,12 +23,11 @@ package com.signalcollect.evaluation.jobsubmission
 import org.apache.commons.codec.binary.Base64
 import com.signalcollect.configuration._
 import com.signalcollect.evaluation.configuration.Job
-import com.signalcollect.evaluation.util.Serializer
 import scala.util.Random
 import scala.sys.process._
 import com.signalcollect.evaluation.jobexecution.JobExecutor
 import java.io.File
-import com.signalcollect.implementations.serialization.CompressingSerializer
+import com.signalcollect.implementations.serialization.DefaultSerializer
 
 sealed trait ExecutionLocation
 object LocalHost extends ExecutionLocation
@@ -84,7 +83,7 @@ class JobSubmitter(
 
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (job <- jobs) {
-      val serializedConfig = CompressingSerializer.write(job)
+      val serializedConfig = DefaultSerializer.write(job)
       val base64Config = Base64.encodeBase64String(serializedConfig).replace("\n", "").replace("\r", "")
       val script = getShellScript(job.jobId.toString, krakenJarname, mainClass, base64Config)
       val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
