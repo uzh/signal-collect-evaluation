@@ -55,6 +55,7 @@ class JobExecutor {
       statsMap += (("submittedByUser", job.submittedByUser))
       statsMap += (("jobId", job.jobId.toString))
       statsMap += (("executionHostname", java.net.InetAddress.getLocalHost.getHostName))
+      statsMap += (("java.runtime.version", System.getProperties.get("java.runtime.version").toString))
       if (job.spreadsheetConfiguration.isDefined) {
         submitSpreadsheetRow(job.spreadsheetConfiguration.get, statsMap)
       } else {

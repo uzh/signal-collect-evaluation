@@ -52,14 +52,14 @@ object PageRankEvaluation extends App {
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
   lazy val computeGraphBuilders = List(GraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
-  //  lazy val numberOfRepetitions = 10
-  lazy val numberOfRepetitions = 1
+    lazy val numberOfRepetitions = 10
+//  lazy val numberOfRepetitions = 1
   //    lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)
   //  lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
   lazy val executionConfigurations = List(ExecutionConfiguration())
-  //  lazy val graphSizes = List(200000)
-  lazy val graphSizes = List(100)
+    lazy val graphSizes = List(200000)
+//  lazy val graphSizes = List(100)
 
   def generateJobs: List[Job] = {
     var jobs = List[Job]()
@@ -76,7 +76,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                 spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
                 submittedByUser = System.getProperty("user.name"),
                 jobId = Random.nextInt.abs,
-                jobDescription = "all students done, let's see where we are",
+                jobDescription = "hopefully running on java 7",
                 execute = { () =>
                   var statsMap = Map[String, String]()
                   statsMap += (("algorithm", "PageRank"))
@@ -121,6 +121,8 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                   statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
                   statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString))
                   statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString))
+                  statsMap += (("preExecutionGcTimeInMilliseconds", stats.executionStatistics.preExecutionGcTimeInMilliseconds.toString))
+                  statsMap += (("terminationReason", stats.executionStatistics.terminationReason.toString))
                   val endDate = new Date
                   statsMap += (("endDate", dateFormat.format(endDate)))
                   statsMap += (("endTime", timeFormat.format(endDate)))
