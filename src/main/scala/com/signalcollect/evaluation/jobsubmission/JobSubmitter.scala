@@ -34,6 +34,7 @@ object LocalHost extends ExecutionLocation
 case class Kraken(username: String = System.getProperty("user.name")) extends ExecutionLocation
 
 class JobSubmitter(
+  val jvmParameters: String = "",
   executionLocation: ExecutionLocation = Kraken(),
   val recompileCore: Boolean = true,
   val jarDescription: String = Random.nextInt.abs.toString,
@@ -110,7 +111,7 @@ jarname=""" + jarname + """
 mainClass=""" + mainClass + """
 serializedConfiguration=""" + serializedConfiguration + """
 workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}
-vm_args="-Xmx35000m -Xms35000m -d64"
+vm_args="""" + jvmParameters + """ -Xmx35000m -Xms35000m -d64"
 
 # copy jar
 cp ~/$jarname $workingDir/
