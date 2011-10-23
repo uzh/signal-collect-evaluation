@@ -31,14 +31,14 @@ import java.text.SimpleDateFormat
 import com.signalcollect.evaluation.configuration._
 import scala.util.Random
 import com.signalcollect.graphproviders.synthetic.LogNormal
-import com.signalcollect.implementations.serialization.DefaultSerializer
+import com.signalcollect.implementations.serialization.CompressingSerializer
 
 object JobExecutor extends App {
   var job: Job = _
   if (args.size > 0) {
     val configurationBase64 = args(0)
     val configurationBytes = Base64.decodeBase64(configurationBase64)
-    job = DefaultSerializer.read[Job](configurationBytes)
+    job = CompressingSerializer.read[Job](configurationBytes)
   } else {
     throw new Exception("No evaluation configuration specified.")
   }
