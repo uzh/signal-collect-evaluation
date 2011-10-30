@@ -42,9 +42,9 @@ import scala.util.Random
 object PageRankEvaluation extends App {
   //    val executionLocation = LocalHost
   val executionLocation = Kraken(System.getProperty("user.name"))
-  lazy val recompileCore = false
-    val jvmParameters = "-agentpath:/home/user/stutz/libyjpagent.so=port=10001,tracing,noj2ee,monitors,dir=/home/user/stutz/Snapshots"
-//  val jvmParameters = ""
+  lazy val recompileCore = true
+  //    val jvmParameters = "-agentpath:/home/user/stutz/libyjpagent.so=port=10001,tracing,noj2ee,monitors,dir=/home/user/stutz/Snapshots"
+  val jvmParameters = ""
   val jobSubmitter = new JobSubmitter(jvmParameters = jvmParameters, executionLocation = executionLocation, recompileCore = recompileCore)
   val jobGenerator = new PageRankJobGenerator(args(0), args(1))
   val jobs = jobGenerator.generateJobs
@@ -52,12 +52,13 @@ object PageRankEvaluation extends App {
 }
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
-  lazy val computeGraphBuilders = List(GraphBuilder) /*List(DefaultComputeGraphBuilder, DefaultComputeGraphBuilder.withMessageBusFactory(messageBus.AkkaBus).withWorkerFactory(worker.AkkaLocal))*/
-    lazy val numberOfRepetitions = 1
-//  lazy val numberOfRepetitions = 10
-//    lazy val numberOfWorkersList = (1 to 24).toList
+  lazy val computeGraphBuilders = List(GraphBuilder)
+  //  lazy val numberOfRepetitions = 20
+  lazy val numberOfRepetitions = 1
+  //    lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)
-  //  lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
+  //    lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
+  //  lazy val executionConfigurations = List(ExecutionConfiguration(executionMode = SynchronousExecutionMode))
   lazy val executionConfigurations = List(ExecutionConfiguration())
   lazy val graphSizes = List(200000)
   //  lazy val graphSizes = List(10000)
@@ -78,7 +79,8 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                 spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
                 submittedByUser = System.getProperty("user.name"),
                 jobId = Random.nextInt.abs,
-                jobDescription = "VERTEXID=>WORKERID ID CALCULATION OPTIMIZATION",
+                //                jobDescription = "Full Evaluation before release, r611 in Google Code SVN repo",
+                jobDescription = "added serialization back in",
                 execute = { () =>
                   var statsMap = Map[String, String]()
                   statsMap += (("algorithm", "PageRank"))

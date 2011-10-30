@@ -27,7 +27,8 @@ import scala.util.Random
 import scala.sys.process._
 import com.signalcollect.evaluation.jobexecution.JobExecutor
 import java.io.File
-import com.signalcollect.implementations.serialization.CompressingSerializer
+import java.io.FileOutputStream
+import com.signalcollect.implementations.serialization.DefaultSerializer
 
 sealed trait ExecutionLocation
 object LocalHost extends ExecutionLocation
@@ -84,9 +85,13 @@ class JobSubmitter(
 
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (job <- jobs) {
-      val compressedSerializedConfig = CompressingSerializer.write(job)
-      val compressedBase64Config = Base64.encodeBase64String(compressedSerializedConfig).replace("\n", "").replace("\r", "")
-      val script = getShellScript(job.jobId.toString, krakenJarname, mainClass, compressedBase64Config)
+      val config = DefaultSerializer.write(job)
+      val out = new FileOutputStream(job.jobId + ".config")
+      out.write(config);
+      out.close
+      val copyConfig = "scp -v " + job.jobId + ".config" + " " + krakenUsername + "@kraken.ifi.uzh.ch:"
+      copyConfig !!
+      val script = getShellScript(job.jobId.toString, krakenJarname, mainClass)
       val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
       val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
       println(krakenShell.execute(qsubCommand))
@@ -95,7 +100,7 @@ class JobSubmitter(
     krakenShell.exit
   }
 
-  def getShellScript(jobId: String, jarname: String, mainClass: String, serializedConfiguration: String): String = {
+  def getShellScript(jobId: String, jarname: String, mainClass: String): String = {
     val script = """
 #!/bin/bash
 #PBS -N """ + jobId + """
@@ -109,7 +114,6 @@ class JobSubmitter(
 
 jarname=""" + jarname + """
 mainClass=""" + mainClass + """
-serializedConfiguration=""" + serializedConfiguration + """
 workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}
 vm_args="""" + jvmParameters + """ -Xmx35000m -Xms35000m -d64"
 
@@ -117,7 +121,7 @@ vm_args="""" + jvmParameters + """ -Xmx35000m -Xms35000m -d64"
 cp ~/$jarname $workingDir/
 
 # run test
-cmd="java $vm_args -cp $workingDir/$jarname $mainClass $serializedConfiguration"
+cmd="java $vm_args -cp $workingDir/$jarname $mainClass """ + jobId + """"
 $cmd
 """
     script

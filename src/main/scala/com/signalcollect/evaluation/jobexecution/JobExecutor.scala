@@ -31,16 +31,26 @@ import java.text.SimpleDateFormat
 import com.signalcollect.evaluation.configuration._
 import scala.util.Random
 import com.signalcollect.graphproviders.synthetic.LogNormal
-import com.signalcollect.implementations.serialization.CompressingSerializer
+import com.signalcollect.implementations.serialization.DefaultSerializer
+import java.io.ObjectInputStream
+import java.io.FileInputStream
+import java.io.File
 
 object JobExecutor extends App {
   var job: Job = _
   if (args.size > 0) {
-    val configurationBase64 = args(0)
-    val configurationBytes = Base64.decodeBase64(configurationBase64)
-    job = CompressingSerializer.read[Job](configurationBytes)
+    try {
+      val jobId = args(0).toInt
+      val configFile = new File(jobId + ".config")
+      val jobArray = new Array[Byte](configFile.length.toInt)
+      val fileInputStream = new FileInputStream(configFile)
+      fileInputStream.read(jobArray)
+      job = DefaultSerializer.read[Job](jobArray)
+    } catch {
+      case e: Exception => throw new Exception("Could not load configuration: " + e.getStackTrace)
+    }
   } else {
-    throw new Exception("No evaluation configuration specified.")
+    throw new Exception("No jobId specified.")
   }
   val executor = new JobExecutor
   executor.run(job)
