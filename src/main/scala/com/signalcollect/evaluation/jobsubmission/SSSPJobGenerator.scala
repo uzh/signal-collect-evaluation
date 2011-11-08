@@ -85,7 +85,7 @@ class SSSPJobGenerator(gmailAccount: String, gmailPassword: String) extends Seri
                   statsMap += (("numberOfWorkers", numberOfWorkers.toString))
                   statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTimeInMilliseconds.toString))
                   statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTimeInMilliseconds.toString))
-                  statsMap += (("graphLoadingWaitInMilliseconds", stats.executionStatistics.graphLoadingWaitInMilliseconds.toString))
+                  statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTimeInMilliseconds.toString))
                   statsMap += (("executionMode", stats.parameters.executionMode.toString))
                   statsMap += (("workerFactory", stats.config.workerConfiguration.workerFactory.name))
                   statsMap += (("storageFactory", stats.config.workerConfiguration.storageFactory.name))

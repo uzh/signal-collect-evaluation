@@ -62,7 +62,7 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable {
     if (!targetIdArray.isEmpty) {
       val signal = state + 1 //default weight = 1
       targetIdArray.foreach(targetId => {
-        messageBus.sendToWorkerForVertexId(SignalMessage(DefaultEdgeId(id, targetId), signal), targetId)
+        messageBus.sendToWorkerForVertexId(SignalMessage(new DefaultEdgeId(id, targetId), signal), targetId)
       })
     }
     stateChangedSinceSignal = false

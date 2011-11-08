@@ -61,7 +61,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
     if (!targetIdArray.isEmpty) {
       val signal = state / targetIdArray.size
       targetIdArray.foreach(targetId => {
-        messageBus.sendToWorkerForVertexId(SignalMessage(DefaultEdgeId(id, targetId), signal), targetId)
+        messageBus.sendToWorkerForVertexId(SignalMessage(new DefaultEdgeId(id, targetId), signal), targetId)
       })
     }
     lastSignalState = state
@@ -165,7 +165,7 @@ class MemoryEfficientLink(var s: Int, var t: Int) extends Edge with Externalizab
 
   def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus[Any]) = {} //Since this is handled by the Page directly
   def signal(sourceVertex: SourceVertex): Signal = 0.0 //Since this is handled by the Page directly
-  def id = DefaultEdgeId(s, t)
+  def id = new DefaultEdgeId(s, t)
 
   def writeExternal(out: ObjectOutput) {
     out.writeInt(s)

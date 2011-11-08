@@ -29,7 +29,7 @@ import com.signalcollect._
  *  @param s: the identifier of the source vertex
  *  @param t: the identifier of the target vertex
  */
-class PageRankEdge(s: Any, t: Any) extends DefaultEdge(s, t) {
+class PageRankEdge(s: Int, t: Int) extends DefaultEdge(s, t) {
   
   type SourceVertex = PageRankVertex
   
@@ -47,7 +47,7 @@ class PageRankEdge(s: Any, t: Any) extends DefaultEdge(s, t) {
  *  @param id: the identifier of this vertex
  *  @param dampingFactor: @see <a href="http://en.wikipedia.org/wiki/PageRank">PageRank algorithm</a>
  */
-class PageRankVertex(id: Any, dampingFactor: Double = 0.85) extends DataGraphVertex(id, 1 - dampingFactor) {
+class PageRankVertex(id: Int, dampingFactor: Double = 0.85) extends DataGraphVertex(id, 1 - dampingFactor) {
 
   type Signal = Double
 
@@ -56,7 +56,7 @@ class PageRankVertex(id: Any, dampingFactor: Double = 0.85) extends DataGraphVer
    *  received from neighbors and the damping factor.
    */
   def collect(oldState: State, mostRecentSignals: Iterable[Double]): Double = {
-    1 - dampingFactor + dampingFactor * mostRecentSignals.foldLeft(0.0)(_ + _)
+    1 - dampingFactor + dampingFactor * mostRecentSignals.sum
   }
 
   override def scoreSignal: Double = {
