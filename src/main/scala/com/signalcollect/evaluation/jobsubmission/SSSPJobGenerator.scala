@@ -18,6 +18,7 @@
 package com.signalcollect.evaluation.jobsubmission
 
 import com.signalcollect._
+import com.signalcollect.configuration._
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.evaluation.util._
 import com.signalcollect.evaluation.configuration._
@@ -41,7 +42,7 @@ class SSSPJobGenerator(gmailAccount: String, gmailPassword: String) extends Seri
   lazy val numberOfRepetitions = 2
   //  lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(2)
-  lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
+  lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = ExecutionMode.Synchronous))
   lazy val graphSizes = List(20000)
 
   def generateJobs: List[Job] = {

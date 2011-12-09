@@ -26,12 +26,13 @@ import com.signalcollect.evaluation.configuration._
 import com.signalcollect.evaluation.util._
 import com.signalcollect.implementations.logging.DefaultLogger
 import com.signalcollect.graphproviders.synthetic.LogNormal
+import com.signalcollect.graphproviders.synthetic.Partitions
 import com.signalcollect.evaluation.algorithms._
-
 import java.util.Date
 import java.text.SimpleDateFormat
-
 import scala.util.Random
+import com.signalcollect.implementations.logging.DefaultLogger
+import com.signalcollect.graphproviders.synthetic.ErdosRenyi
 
 /*
  * Packages the application, deploys the benchmarking jar/script to kraken
@@ -40,59 +41,82 @@ import scala.util.Random
  * REQUIRES CERTIFICATE FOR LOGIN ON KRAKEN 
  */
 object PageRankEvaluation extends App {
-  //    val executionLocation = LocalHost
+  //      val executionLocation = LocalHost
   val executionLocation = Kraken(System.getProperty("user.name"))
-  lazy val recompileCore = true
-  //    val jvmParameters = "-agentpath:/home/user/stutz/libyjpagent.so=port=10001,tracing,noj2ee,monitors,dir=/home/user/stutz/Snapshots"
+  //  lazy val recompileCore = true
+  lazy val recompileCore = false
+  //  val jvmParameters = "-agentpath:/home/user/stutz/libyjpagent.so=port=10001,tracing,noj2ee,monitors,dir=/home/user/stutz/Snapshots"
   val jvmParameters = ""
-  val jobSubmitter = new JobSubmitter(jvmParameters = jvmParameters, executionLocation = executionLocation, recompileCore = recompileCore)
+  //  val jvmParameters = "-XX:+AggressiveHeap"
+  val jobSubmitter = new JobSubmitter(mailAddress = mailAddress, jvmParameters = jvmParameters, executionLocation = executionLocation, recompileCore = recompileCore)
   val jobGenerator = new PageRankJobGenerator(args(0), args(1))
+  val mailAddress = args(2)
   val jobs = jobGenerator.generateJobs
   jobSubmitter.submitJobs(jobs)
 }
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
-  lazy val computeGraphBuilders = List(GraphBuilder)
-  //  lazy val numberOfRepetitions = 20
-  lazy val numberOfRepetitions = 1
-  //    lazy val numberOfWorkersList = (1 to 24).toList
+  lazy val computeGraphBuilders = List(GraphBuilder.withLogger(new DefaultLogger))
+    lazy val numberOfRepetitions = 1
+//  lazy val numberOfRepetitions = 10
+//        lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)
-  //    lazy val executionConfigurations = List(ExecutionConfiguration(), ExecutionConfiguration(executionMode = SynchronousExecutionMode))
+  lazy val signalThreshold = 0.01
+  //  lazy val numberOfWorkersList = List(1, 24)
+  lazy val executionConfigurations = List(ExecutionConfiguration().withSignalThreshold(signalThreshold), ExecutionConfiguration(executionMode = ExecutionMode.Synchronous).withSignalThreshold(signalThreshold))
   //  lazy val executionConfigurations = List(ExecutionConfiguration(executionMode = SynchronousExecutionMode))
-  lazy val executionConfigurations = List(ExecutionConfiguration())
-  lazy val graphSizes = List(200000)
+  //  lazy val executionConfigurations = List(ExecutionConfiguration())
+  lazy val graphSizes = List(500000)
+  //  lazy val graphSizes = List(200000)
   //  lazy val graphSizes = List(10000)
-  //  lazy val graphSizes = List(100)
+  //    lazy val graphSizes = List(100)
 
   def generateJobs: List[Job] = {
     var jobs = List[Job]()
     for (computeGraphBuilder <- computeGraphBuilders) {
       for (executionConfiguration <- executionConfigurations) {
-        for (numberOfWorkers <- numberOfWorkersList) {
+        for (repetition <- 1 to numberOfRepetitions) {
           for (graphSize <- graphSizes) {
-            for (repetition <- 1 to numberOfRepetitions) {
+            for (numberOfWorkers <- numberOfWorkersList) {
               val seed = 0
-              val sigma = 1.0
-              val mu = 3.0
+              val sigma = 1.3
+              val mu = 4.0
+              //              val edgeProbability = 10 / graphSize
               val builder = computeGraphBuilder.withNumberOfWorkers(numberOfWorkers)
               val job = new Job(
                 spreadsheetConfiguration = Some(new SpreadsheetConfiguration(gmailAccount, gmailPassword, "evaluation", "data")),
                 submittedByUser = System.getProperty("user.name"),
                 jobId = Random.nextInt.abs,
-                //                jobDescription = "Full Evaluation before release, r611 in Google Code SVN repo",
-                jobDescription = "added serialization back in",
+                jobDescription = "pagerank problem-size-scalability evaluation on log-normal graph",
                 execute = { () =>
+                  val jobStart = System.nanoTime
+                  val startDate = new Date
+                  val dateFormat = new SimpleDateFormat("dd-MM-yyyy")
+                  val timeFormat = new SimpleDateFormat("HH:mm:ss")
                   var statsMap = Map[String, String]()
                   statsMap += (("algorithm", "PageRank"))
                   val computeGraph = builder.build
+                  //                  statsMap += (("graphStructure", "ErdosRenyi(" + graphSize + ", " + edgeProbability + ")"))
                   statsMap += (("graphStructure", "LogNormal(" + graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"))
                   val edgeTuples = new LogNormal(graphSize, seed, sigma, mu)
-                  edgeTuples foreach {
+                  //                  val edgeTuples = new Partitions(24, graphSize, seed, sigma, mu)
+                  //                  val edgeTuples = new ErdosRenyi(graphSize, edgeProbability)
+
+                  val graphLoadingStart = System.nanoTime
+                  val preGraphLoadingTime = graphLoadingStart - jobStart
+                  val preGraphLoadingTimeInMilliseconds = preGraphLoadingTime / 1000000l
+
+                  for (id <- (0 until graphSize).par) {
+                    computeGraph.addVertex(new PageRankVertex(id, 0.15))
+                  }
+
+                  edgeTuples.par foreach {
                     case (sourceId, targetId) =>
-                      computeGraph.addVertex(new PageRankVertex(sourceId, 0.85))
-                      computeGraph.addVertex(new PageRankVertex(targetId, 0.85))
                       computeGraph.addEdge(new PageRankEdge(sourceId, targetId))
                   }
+                  val graphLoadingStop = System.nanoTime
+                  val graphLoadingTime = graphLoadingStop - graphLoadingStart
+                  val graphLoadingTimeInMilliseconds = graphLoadingTime / 1000000l
 
                   //                  //Reduced message traffic version for loading the graph
                   //                  
@@ -100,17 +124,24 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                   //                  for(id<-0 until graphSize) {
                   //                    computeGraph.addVertex(pageFactory.getPageForId(id))
                   //                  }                
-                  //                  
-                  val startDate = new Date
-                  val dateFormat = new SimpleDateFormat("dd-MM-yyyy")
-                  val timeFormat = new SimpleDateFormat("HH:mm:ss")
+                  //
+
                   statsMap += (("startDate", dateFormat.format(startDate)))
                   statsMap += (("startTime", timeFormat.format(startDate)))
+
+                  val externallyMeasuredExecutionStartTime = System.nanoTime
                   val stats = computeGraph.execute(executionConfiguration)
+                  val externallyMeasuredExecutionStopTime = System.nanoTime
+                  val externallyMeasuredExecutionTime = externallyMeasuredExecutionStopTime - externallyMeasuredExecutionStartTime
+                  val externallyMeasuredExecutionTimeInMilliseconds = externallyMeasuredExecutionTime / 1000000l
+
+                  computeGraph.shutdown
+
                   statsMap += (("numberOfWorkers", numberOfWorkers.toString))
                   statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTimeInMilliseconds.toString))
                   statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTimeInMilliseconds.toString))
-                  statsMap += (("graphLoadingWaitInMilliseconds", stats.executionStatistics.graphLoadingWaitInMilliseconds.toString))
+                  statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTimeInMilliseconds.toString))
+                  statsMap += (("graphLoadingTimeInMilliseconds", (graphLoadingTimeInMilliseconds + stats.executionStatistics.graphIdleWaitingTimeInMilliseconds).toString))
                   statsMap += (("executionMode", stats.parameters.executionMode.toString))
                   statsMap += (("workerFactory", stats.config.workerConfiguration.workerFactory.name))
                   statsMap += (("storageFactory", stats.config.workerConfiguration.storageFactory.name))
@@ -130,7 +161,13 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                   val endDate = new Date
                   statsMap += (("endDate", dateFormat.format(endDate)))
                   statsMap += (("endTime", timeFormat.format(endDate)))
-                  computeGraph.shutdown
+                  val jobStop = System.nanoTime
+                  val jobExecutionTime = jobStop - jobStart
+                  val jobExecutionTimeInMilliseconds = jobExecutionTime / 1000000l
+                  statsMap += (("jobExecutionTimeInMilliseconds", jobExecutionTimeInMilliseconds.toString))
+                  statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTimeInMilliseconds.toString))
+                  statsMap += (("preGraphLoadingTimeInMilliseconds", preGraphLoadingTimeInMilliseconds.toString))
+                  statsMap += (("externallyMeasuredExecutionTimeInMilliseconds", externallyMeasuredExecutionTimeInMilliseconds.toString))
                   statsMap
                 })
               jobs = job :: jobs

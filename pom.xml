@@ -57,7 +57,7 @@
 		<dependency>
 			<groupId>com.signalcollect</groupId>
 			<artifactId>core</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.1.1</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>

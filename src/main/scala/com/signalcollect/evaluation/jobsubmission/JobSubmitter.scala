@@ -35,6 +35,7 @@ object LocalHost extends ExecutionLocation
 case class Kraken(username: String = System.getProperty("user.name")) extends ExecutionLocation
 
 class JobSubmitter(
+  val mailAddress: String = "", 
   val jvmParameters: String = "",
   executionLocation: ExecutionLocation = Kraken(),
   val recompileCore: Boolean = true,
@@ -100,17 +101,24 @@ class JobSubmitter(
     krakenShell.exit
   }
 
+//#PBS -l walltime=36000,cput=2400000,mem=50gb
+//#PBS -l walltime=00:59:59,cput=2400000,mem=50gb
+//#PBS -l walltime=11:59:59,cput=2400000,mem=50gb
+  
   def getShellScript(jobId: String, jarname: String, mainClass: String): String = {
     val script = """
 #!/bin/bash
 #PBS -N """ + jobId + """
 #PBS -l nodes=1:ppn=23
-#PBS -l walltime=36000,cput=2400000,mem=20gb
+#PBS -l walltime=00:59:59,cput=2400000,mem=50gb
 #PBS -j oe
 #PBS -m b
 #PBS -m e
 #PBS -m a
 #PBS -V
+#PBS -o out/""" + jobId + """.out
+#PBS -e err/""" + jobId + """.err
+""" + { if (mailAddress != null && mailAddress.length > 0) "#PBS -m a -M " + mailAddress else "" } + """
 
 jarname=""" + jarname + """
 mainClass=""" + mainClass + """
