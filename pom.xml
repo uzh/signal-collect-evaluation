@@ -17,6 +17,11 @@
 			<layout>default</layout>
 			<url>file://${basedir}/lib</url>
 		</repository>
+        <repository>
+                <id>ddis-public-release</id>
+                <name>DDIS Public Release Repository</name>
+                <url>https://bigblue.ifi.uzh.ch/nexus/content/repositories/ddis-public/</url>
+        </repository>
 	</repositories>
 	<modules>
 	</modules>
