@@ -32,7 +32,6 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import scala.util.Random
 import com.signalcollect.implementations.logging.DefaultLogger
-import com.signalcollect.graphproviders.synthetic.ErdosRenyi
 
 /*
  * Packages the application, deploys the benchmarking jar/script to kraken
@@ -61,7 +60,8 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
 //  lazy val numberOfRepetitions = 10
 //        lazy val numberOfWorkersList = (1 to 24).toList
   lazy val numberOfWorkersList = List(24)
-  lazy val signalThreshold = 0.01
+//  lazy val signalThreshold = 0.01
+  lazy val signalThreshold = 0.000000001
   //  lazy val numberOfWorkersList = List(1, 24)
   lazy val executionConfigurations = List(ExecutionConfiguration().withSignalThreshold(signalThreshold), ExecutionConfiguration(executionMode = ExecutionMode.Synchronous).withSignalThreshold(signalThreshold))
   //  lazy val executionConfigurations = List(ExecutionConfiguration(executionMode = SynchronousExecutionMode))
