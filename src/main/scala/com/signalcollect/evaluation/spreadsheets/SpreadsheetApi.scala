@@ -10,7 +10,7 @@ class SpreadsheetApi(
   gmailAccount: String,
   gmailPassword: String) {
 
-  val service = new SpreadsheetService("uzh-signalcollect-0.0.1")
+  val service = new SpreadsheetService("uzh-signalcollect-2.0.0")
   service.setUserCredentials(gmailAccount, gmailPassword)
 
   def insertRow(worksheet: WorksheetEntry, dataMap: Map[String, String]) {

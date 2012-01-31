@@ -49,7 +49,7 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable {
 
   def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
-  def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus[Any]) {
+  def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus) {
     val castedSignals = signals.asInstanceOf[Traversable[SignalMessage[Int, _, Int]]].map(_.signal)
     val newState = castedSignals.foldLeft(state)(math.min(_, _))
     if (newState != state) {
@@ -58,7 +58,7 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable {
     }
   }
 
-  override def executeSignalOperation(messageBus: MessageBus[Any]) {
+  override def executeSignalOperation(messageBus: MessageBus) {
     if (!targetIdArray.isEmpty) {
       val signal = state + 1 //default weight = 1
       targetIdArray.foreach(targetId => {
@@ -80,8 +80,8 @@ class MemoryEfficientLocation(var id: Int) extends Vertex with Externalizable {
 
   def outgoingEdgeCount = targetIdArray.size
 
-  def afterInitialization(messageBus: MessageBus[Any]) = {}
-  def beforeRemoval(messageBus: MessageBus[Any]) = {}
+  def afterInitialization(messageBus: MessageBus) = {}
+  def beforeRemoval(messageBus: MessageBus) = {}
   def addIncomingEdge(e: Edge): Boolean = true
   def removeIncomingEdge(edgeId: EdgeId[_, _]): Boolean = true
   

@@ -57,7 +57,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
     0.15f + 0.85f * mostRecentSignalMap.values.foldLeft(0.0f)(_ + _)
   }
 
-  override def executeSignalOperation(messageBus: MessageBus[Any]) {
+  override def executeSignalOperation(messageBus: MessageBus) {
     if (!targetIdArray.isEmpty) {
       val signal = state / targetIdArray.size
       targetIdArray.foreach(targetId => {
@@ -67,7 +67,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
     lastSignalState = state
   }
 
-  def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus[Any]) {
+  def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus) {
     val castS = signals.asInstanceOf[Traversable[SignalMessage[Int, _, Signal]]]
     castS foreach { signal =>
       mostRecentSignalMap += ((signal.edgeId.sourceId, signal.signal))
@@ -87,8 +87,8 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   def outgoingEdgeCount = targetIdArray.size
 
-  def afterInitialization(messageBus: MessageBus[Any]) = {}
-  def beforeRemoval(messageBus: MessageBus[Any]) = {}
+  def afterInitialization(messageBus: MessageBus) = {}
+  def beforeRemoval(messageBus: MessageBus) = {}
   def addIncomingEdge(e: Edge): Boolean = true
   def removeIncomingEdge(edgeId: EdgeId[_, _]): Boolean = true
 
@@ -163,7 +163,7 @@ class MemoryEfficientLink(var s: Int, var t: Int) extends Edge with Externalizab
 
   def weight = 1.0
 
-  def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus[Any]) = {} //Since this is handled by the Page directly
+  def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus) = {} //Since this is handled by the Page directly
   def signal(sourceVertex: SourceVertex): Signal = 0.0 //Since this is handled by the Page directly
   def id = new DefaultEdgeId(s, t)
 

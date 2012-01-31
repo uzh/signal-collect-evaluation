@@ -32,6 +32,8 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import scala.util.Random
 import com.signalcollect.implementations.logging.DefaultLogger
+import akka.util.FiniteDuration
+import java.util.concurrent.TimeUnit
 
 /*
  * Packages the application, deploys the benchmarking jar/script to kraken
@@ -55,7 +57,7 @@ object PageRankEvaluation extends App {
 }
 
 class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends Serializable {
-  lazy val computeGraphBuilders = List(GraphBuilder.withLogger(new DefaultLogger))
+  lazy val computeGraphBuilders = List(GraphBuilder.withLogger(println(_)))
     lazy val numberOfRepetitions = 1
 //  lazy val numberOfRepetitions = 10
 //        lazy val numberOfWorkersList = (1 to 24).toList
@@ -115,8 +117,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                       computeGraph.addEdge(new PageRankEdge(sourceId, targetId))
                   }
                   val graphLoadingStop = System.nanoTime
-                  val graphLoadingTime = graphLoadingStop - graphLoadingStart
-                  val graphLoadingTimeInMilliseconds = graphLoadingTime / 1000000l
+                  val graphLoadingTime = new FiniteDuration(graphLoadingStop - graphLoadingStart, TimeUnit.NANOSECONDS)
 
                   //                  //Reduced message traffic version for loading the graph
                   //                  
@@ -138,14 +139,14 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                   computeGraph.shutdown
 
                   statsMap += (("numberOfWorkers", numberOfWorkers.toString))
-                  statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTimeInMilliseconds.toString))
-                  statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTimeInMilliseconds.toString))
-                  statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTimeInMilliseconds.toString))
-                  statsMap += (("graphLoadingTimeInMilliseconds", (graphLoadingTimeInMilliseconds + stats.executionStatistics.graphIdleWaitingTimeInMilliseconds).toString))
+                  statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTime.toString))
+                  statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTime.toString))
+                  statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTime.toString))
+                  statsMap += (("graphLoadingTimeInMilliseconds", (stats.executionStatistics.graphIdleWaitingTime + graphLoadingTime).toString))
                   statsMap += (("executionMode", stats.parameters.executionMode.toString))
-                  statsMap += (("workerFactory", stats.config.workerConfiguration.workerFactory.name))
-                  statsMap += (("storageFactory", stats.config.workerConfiguration.storageFactory.name))
-                  statsMap += (("messageBusFactory", stats.config.workerConfiguration.messageBusFactory.name))
+                  statsMap += (("workerFactory", stats.config.workerFactory.name))
+                  statsMap += (("storageFactory", stats.config.storageFactory.name))
+                  statsMap += (("messageBusFactory", stats.config.messageBusFactory.name))
                   statsMap += (("logger", stats.config.logger.toString))
                   statsMap += (("signalSteps", stats.executionStatistics.signalSteps.toString))
                   statsMap += (("collectSteps", stats.executionStatistics.collectSteps.toString))
@@ -156,7 +157,6 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                   statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
                   statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString))
                   statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString))
-                  statsMap += (("preExecutionGcTimeInMilliseconds", stats.executionStatistics.preExecutionGcTimeInMilliseconds.toString))
                   statsMap += (("terminationReason", stats.executionStatistics.terminationReason.toString))
                   val endDate = new Date
                   statsMap += (("endDate", dateFormat.format(endDate)))
@@ -165,7 +165,7 @@ class PageRankJobGenerator(gmailAccount: String, gmailPassword: String) extends 
                   val jobExecutionTime = jobStop - jobStart
                   val jobExecutionTimeInMilliseconds = jobExecutionTime / 1000000l
                   statsMap += (("jobExecutionTimeInMilliseconds", jobExecutionTimeInMilliseconds.toString))
-                  statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTimeInMilliseconds.toString))
+                  statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTime.toString))
                   statsMap += (("preGraphLoadingTimeInMilliseconds", preGraphLoadingTimeInMilliseconds.toString))
                   statsMap += (("externallyMeasuredExecutionTimeInMilliseconds", externallyMeasuredExecutionTimeInMilliseconds.toString))
                   statsMap
