@@ -20,7 +20,9 @@
 package com.signalcollect.evaluation.configuration
 
 class Job(
-  val jobId: Int,
-  val submittedByUser: String,
-  val jobDescription: String,
-  val execute: (() => Map[String, String])) extends Serializable
+  var jobId: Int,
+  var spreadsheetConfiguration: Option[SpreadsheetConfiguration],
+  var submittedByUser: String,
+  var jobDescription: String,
+  var execute: (() => Map[String, String])
+) extends Serializable
