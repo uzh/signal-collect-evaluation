@@ -27,7 +27,7 @@ import com.signalcollect.configuration.ExecutionMode
 
 object TestEvaluationSuite extends App {
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Test_Suite_Name", 
-      executionHost = new KrakenHost(krakenUsername = "strebel"  /*System.getProperty("user.name")*/, recompileCore = false)
+      executionHost = new KrakenHost(krakenUsername = System.getProperty("user.name"), recompileCore = false)
       )
   
 //  val evaluation = new EvaluationSuiteCreator(evaluationName = "SSSP_Test")
