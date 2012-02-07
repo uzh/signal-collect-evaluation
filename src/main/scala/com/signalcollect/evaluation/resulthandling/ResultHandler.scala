@@ -1,7 +1,7 @@
 /*
- *  @author Philip Stutz
+ *  @author Daniel Strebel
  *  
- *  Copyright 2011 University of Zurich
+ *  Copyright 2012 University of Zurich
  *      
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
  *  
  */
 
-package com.signalcollect.evaluation.configuration
+package com.signalcollect.evaluation.resulthandling
 
-class Job(
-  val jobId: Int,
-  val submittedByUser: String,
-  val jobDescription: String,
-  val execute: (() => Map[String, String])) extends Serializable
+trait ResultHandler extends Serializable {
+  def addEntry(data: Map[String, String])
+} 

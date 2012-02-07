@@ -1,8 +1,7 @@
 /*
  *  @author Philip Stutz
- *  @author Lorenz Fischer
  *  
- *  Copyright 2010 University of Zurich
+ *  Copyright 2012 University of Zurich
  *      
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,32 +16,27 @@
  *  limitations under the License.
  *  
  */
+package com.signalcollect.evaluation.jobexecution
 
-package com.signalcollect.evaluation.jobsubmission
-
-import org.apache.commons.codec.binary.Base64
-import com.signalcollect.configuration._
-import com.signalcollect.evaluation.configuration.Job
 import scala.util.Random
-import scala.sys.process._
-import com.signalcollect.evaluation.jobexecution.JobExecutor
 import java.io.File
-import java.io.FileOutputStream
+import com.signalcollect.evaluation.configuration.Job
+import scala.sys.process._
+import org.apache.commons.codec.binary.Base64
+import com.signalcollect.evaluation.jobsubmission.SshShell
 import com.signalcollect.implementations.serialization.DefaultSerializer
+import java.io.FileOutputStream
 
-sealed trait ExecutionLocation
-object LocalHost extends ExecutionLocation
-case class Kraken(username: String = System.getProperty("user.name")) extends ExecutionLocation
+object KrakenHost
 
-class JobSubmitter(
-  val mailAddress: String = "", 
+class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
+  val mailAddress: String = "",
   val jvmParameters: String = "",
-  executionLocation: ExecutionLocation = Kraken(),
   val recompileCore: Boolean = true,
   val jarDescription: String = Random.nextInt.abs.toString,
   val pathToSignalcollectCorePom: String = new File("../core/pom.xml").getCanonicalPath, // maven -file CLI parameter can't relative paths
   val mainClass: String = "com.signalcollect.evaluation.jobexecution.JobExecutor",
-  val packagename: String = "evaluation-0.0.1-SNAPSHOT") {
+  val packagename: String = "signal-collect-evaluation-2.0.0-SNAPSHOT") extends ExecutionHost {
 
   lazy val jarSuffix = "-jar-with-dependencies.jar"
   lazy val fileSpearator = System.getProperty("file.separator")
@@ -50,21 +44,7 @@ class JobSubmitter(
   lazy val krakenJarname = packagename + "-" + jarDescription + jarSuffix
   lazy val localJarpath = "." + fileSpearator + "target" + fileSpearator + localhostJarname
 
-  def submitJobs(jobs: List[Job]) {
-    executionLocation match {
-      case LocalHost => executeLocally(jobs)
-      case Kraken(username) => executeKraken(username, jobs)
-    }
-  }
-
-  def executeLocally(jobs: List[Job]) {
-    val executor = new JobExecutor
-    for (job <- jobs) {
-      executor.run(job)
-    }
-  }
-
-  def executeKraken(krakenUsername: String, jobs: List[Job]) {
+  def executeJobs(jobs: List[Job]) = {
     if (recompileCore) {
       val commandInstallCore = "mvn -file " + pathToSignalcollectCorePom + " -Dmaven.test.skip=true clean install"
       println(commandInstallCore)
@@ -86,9 +66,9 @@ class JobSubmitter(
 
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (job <- jobs) {
-      val config = DefaultSerializer.write(job)
+      val config = DefaultSerializer.write((job, resultHandlers))
       val out = new FileOutputStream(job.jobId + ".config")
-      out.write(config);
+      out.write(config)
       out.close
       val copyConfig = "scp -v " + job.jobId + ".config" + " " + krakenUsername + "@kraken.ifi.uzh.ch:"
       copyConfig !!
@@ -101,16 +81,12 @@ class JobSubmitter(
     krakenShell.exit
   }
 
-//#PBS -l walltime=36000,cput=2400000,mem=50gb
-//#PBS -l walltime=00:59:59,cput=2400000,mem=50gb
-//#PBS -l walltime=11:59:59,cput=2400000,mem=50gb
-  
   def getShellScript(jobId: String, jarname: String, mainClass: String): String = {
     val script = """
 #!/bin/bash
 #PBS -N """ + jobId + """
 #PBS -l nodes=1:ppn=23
-#PBS -l walltime=00:59:59,cput=2400000,mem=50gb
+#PBS -l walltime=00:10:59,cput=24000,mem=50gb
 #PBS -j oe
 #PBS -m b
 #PBS -m e
@@ -134,5 +110,4 @@ $cmd
 """
     script
   }
-
 }
