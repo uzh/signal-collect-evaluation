@@ -26,27 +26,28 @@ import com.signalcollect.evaluation.algorithms.PageRankEvaluationRun
 import com.signalcollect.configuration._
 import com.signalcollect._
 
-
 /**
  * Runs a PageRank algorithm on a graph of a fixed size
  * for different numbers of worker threads.
- * 
+ *
  * Evaluation is set to execute on a 'Kraken'-node.
  */
 object ScalabilityEvaluation extends App {
 
-  val repetitions = 1
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Scalability Evaluation",
     executionHost = new KrakenHost(System.getProperty("user.name"), recompileCore = false))
+
   val googleDocsAccount = args(0)
   val googleDocsPasswd = args(1)
-  evaluation.addResultHandler(new GoogleDocsResultHandler(googleDocsAccount, googleDocsPasswd, "evaluation", "data"))
 
+  val repetitions = 1
   for (i <- 0 until repetitions) {
-	  for (workers <- 1 to 24) {
-	      evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(numberOfWorkers = workers, graphSize = 200000,
-	          executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)))
-	  }
+    for (workers <- 1 to 24) {
+      evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(numberOfWorkers = workers, graphSize = 200000,
+        executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)))
+    }
   }
+
+  evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
   evaluation.runEvaluation()
 }

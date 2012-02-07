@@ -40,6 +40,7 @@ class LocalHost extends ExecutionHost {
         } else {
           println(statsMap)
         }
+        System.gc
       } catch {
         case e: Exception =>
           println(statsMap)

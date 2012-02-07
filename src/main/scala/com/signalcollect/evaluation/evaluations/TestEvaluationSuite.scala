@@ -32,15 +32,11 @@ object TestEvaluationSuite extends App {
   
 //  val evaluation = new EvaluationSuiteCreator(evaluationName = "SSSP_Test")
 
-//  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun)
+  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun)
 //  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous)))
-  evaluation.addJobForEvaluationAlgorithm(new SSSPEvaluationRun)
+//  evaluation.addJobForEvaluationAlgorithm(new SSSPEvaluationRun)
 
-  
-  //evaluation.addResultHandler(() => new ConsoleResultHandler(true))
-  val googleDocsAccount = args(0)
-  val googleDocsPasswd = args(1)
-  evaluation.addResultHandler(new GoogleDocsResultHandler(googleDocsAccount, googleDocsPasswd, "evaluation", "data"))
+  evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
 
   evaluation.runEvaluation()
 }

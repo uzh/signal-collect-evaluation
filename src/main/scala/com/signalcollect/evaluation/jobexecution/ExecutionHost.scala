@@ -24,7 +24,7 @@ import com.signalcollect.evaluation.resulthandling._
 
 abstract class ExecutionHost {
   var resultHandlers = List[ResultHandler]()
-  def addResultHandler(handler: ResultHandler) = { resultHandlers = handler :: resultHandlers }
+  def setResultHandlers(handlers: List[ResultHandler]) = { resultHandlers = handlers }
   def executeJobs(jobs: List[Job])
 }
 

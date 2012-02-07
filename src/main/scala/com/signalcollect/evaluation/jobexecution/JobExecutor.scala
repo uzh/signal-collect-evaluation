@@ -40,15 +40,14 @@ object JobExecutor extends App {
       fileInputStream.read(jobArray)
       config = DefaultSerializer.read[(Job,  List[ResultHandler])](jobArray)
     } catch {
-      case e: Exception => throw new Exception("Could not load configuration: \n" + e.getMessage() + "\n" + e.getStackTrace)
+      case e: Exception => throw new Exception("Could not load configuration: \n" + e.getMessage() + "\n" + e.getCause() + "\n" + e.getStackTrace)
 
     }
   } else {
     throw new Exception("No jobId specified.")
   }
   val executor = new LocalHost
-  for (resultHandler <- config._2) {
-    executor.addResultHandler(resultHandler)
-  }
+  executor.setResultHandlers(config._2)
+  
   executor.executeJobs(List(config._1))
 }

@@ -26,8 +26,18 @@ import org.apache.commons.codec.binary.Base64
 import com.signalcollect.evaluation.jobsubmission.SshShell
 import com.signalcollect.implementations.serialization.DefaultSerializer
 import java.io.FileOutputStream
+import com.signalcollect.evaluation.resulthandling.ConsoleResultHandler
 
 object KrakenHost
+
+/**
+ * Determines the priority in torque's scheduling queue
+ */
+object TorquePriority {
+  val superfast = "#PBS -l walltime=11:59:59,cput=2400000,mem=50gb"
+  val fast = "#PBS -l walltime=00:59:59,cput=2400000,mem=50gb"
+  val slow = "#PBS -l walltime=47:59:59,cput=2400000,mem=50gb"
+}
 
 class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
   val mailAddress: String = "",
@@ -36,14 +46,15 @@ class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
   val jarDescription: String = Random.nextInt.abs.toString,
   val pathToSignalcollectCorePom: String = new File("../core/pom.xml").getCanonicalPath, // maven -file CLI parameter can't relative paths
   val mainClass: String = "com.signalcollect.evaluation.jobexecution.JobExecutor",
-  val packagename: String = "signal-collect-evaluation-2.0.0-SNAPSHOT") extends ExecutionHost {
+  val packagename: String = "signal-collect-evaluation-2.0.0-SNAPSHOT",
+  val priority: String = TorquePriority.superfast) extends ExecutionHost {
 
   lazy val jarSuffix = "-jar-with-dependencies.jar"
   lazy val fileSpearator = System.getProperty("file.separator")
   lazy val localhostJarname = packagename + jarSuffix
   lazy val krakenJarname = packagename + "-" + jarDescription + jarSuffix
   lazy val localJarpath = "." + fileSpearator + "target" + fileSpearator + localhostJarname
-
+  
   def executeJobs(jobs: List[Job]) = {
     if (recompileCore) {
       val commandInstallCore = "mvn -file " + pathToSignalcollectCorePom + " -Dmaven.test.skip=true clean install"
@@ -86,7 +97,7 @@ class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
 #!/bin/bash
 #PBS -N """ + jobId + """
 #PBS -l nodes=1:ppn=23
-#PBS -l walltime=00:10:59,cput=24000,mem=50gb
+""" + priority + """
 #PBS -j oe
 #PBS -m b
 #PBS -m e

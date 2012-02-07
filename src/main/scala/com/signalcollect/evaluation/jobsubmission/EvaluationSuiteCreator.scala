@@ -49,8 +49,8 @@ class EvaluationSuiteCreator(evaluationName: String,
   /**
    * Add a result handler that takes care of the evaluation results
    */
-  def addResultHandler(handler:  ResultHandler) {
-    executionHost.addResultHandler(handler)
+  def setResultHandlers(handlers:  List[ResultHandler]) {
+    executionHost.setResultHandlers(handlers)
   }
 
   /**
@@ -90,9 +90,10 @@ class EvaluationSuiteCreator(evaluationName: String,
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))
       statsMap += (("numberOfWorkers", stats.config.numberOfWorkers.toString))
-      statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTime.toString))
-      statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTime.toString))
-      statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTime.toString))
+      statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTime.toMillis.toString))
+      statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTime.toMillis.toString))
+      statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTime.toMillis.toString))
+      statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTime.toMillis.toString))
       statsMap += (("executionMode", stats.parameters.executionMode.toString))
       statsMap += (("workerFactory", stats.config.workerFactory.name))
       statsMap += (("storageFactory", stats.config.storageFactory.name))
