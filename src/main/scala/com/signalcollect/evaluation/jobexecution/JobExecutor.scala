@@ -22,22 +22,15 @@
 
 package com.signalcollect.evaluation.jobexecution
 
-import org.apache.commons.codec.binary.Base64
 import com.signalcollect.interfaces._
-import com.signalcollect.configuration._
-import com.signalcollect.evaluation.spreadsheets._
-import java.util.Date
-import java.text.SimpleDateFormat
 import com.signalcollect.evaluation.configuration._
-import scala.util.Random
-import com.signalcollect.graphproviders.synthetic.LogNormal
 import com.signalcollect.implementations.serialization.DefaultSerializer
-import java.io.ObjectInputStream
 import java.io.FileInputStream
 import java.io.File
+import com.signalcollect.evaluation.resulthandling._
 
 object JobExecutor extends App {
-  var job: Job = _
+  var config: (Job,  List[ResultHandler]) = _
   if (args.size > 0) {
     try {
       val jobId = args(0).toInt
@@ -45,43 +38,17 @@ object JobExecutor extends App {
       val jobArray = new Array[Byte](configFile.length.toInt)
       val fileInputStream = new FileInputStream(configFile)
       fileInputStream.read(jobArray)
-      job = DefaultSerializer.read[Job](jobArray)
+      config = DefaultSerializer.read[(Job,  List[ResultHandler])](jobArray)
     } catch {
-      case e: Exception => throw new Exception("Could not load configuration: " + e.getStackTrace)
+      case e: Exception => throw new Exception("Could not load configuration: \n" + e.getMessage() + "\n" + e.getStackTrace)
+
     }
   } else {
     throw new Exception("No jobId specified.")
   }
-  val executor = new JobExecutor
-  executor.run(job)
-}
-
-class JobExecutor {
-  def run(job: Job) {
-    var statsMap = Map[String, String]()
-    try {
-      statsMap = job.execute()
-      statsMap += (("evaluationDescription", job.jobDescription))
-      statsMap += (("submittedByUser", job.submittedByUser))
-      statsMap += (("jobId", job.jobId.toString))
-      statsMap += (("executionHostname", java.net.InetAddress.getLocalHost.getHostName))
-      statsMap += (("java.runtime.version", System.getProperties.get("java.runtime.version").toString))
-      if (job.spreadsheetConfiguration.isDefined) {
-        submitSpreadsheetRow(job.spreadsheetConfiguration.get, statsMap)
-      } else {
-        println(statsMap)
-      }
-    } catch {
-      case e: Exception =>
-        println(statsMap)
-        sys.error(e.getMessage + "\n" + e.getStackTraceString)
-    }
-
-    def submitSpreadsheetRow(spreadsheetConfig: SpreadsheetConfiguration, rowData: Map[String, String]) {
-      val api = new SpreadsheetApi(spreadsheetConfig.gmailAccount, spreadsheetConfig.gmailPassword)
-      val spreadsheet = api.getSpreadsheet(spreadsheetConfig.spreadsheetName)
-      val worksheet = api.getWorksheetInSpreadsheet(spreadsheetConfig.worksheetName, spreadsheet)
-      api.insertRow(worksheet, statsMap)
-    }
+  val executor = new LocalHost
+  for (resultHandler <- config._2) {
+    executor.addResultHandler(resultHandler)
   }
+  executor.executeJobs(List(config._1))
 }
