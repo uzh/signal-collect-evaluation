@@ -25,11 +25,12 @@ import com.signalcollect.configuration._
 import com.signalcollect.graphproviders.synthetic.LogNormal
 import com.signalcollect.evaluation.util.VertexFactory
 import com.signalcollect.evaluation.util.LogNormalParameters
+import com.signalcollect.evaluation.graphs.GraphStructure
 
 class SSSPEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
   numberOfWorkers: Int = 24,
-  graphSize: Int = 1000,
+  graph: GraphStructure,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder.withNumberOfWorkers(numberOfWorkers)
@@ -43,14 +44,16 @@ class SSSPEvaluationRun(
   val mu = 4.0
 
   def loadGraph = {
-    computeGraph = builder.build
-    val locationFactory = new VertexFactory(new LogNormalParameters(sigma, mu, graphSize))
-
-    for (id <- (0 until graphSize - 1)) {
-      val location = locationFactory.getLocationForId(id)
-      computeGraph.addVertex(location)
-    }
-    computeGraph.addVertex(new MemoryEfficientLocation(graphSize - 1))
+    computeGraph = graph.populateGraph(builder, 
+        (id) => {
+        	if(id != 0) {
+        	  new Location(id)
+        	}
+        	else {
+        	  new Location(id, Some(0))
+        	}
+    },
+    (source, target) => new Path(source, target))
   }
 
   def execute = {
@@ -59,5 +62,5 @@ class SSSPEvaluationRun(
 
   def algorithmName = "SSSP"
 
-  def graphStructure = "LogNormal(" + graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"
+  def graphStructure = graph.toString
 }

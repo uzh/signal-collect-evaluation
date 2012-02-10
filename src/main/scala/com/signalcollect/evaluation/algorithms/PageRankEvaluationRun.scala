@@ -26,36 +26,21 @@ import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.Graph
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.configuration.ExecutionMode
+import com.signalcollect.evaluation.graphs.GraphStructure
 
 class PageRankEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
   numberOfWorkers: Int = 24,
-  graphSize: Int = 1000,
+  graph: GraphStructure,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder.withNumberOfWorkers(numberOfWorkers)
   var edgeTuples: Traversable[(Int, Int)] = null
 
-  /*
-   * Synthetic graph parameters
-   */
-  val seed = 0
-  val sigma = 1.3
-  val mu = 4.0
-
   def loadGraph = {
-    computeGraph = builder.build
-    edgeTuples = new LogNormal(graphSize, seed, sigma, mu)
-
-    for (id <- (0 until graphSize).par) {
-      computeGraph.addVertex(new PageRankVertex(id, 0.15))
-    }
-
-    edgeTuples.par foreach {
-      case (sourceId, targetId) =>
-        computeGraph.addEdge(new PageRankEdge(sourceId, targetId))
-    }
-
+    computeGraph = graph.populateGraph(builder, 
+        (id) => new PageRankVertex(id.asInstanceOf[Int], 0.15), 
+        (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
   }
 
   def execute = {
@@ -64,6 +49,6 @@ class PageRankEvaluationRun(
 
   def algorithmName = "PageRank"
 
-  def graphStructure = "LogNormal(" + graphSize + ", " + seed + ", " + sigma + ", " + mu + ")"
+  def graphStructure = graph.toString
 
 }

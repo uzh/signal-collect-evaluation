@@ -25,6 +25,7 @@ import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms.PageRankEvaluationRun
 import com.signalcollect.configuration._
 import com.signalcollect._
+import com.signalcollect.evaluation.graphs.LogNormalGraph
 
 /**
  * Runs a PageRank algorithm on a graph of a fixed size
@@ -35,16 +36,19 @@ import com.signalcollect._
 object ScalabilityEvaluation extends App {
 
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Scalability Evaluation",
-    executionHost = new KrakenHost(System.getProperty("user.name"), recompileCore = false))
+    executionHost = new KrakenHost("strebel" /*System.getProperty("user.name")*/, recompileCore = false))
 
   val googleDocsAccount = args(0)
   val googleDocsPasswd = args(1)
 
   val repetitions = 1
   for (i <- 0 until repetitions) {
-    for (workers <- 1 to 24) {
-      evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(numberOfWorkers = workers, graphSize = 200000,
-        executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)))
+    for (workers <- 24 to 24) {
+      val graphStructure = new LogNormalGraph(graphSize = 200000)
+      val executionConfig = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)
+      
+      evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(numberOfWorkers = workers, graph = graphStructure,
+        executionConfiguration = executionConfig))
     }
   }
 
