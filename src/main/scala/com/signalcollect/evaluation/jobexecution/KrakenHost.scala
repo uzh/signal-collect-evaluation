@@ -54,7 +54,7 @@ class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
   lazy val localhostJarname = packagename + jarSuffix
   lazy val krakenJarname = packagename + "-" + jarDescription + jarSuffix
   lazy val localJarpath = "." + fileSpearator + "target" + fileSpearator + localhostJarname
-  
+
   def executeJobs(jobs: List[Job]) = {
     if (recompileCore) {
       val commandInstallCore = "mvn -file " + pathToSignalcollectCorePom + " -Dmaven.test.skip=true clean install"
@@ -83,6 +83,8 @@ class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
       out.close
       val copyConfig = "scp -v " + job.jobId + ".config" + " " + krakenUsername + "@kraken.ifi.uzh.ch:"
       copyConfig !!
+      val deleteConfig = "rm " + job.jobId + ".config"
+      deleteConfig !!
       val script = getShellScript(job.jobId.toString, krakenJarname, mainClass)
       val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
       val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
