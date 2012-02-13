@@ -23,7 +23,7 @@
 package com.signalcollect.evaluation.jobexecution
 
 import com.signalcollect.interfaces._
-import com.signalcollect.evaluation.configuration._
+import com.signalcollect.evaluation.jobsubmission.Job
 import com.signalcollect.implementations.serialization.DefaultSerializer
 import java.io.FileInputStream
 import java.io.File

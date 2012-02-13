@@ -20,7 +20,7 @@
 
 package com.signalcollect.evaluation.jobexecution
 
-import com.signalcollect.evaluation.configuration.Job
+import com.signalcollect.evaluation.jobsubmission.Job
 
 class LocalHost extends ExecutionHost {
   def executeJobs(jobs: List[Job]) = {

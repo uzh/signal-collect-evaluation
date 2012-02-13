@@ -19,10 +19,10 @@
 
 package com.signalcollect.evaluation.jobexecution
 
-import com.signalcollect.evaluation.configuration.Job
+import com.signalcollect.evaluation.jobsubmission.Job
 import com.signalcollect.evaluation.resulthandling._
 
-abstract class ExecutionHost {
+trait ExecutionHost {
   var resultHandlers = List[ResultHandler]()
   def setResultHandlers(handlers: List[ResultHandler]) = { resultHandlers = handlers }
   def executeJobs(jobs: List[Job])

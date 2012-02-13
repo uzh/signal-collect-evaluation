@@ -24,18 +24,18 @@ import com.signalcollect.evaluation.jobexecution._
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.configuration.ExecutionMode
-import com.signalcollect.evaluation.graphs.LogNormalGraph
+import com.signalcollect.evaluation.graphs._
 
 object TestEvaluationSuite extends App {
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Test_Suite_Name", 
-     // executionHost = new KrakenHost(krakenUsername = System.getProperty("user.name"), recompileCore = false)
-      executionHost = new LocalHost
+     executionHost = new TorqueHost(torqueUsername = System.getProperty("user.name"), recompileCore = false)
+      //executionHost = new LocalHost
       )
   
 //  val evaluation = new EvaluationSuiteCreator(evaluationName = "SSSP_Test")
 
-  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graph = new LogNormalGraph(graphSize = 100)))
-//  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous)))
+//  evaluation.addJobForEvaluationAlgorithm(new PageRankMemoryConsumptionEvaluation(graph = new IdOnlyGraph(graphSize = 1000 )))
+  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graph = new LogNormalGraph(graphSize = 1000)))
 //  evaluation.addJobForEvaluationAlgorithm(new SSSPEvaluationRun)
 
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))

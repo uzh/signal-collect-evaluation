@@ -1,5 +1,6 @@
 /*
  *  @author Philip Stutz
+ *  @author Daniel Strebel
  *  
  *  Copyright 2012 University of Zurich
  *      
@@ -20,34 +21,28 @@ package com.signalcollect.evaluation.jobexecution
 
 import scala.util.Random
 import java.io.File
-import com.signalcollect.evaluation.configuration.Job
+import com.signalcollect.evaluation.jobsubmission.Job
 import scala.sys.process._
 import org.apache.commons.codec.binary.Base64
-import com.signalcollect.evaluation.jobsubmission.SshShell
 import com.signalcollect.implementations.serialization.DefaultSerializer
 import java.io.FileOutputStream
 import com.signalcollect.evaluation.resulthandling.ConsoleResultHandler
 
-object KrakenHost
-
 /**
  * Determines the priority in torque's scheduling queue
  */
-object TorquePriority {
-  val superfast = "#PBS -l walltime=00:59:59,mem=50gb"
-  val fast = "#PBS -l walltime=23:59:59,mem=50gb"
-  val slow = "#PBS -l walltime=200:59:59,mem=50gb"
-}
 
-class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
-  val mailAddress: String = "",
+class TorqueHost(
+  val torqueUsername: String = System.getProperty("user.name"),
+  val torqueMailAddress: String = "",
+  val torqueHostname: String = "kraken.ifi.uzh.ch",
   val jvmParameters: String = "",
   val recompileCore: Boolean = true,
   val jarDescription: String = Random.nextInt.abs.toString,
   val pathToSignalcollectCorePom: String = new File("../core/pom.xml").getCanonicalPath, // maven -file CLI parameter can't relative paths
   val mainClass: String = "com.signalcollect.evaluation.jobexecution.JobExecutor",
   val packagename: String = "signal-collect-evaluation-2.0.0-SNAPSHOT",
-  val priority: String = TorquePriority.superfast) extends ExecutionHost {
+  val priority: String = TorquePriority.superfast) extends TorqueJobSubmitter(torqueUsername, torqueMailAddress, torqueHostname) with ExecutionHost {
 
   lazy val jarSuffix = "-jar-with-dependencies.jar"
   lazy val fileSpearator = System.getProperty("file.separator")
@@ -67,13 +62,8 @@ class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
     println(commandPackage)
     println(commandPackage !!)
 
-    /** COPY EVAL JAR TO KRAKEN */
-    val commandCopy = "scp -v " + localJarpath + " " + krakenUsername + "@kraken.ifi.uzh.ch:" + krakenJarname
-    println(commandCopy)
-    println(commandCopy !!)
-
-    /** LOG INTO KRAKEN WITH SSH */
-    val krakenShell = new SshShell(username = krakenUsername)
+    /** COPY EVAL JAR TO TORQUE HOME DIRECTORY */
+    copyFileToCluster(localJarpath, krakenJarname)
 
     /** SUBMIT AN EVALUATION JOB FOR EACH CONFIGURATION */
     for (job <- jobs) {
@@ -81,46 +71,11 @@ class KrakenHost(val krakenUsername: String = System.getProperty("user.name"),
       val out = new FileOutputStream(job.jobId + ".config")
       out.write(config)
       out.close
-      val copyConfig = "scp -v " + job.jobId + ".config" + " " + krakenUsername + "@kraken.ifi.uzh.ch:"
-      copyConfig !!
+      copyFileToCluster(job.jobId + ".config")
       val deleteConfig = "rm " + job.jobId + ".config"
       deleteConfig !!
-      val script = getShellScript(job.jobId.toString, krakenJarname, mainClass)
-      val scriptBase64 = Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "")
-      val qsubCommand = """echo """ + scriptBase64 + """ | base64 -d | qsub"""
-      println(krakenShell.execute(qsubCommand))
+      
+      runOnClusterNode(job.jobId.toString, krakenJarname, mainClass, priority, jvmParameters)
     }
-    /** LOG OUT OF KRAKEN */
-    krakenShell.exit
-  }
-
-  def getShellScript(jobId: String, jarname: String, mainClass: String): String = {
-    val script = """
-#!/bin/bash
-#PBS -N """ + jobId + """
-#PBS -l nodes=1:ppn=23
-""" + priority + """
-#PBS -j oe
-#PBS -m b
-#PBS -m e
-#PBS -m a
-#PBS -V
-#PBS -o out/""" + jobId + """.out
-#PBS -e err/""" + jobId + """.err
-""" + { if (mailAddress != null && mailAddress.length > 0) "#PBS -m a -M " + mailAddress else "" } + """
-
-jarname=""" + jarname + """
-mainClass=""" + mainClass + """
-workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}
-vm_args="""" + jvmParameters + """ -Xmx35000m -Xms35000m -d64"
-
-# copy jar
-cp ~/$jarname $workingDir/
-
-# run test
-cmd="java $vm_args -cp $workingDir/$jarname $mainClass """ + jobId + """"
-$cmd
-"""
-    script
   }
 }

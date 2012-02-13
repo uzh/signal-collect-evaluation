@@ -20,7 +20,6 @@
 
 package com.signalcollect.evaluation.jobsubmission
 
-import com.signalcollect.evaluation.configuration.Job
 import scala.util.Random
 import java.util.Date
 import java.text.SimpleDateFormat
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit
 import com.signalcollect.evaluation.jobexecution._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms._
-
 
 class EvaluationSuiteCreator(evaluationName: String,
   evaluationCreator: String = System.getProperty("user.name"),
@@ -49,7 +47,7 @@ class EvaluationSuiteCreator(evaluationName: String,
   /**
    * Add a result handler that takes care of the evaluation results
    */
-  def setResultHandlers(handlers:  List[ResultHandler]) {
+  def setResultHandlers(handlers: List[ResultHandler]) {
     executionHost.setResultHandlers(handlers)
   }
 
@@ -73,7 +71,6 @@ class EvaluationSuiteCreator(evaluationName: String,
       val graphLoadingStop = System.nanoTime
       val graphLoadingTime = new FiniteDuration(graphLoadingStop - graphLoadingStart, TimeUnit.NANOSECONDS)
 
-      
       val startDate = new Date
       val dateFormat = new SimpleDateFormat("dd-MM-yyyy")
       val timeFormat = new SimpleDateFormat("HH:mm:ss")
@@ -89,30 +86,32 @@ class EvaluationSuiteCreator(evaluationName: String,
 
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))
-      statsMap += (("numberOfWorkers", stats.config.numberOfWorkers.toString))
-      statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTime.toMillis.toString))
-      statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTime.toMillis.toString))
-      statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTime.toMillis.toString))
-      statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTime.toMillis.toString))
-      statsMap += (("executionMode", stats.parameters.executionMode.toString))
-      statsMap += (("workerFactory", stats.config.workerFactory.name))
-      statsMap += (("storageFactory", stats.config.storageFactory.name))
-      statsMap += (("messageBusFactory", stats.config.messageBusFactory.name))
-      statsMap += (("logger", stats.config.logger.toString))
-      statsMap += (("signalSteps", stats.executionStatistics.signalSteps.toString))
-      statsMap += (("collectSteps", stats.executionStatistics.collectSteps.toString))
-      statsMap += (("numberOfVertices", stats.aggregatedWorkerStatistics.numberOfVertices.toString))
-      statsMap += (("numberOfEdges", stats.aggregatedWorkerStatistics.numberOfOutgoingEdges.toString))
-      statsMap += (("collectOperationsExecuted", stats.aggregatedWorkerStatistics.collectOperationsExecuted.toString))
-      statsMap += (("signalOperationsExecuted", stats.aggregatedWorkerStatistics.signalOperationsExecuted.toString))
-      statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
-      statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString))
-      statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString))
+      if (stats != null) {
+        statsMap += (("numberOfWorkers", stats.config.numberOfWorkers.toString))
+        statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTime.toMillis.toString))
+        statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTime.toMillis.toString))
+        statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTime.toMillis.toString))
+        statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTime.toMillis.toString))
+        statsMap += (("executionMode", stats.parameters.executionMode.toString))
+        statsMap += (("workerFactory", stats.config.workerFactory.name))
+        statsMap += (("storageFactory", stats.config.storageFactory.name))
+        statsMap += (("messageBusFactory", stats.config.messageBusFactory.name))
+        statsMap += (("logger", stats.config.logger.toString))
+        statsMap += (("signalSteps", stats.executionStatistics.signalSteps.toString))
+        statsMap += (("collectSteps", stats.executionStatistics.collectSteps.toString))
+        statsMap += (("numberOfVertices", stats.aggregatedWorkerStatistics.numberOfVertices.toString))
+        statsMap += (("numberOfEdges", stats.aggregatedWorkerStatistics.numberOfOutgoingEdges.toString))
+        statsMap += (("collectOperationsExecuted", stats.aggregatedWorkerStatistics.collectOperationsExecuted.toString))
+        statsMap += (("signalOperationsExecuted", stats.aggregatedWorkerStatistics.signalOperationsExecuted.toString))
+        statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
+        statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString))
+        statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString))
+      }
       val endDate = new Date
       statsMap += (("endDate", dateFormat.format(endDate)))
       statsMap += (("endTime", timeFormat.format(endDate)))
       run.shutdown
-      
+
       statsMap
     })
 

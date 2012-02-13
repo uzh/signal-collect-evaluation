@@ -36,10 +36,8 @@ import com.signalcollect.evaluation.graphs.LogNormalGraph
 object ScalabilityEvaluation extends App {
 
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Scalability Evaluation",
-    executionHost = new KrakenHost("strebel" /*System.getProperty("user.name")*/, recompileCore = false))
+    executionHost = new TorqueHost(System.getProperty("user.name"), recompileCore = false))
 
-  val googleDocsAccount = args(0)
-  val googleDocsPasswd = args(1)
 
   val repetitions = 1
   for (i <- 0 until repetitions) {

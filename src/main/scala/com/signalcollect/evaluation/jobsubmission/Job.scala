@@ -17,7 +17,7 @@
  *  
  */
 
-package com.signalcollect.evaluation.configuration
+package com.signalcollect.evaluation.jobsubmission
 
 class Job(
   val jobId: Int,
