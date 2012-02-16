@@ -70,6 +70,7 @@ class EvaluationSuiteCreator(evaluationName: String,
       run.loadGraph
       val graphLoadingStop = System.nanoTime
       val graphLoadingTime = new FiniteDuration(graphLoadingStop - graphLoadingStart, TimeUnit.NANOSECONDS)
+      statsMap += (("graphLoadingTimeInMilliseconds", graphLoadingTime.toMillis.toString))
 
       val startDate = new Date
       val dateFormat = new SimpleDateFormat("dd-MM-yyyy")
