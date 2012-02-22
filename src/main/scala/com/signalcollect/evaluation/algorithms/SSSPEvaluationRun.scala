@@ -33,7 +33,7 @@ class SSSPEvaluationRun(
   graph: GraphStructure,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
-  val builder = graphBuilder.withNumberOfWorkers(numberOfWorkers)
+  val builder = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
 
   /*
