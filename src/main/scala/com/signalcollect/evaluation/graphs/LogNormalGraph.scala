@@ -45,6 +45,7 @@ class LogNormalGraph(graphSize: Int, seed: Long = 0, sigma: Double = 1, mu: Doub
         }
       }
     }
+    graph.awaitIdle
     graph
   }
   

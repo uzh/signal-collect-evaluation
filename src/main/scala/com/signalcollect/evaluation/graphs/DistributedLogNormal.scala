@@ -45,6 +45,7 @@ class DistributedLogNormal(graphSize: Int, numberOfWorkers: Option[Int] = None, 
       }
     }
 
+    graph.awaitIdle
     graph
   }
 
