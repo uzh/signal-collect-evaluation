@@ -30,7 +30,6 @@ import com.signalcollect.evaluation.graphs.GraphStructure
 
 class PageRankEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
-  numberOfWorkers: Int = 24,
   graph: GraphStructure,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
