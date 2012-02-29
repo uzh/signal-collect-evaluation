@@ -26,6 +26,7 @@ import com.signalcollect.evaluation.algorithms.PageRankEvaluationRun
 import com.signalcollect.configuration._
 import com.signalcollect._
 import com.signalcollect.evaluation.graphs.LogNormalGraph
+import com.signalcollect.nodeprovisioning.torque.TorqueNodeProvisioner
 
 /**
  * Runs a PageRank algorithm on a graph of a fixed size
@@ -35,19 +36,18 @@ import com.signalcollect.evaluation.graphs.LogNormalGraph
  */
 object ScalabilityEvaluation extends App {
 
-  val evaluation = new EvaluationSuiteCreator(evaluationName = "Scalability Evaluation",
+  val evaluation = new EvaluationSuiteCreator(evaluationName = "Scalability Evaluation Akka RC3",
     executionHost = new TorqueHost(System.getProperty("user.name"), recompileCore = false))
 
-
-  val repetitions = 1
+  val repetitions = 10
   for (i <- 0 until repetitions) {
-    for (workers <- 24 to 24) {
-      val graphStructure = new LogNormalGraph(graphSize = 200000)
-      val executionConfig = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)
-      
-      evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(numberOfWorkers = workers, graph = graphStructure,
-        executionConfiguration = executionConfig))
-    }
+    val graphStructure = new LogNormalGraph(graphSize = 200000)
+    val executionConfig = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)
+    //    val kraken = new com.signalcollect.nodeprovisioning.torque.TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", privateKeyFilePath = "/home/user/stutz/.ssh/id_rsa")
+    //    val krakenNodeProvisioner = new TorqueNodeProvisioner(kraken, 1)
+    val graphBuilder = GraphBuilder //.withNodeProvisioner(krakenNodeProvisioner) //.withLoggingLevel(LoggingLevel.Debug)
+
+    evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graph = graphStructure, executionConfiguration = executionConfig))
   }
 
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))

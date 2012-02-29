@@ -47,7 +47,8 @@ class TorqueHost(
   lazy val jarSuffix = "-jar-with-dependencies.jar"
   lazy val fileSpearator = System.getProperty("file.separator")
   lazy val localhostJarname = packagename + jarSuffix
-  lazy val krakenJarname = packagename + "-" + jarDescription + jarSuffix
+//  lazy val krakenJarname = packagename + "-" + jarDescription + jarSuffix
+  lazy val krakenJarname = packagename + jarSuffix
   lazy val localJarpath = "." + fileSpearator + "target" + fileSpearator + localhostJarname
 
   def executeJobs(jobs: List[Job]) = {
@@ -56,11 +57,6 @@ class TorqueHost(
       println(commandInstallCore)
       println(commandInstallCore !!)
     }
-
-    /** PACKAGE EVAL CODE AS JAR */
-    val commandPackage = "mvn -Dmaven.test.skip=true clean package"
-    println(commandPackage)
-    println(commandPackage !!)
 
     /** COPY EVAL JAR TO TORQUE HOME DIRECTORY */
     copyFileToCluster(localJarpath, krakenJarname)
