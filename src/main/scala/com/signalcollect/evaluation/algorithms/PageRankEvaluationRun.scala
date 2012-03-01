@@ -21,7 +21,7 @@ package com.signalcollect.evaluation.algorithms
 
 import com.signalcollect.GraphBuilder
 import com.signalcollect.ExecutionInformation
-import com.signalcollect.graphproviders.synthetic.LogNormal
+import com.signalcollect.graphproviders.synthetic._
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.Graph
 import com.signalcollect.evaluation.algorithms._
