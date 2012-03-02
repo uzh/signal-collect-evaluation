@@ -94,6 +94,7 @@ class EvaluationSuiteCreator(evaluationName: String,
         statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTime.toMillis.toString))
         statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTime.toMillis.toString))
         statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTime.toMillis.toString))
+        statsMap += (("terminationReason", stats.executionStatistics.terminationReason.toString))
         statsMap += (("executionMode", stats.parameters.executionMode.toString))
         statsMap += (("workerFactory", stats.config.workerFactory.name))
         statsMap += (("storageFactory", stats.config.storageFactory.name))
