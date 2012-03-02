@@ -25,8 +25,8 @@ import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms.PageRankEvaluationRun
 import com.signalcollect.configuration._
 import com.signalcollect._
-import com.signalcollect.evaluation.graphs.LogNormalGraph
 import com.signalcollect.nodeprovisioning.torque.TorqueNodeProvisioner
+import com.signalcollect.graphproviders.synthetic._
 
 /**
  * Runs a PageRank algorithm on a graph of a fixed size
@@ -43,9 +43,9 @@ object ScalabilityEvaluation extends App {
   for (i <- 0 until repetitions) {
     val graphStructure = new LogNormalGraph(graphSize = 200000)
     val executionConfig = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)
-    //    val kraken = new com.signalcollect.nodeprovisioning.torque.TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", privateKeyFilePath = "/home/user/stutz/.ssh/id_rsa")
-    //    val krakenNodeProvisioner = new TorqueNodeProvisioner(kraken, 1)
-    val graphBuilder = GraphBuilder //.withNodeProvisioner(krakenNodeProvisioner) //.withLoggingLevel(LoggingLevel.Debug)
+        val kraken = new com.signalcollect.nodeprovisioning.torque.TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", privateKeyFilePath = "/home/user/stutz/.ssh/id_rsa")
+        val krakenNodeProvisioner = new TorqueNodeProvisioner(kraken, 1)
+    val graphBuilder = GraphBuilder.withNodeProvisioner(krakenNodeProvisioner) //.withLoggingLevel(LoggingLevel.Debug)
 
     evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graph = graphStructure, executionConfiguration = executionConfig))
   }

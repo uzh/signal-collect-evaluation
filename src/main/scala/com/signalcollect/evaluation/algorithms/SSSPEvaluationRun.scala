@@ -22,14 +22,14 @@ package com.signalcollect.evaluation.algorithms
 
 import com.signalcollect._
 import com.signalcollect.configuration._
-import com.signalcollect.graphproviders.synthetic.LogNormal
+import com.signalcollect.graphproviders.synthetic._
 import com.signalcollect.evaluation.util.VertexFactory
 import com.signalcollect.evaluation.util.LogNormalParameters
-import com.signalcollect.evaluation.graphs.GraphStructure
+import com.signalcollect.graphproviders.GraphProvider
 
 class SSSPEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
-  graph: GraphStructure,
+  graph: GraphProvider,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder

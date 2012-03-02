@@ -25,6 +25,7 @@ import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.evaluation.graphs._
+import com.signalcollect.graphproviders.synthetic._
 
 object TestEvaluationSuite extends App {
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Test_Suite_Name", 

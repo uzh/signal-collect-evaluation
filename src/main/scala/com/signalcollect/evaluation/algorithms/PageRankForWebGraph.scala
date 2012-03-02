@@ -26,24 +26,28 @@ import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.Graph
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.configuration.ExecutionMode
-import com.signalcollect.graphproviders.GraphProvider
+import com.signalcollect.graphproviders._
+import com.signalcollect.evaluation.util.OptimizedGraphProvider
 
-class PageRankEvaluationRun(
+class PageRankForWebGraph(
   graphBuilder: GraphBuilder = GraphBuilder,
-  graph: GraphProvider,
-  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
+  numberOfWorkers: Int = 24,
+  graph: OptimizedGraphProvider,
+  runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
-  var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
     computeGraph = graph.populateGraph(builder, 
-        (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85), 
-        (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
+        (id, outgoingEdges) => {
+          val vertex = new MemoryMinimalPage(id.asInstanceOf[Int])
+          vertex.setTargetIdArray(outgoingEdges.toArray.asInstanceOf[Array[Int]])
+          vertex
+        })
   }
 
   def execute = {
-    computeGraph.execute(executionConfiguration)
+    computeGraph.execute(runConfiguration)
   }
 
   def algorithmName = "PageRank"

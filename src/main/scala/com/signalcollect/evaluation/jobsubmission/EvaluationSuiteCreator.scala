@@ -68,6 +68,7 @@ class EvaluationSuiteCreator(evaluationName: String,
       //Load Graph
       val graphLoadingStart = System.nanoTime
       run.loadGraph
+      run.awaitIdle
       val graphLoadingStop = System.nanoTime
       val graphLoadingTime = new FiniteDuration(graphLoadingStop - graphLoadingStart, TimeUnit.NANOSECONDS)
       statsMap += (("graphLoadingTimeInMilliseconds", graphLoadingTime.toMillis.toString))

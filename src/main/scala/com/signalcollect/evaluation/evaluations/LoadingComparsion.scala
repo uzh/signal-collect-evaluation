@@ -3,10 +3,10 @@ package com.signalcollect.evaluation.evaluations
 import com.signalcollect.evaluation.jobsubmission._
 import com.signalcollect.evaluation.jobexecution._
 import com.signalcollect.evaluation.algorithms._
-import com.signalcollect.evaluation.graphs._
 import com.signalcollect.configuration._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect._
+import com.signalcollect.graphproviders.synthetic._
 
 object LoadingComparsion extends App {
 

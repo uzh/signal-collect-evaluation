@@ -31,4 +31,5 @@ abstract class EvaluationAlgorithmRun extends Serializable {
 	def shutdown: Unit = computeGraph.shutdown
 	def algorithmName: String
 	def graphStructure: String
+	def awaitIdle = computeGraph.awaitIdle
 }
