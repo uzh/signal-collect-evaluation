@@ -33,7 +33,7 @@ class LogNormalGraph(graphSize: Int, seed: Long = 0, sigma: Double = 1, mu: Doub
 
     val r = new Random(seed)
 
-    for (i <- (0 until graphSize).par) {
+    for (i <- 0 until graphSize) {
       val from = i
       val outDegree: Int = exp(mu + sigma * (r.nextGaussian)).round.toInt //log-normal
       var j = 0

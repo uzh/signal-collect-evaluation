@@ -38,12 +38,12 @@ class PageRankEvaluationRun(
 
   def loadGraph = {
     computeGraph = graph.populateGraph(builder, 
-        (id) => new PageRankVertex(id.asInstanceOf[Int], 0.15), 
+        (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85), 
         (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
   }
 
   def execute = {
-    computeGraph.execute(ExecutionConfiguration)
+    computeGraph.execute(executionConfiguration)
   }
 
   def algorithmName = "PageRank"
