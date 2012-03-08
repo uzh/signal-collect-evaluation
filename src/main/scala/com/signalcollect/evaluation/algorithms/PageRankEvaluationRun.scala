@@ -37,10 +37,22 @@ class PageRankEvaluationRun(
   var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
-    computeGraph = graph.populateGraph(builder, 
-        (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85), 
-        (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
+    computeGraph = graph.populateGraph(builder,
+      (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85),
+      (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
   }
+
+  //  def loadGraph = {
+  //    computeGraph = graphBuilder.build
+  //    val edgeTuples = new LogNormalGraph(200000, 0, 1.0, 3.0)
+  //    for (id <- (0 until 200000).par) {
+  //      computeGraph.addVertex(new PageRankVertex(id))
+  //    }
+  //    edgeTuples foreach {
+  //      case (sourceId, targetId) =>
+  //        computeGraph.addEdge(new PageRankEdge(sourceId, targetId))
+  //    }
+  //  }
 
   def execute = {
     computeGraph.execute(executionConfiguration)
