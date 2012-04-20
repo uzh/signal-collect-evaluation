@@ -87,8 +87,8 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   def outgoingEdgeCount = targetIdArray.size
 
-  def afterInitialization(messageBus: MessageBus) = {}
-  def beforeRemoval(messageBus: MessageBus) = {}
+  def afterInitialization(graphEditor: GraphEditor) = {}
+  def beforeRemoval(graphEditor: GraphEditor) = {}
   def addIncomingEdge(e: Edge): Boolean = true
   def removeIncomingEdge(edgeId: EdgeId[_, _]): Boolean = true
 

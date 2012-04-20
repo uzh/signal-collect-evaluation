@@ -58,7 +58,7 @@ class MemoryMinimalPage(var id: Int) extends Vertex with Externalizable {
 
   override def executeSignalOperation(messageBus: MessageBus) {
     if (!targetIdArray.isEmpty) {
-      val signal = (state - Math.max(0, lastSignalState)) / targetIdArray.size
+      val signal = (state - math.max(0, lastSignalState)) / targetIdArray.size
       targetIdArray.foreach(targetId => {
         messageBus.sendToWorkerForVertexId(SignalMessage(new DefaultEdgeId(id, targetId), signal), targetId)
       })
@@ -86,8 +86,8 @@ class MemoryMinimalPage(var id: Int) extends Vertex with Externalizable {
 
   def outgoingEdgeCount = targetIdArray.size
 
-  def afterInitialization(messageBus: MessageBus) = {}
-  def beforeRemoval(messageBus: MessageBus) = {}
+  def afterInitialization(graphEditor: GraphEditor) = {}
+  def beforeRemoval(graphEditor: GraphEditor) = {}
   def addIncomingEdge(e: Edge): Boolean = true
   def removeIncomingEdge(edgeId: EdgeId[_, _]): Boolean = true
 

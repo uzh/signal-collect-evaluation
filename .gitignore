@@ -1,14 +1,4 @@
-
-.cache
-
-.classpath
-
-.project
-
-.scala_dependencies
-
-.settings/*
+.*
+!/.gitignore
 
 target/*
-
-*.config

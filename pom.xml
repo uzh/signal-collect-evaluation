@@ -7,25 +7,15 @@
 	<name>Signal/Collect Evaluation</name>
 	<repositories>
 		<repository>
-			<id>scala-tools.org</id>
-			<name>Scala Tools Maven2 Repository</name>
-			<url>http://scala-tools.org/repo-releases</url>
+			<id>typesafe</id>
+			<name>Typesafe Repository</name>
+			<url>http://repo.typesafe.com/typesafe/releases/</url>
 		</repository>
 		<repository>
 			<id>project</id>
 			<name>Project Maven Repository</name>
 			<layout>default</layout>
 			<url>file://${basedir}/lib</url>
-		</repository>
-		<repository>
-			<id>ddis-public-release</id>
-			<name>DDIS Public Release Repository</name>
-			<url>https://bigblue.ifi.uzh.ch/nexus/content/repositories/ddis-public/</url>
-		</repository>
-		<repository>
-			<id>ddis-thirdparty-release</id>
-			<name>DDIS Third-party Release Repository</name>
-			<url>https://bigblue.ifi.uzh.ch/nexus/content/repositories/ddis-thirdparty-release/</url>
 		</repository>
 	</repositories>
 	<modules>
@@ -176,6 +166,6 @@
 		<project.reporting.outputEncoding>
 			UTF-8
 		</project.reporting.outputEncoding>
-		<scala.version>2.9.1-1</scala.version>
+		<scala.version>2.9.2</scala.version>
 	</properties>
 </project>

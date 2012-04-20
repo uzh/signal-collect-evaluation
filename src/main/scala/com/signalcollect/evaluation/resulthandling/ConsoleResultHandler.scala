@@ -25,7 +25,7 @@ class ConsoleResultHandler(useListDisplay: Boolean = false) extends ResultHandle
       println(data.toString)
     }
     else {
-      for((k,v) <- data.elements) {
+      for((k,v) <- data.iterator) {
         println(k + "\t" + v)
       }
       println("--------------------------")
