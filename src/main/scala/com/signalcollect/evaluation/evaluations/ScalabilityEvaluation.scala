@@ -36,13 +36,13 @@ import com.signalcollect.graphproviders.synthetic._
  */
 object ScalabilityEvaluation extends App {
 
-  val evaluation = new EvaluationSuiteCreator(evaluationName = "Scalability Evaluation Akka RC3",
+  val evaluation = new EvaluationSuiteCreator(evaluationName = "Reproduce problem.",
     executionHost = new TorqueHost(System.getProperty("user.name"), recompileCore = false))
 
-  val repetitions = 10
+  val repetitions = 1
   for (i <- 0 until repetitions) {
     val graphStructure = new LogNormalGraph(graphSize = 200000)
-    val executionConfig = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)
+    val executionConfig = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous).withSignalThreshold(0.01)
 //        val kraken = new com.signalcollect.nodeprovisioning.torque.TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", privateKeyFilePath = "/home/user/stutz/.ssh/id_rsa")
 //        val krakenNodeProvisioner = new TorqueNodeProvisioner(kraken, 1)
 //    val graphBuilder = GraphBuilder.withNodeProvisioner(krakenNodeProvisioner) //.withLoggingLevel(LoggingLevel.Debug)

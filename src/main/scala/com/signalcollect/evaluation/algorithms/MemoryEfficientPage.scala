@@ -38,7 +38,7 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   protected var mostRecentSignalMap: Map[Int, Float] = Map[Int, Float]() // key: signal source id, value: signal
 
-  override def addOutgoingEdge(e: Edge): Boolean = {
+  override def addOutgoingEdge(e: Edge, graphEditor: GraphEditor): Boolean = {
     var edgeAdded = false
     val targetId = e.id.targetId.asInstanceOf[Int]
     if (!targetIdArray.contains(targetId)) {
@@ -89,14 +89,14 @@ class MemoryEfficientPage(var id: Int) extends Vertex with Externalizable {
 
   def afterInitialization(graphEditor: GraphEditor) = {}
   def beforeRemoval(graphEditor: GraphEditor) = {}
-  def addIncomingEdge(e: Edge): Boolean = true
-  def removeIncomingEdge(edgeId: EdgeId[_, _]): Boolean = true
+  def addIncomingEdge(e: Edge, graphEditor: GraphEditor): Boolean = true
+  def removeIncomingEdge(edgeId: EdgeId[_, _], graphEditor: GraphEditor): Boolean = true
 
-  override def removeOutgoingEdge(edgeId: EdgeId[_, _]): Boolean = {
+  override def removeOutgoingEdge(edgeId: EdgeId[_, _], graphEditor: GraphEditor): Boolean = {
     throw new UnsupportedOperationException
   }
 
-  override def removeAllOutgoingEdges: Int = {
+  override def removeAllOutgoingEdges(graphEditor: GraphEditor): Int = {
     throw new UnsupportedOperationException
   }
 
@@ -162,6 +162,8 @@ class MemoryEfficientLink(var s: Int, var t: Int) extends Edge with Externalizab
   type TargetId = Int
 
   def weight = 1.0
+  
+  def onAttach(sourceVertex: SourceVertex, graphEditor: GraphEditor) = {}
 
   def executeSignalOperation(sourceVertex: Vertex, mb: MessageBus) = {} //Since this is handled by the Page directly
   def signal(sourceVertex: SourceVertex): Signal = 0.0 //Since this is handled by the Page directly
