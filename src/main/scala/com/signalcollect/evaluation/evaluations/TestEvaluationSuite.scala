@@ -35,7 +35,7 @@ object TestEvaluationSuite extends App {
 //  val evaluation = new EvaluationSuiteCreator(evaluationName = "SSSP_Test")
 
 //  evaluation.addJobForEvaluationAlgorithm(new PageRankMemoryConsumptionEvaluation(graph = new IdOnlyGraph(graphSize = 1000 )))
-  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graph = new LogNormalGraph(graphSize = 1000)))
+  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new LogNormalGraph(graphSize = 1000)))
 //  evaluation.addJobForEvaluationAlgorithm(new SSSPEvaluationRun)
 
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))

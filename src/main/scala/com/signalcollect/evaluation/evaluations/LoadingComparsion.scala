@@ -13,11 +13,11 @@ object LoadingComparsion extends App {
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Loading Evaluation",
   executionHost = new TorqueHost("strebel"/*System.getProperty("user.name")*/, recompileCore = false))
   
-  val centralizedLoading = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graph = new LogNormalGraph(graphSize = 200000))
+  val centralizedLoading = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new LogNormalGraph(graphSize = 200000))
   
-  val distributedLoading = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graph = new DistributedLogNormal(graphSize = 200000, numberOfWorkers = Some(24)))
+  val distributedLoading = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new DistributedLogNormal(graphSize = 200000, numberOfWorkers = Some(24)))
   
-  val distributedRandomly = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graph = new DistributedLogNormal(graphSize = 200000))
+  val distributedRandomly = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new DistributedLogNormal(graphSize = 200000))
   
   for (i <- 0 until 2) {
     evaluation.addJobForEvaluationAlgorithm(centralizedLoading)

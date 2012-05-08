@@ -20,6 +20,7 @@
 package com.signalcollect.evaluation.algorithms
 
 import com.signalcollect._
+import com.signalcollect.interfaces._
 
 /**
  * Represents an edge in a Single-Source Shortest Path compute graph.
@@ -64,6 +65,29 @@ class Location(id: Any, initialState: Option[Int] = None) extends DataGraphVerte
     Some(mostRecentSignals.foldLeft(currentShortestPath)(math.min(_, _)))
   }
 
+  override def scoreSignal: Double = {
+    if (lastSignalState.isDefined) {
+      // we signaled before
+      if (lastSignalState.get.isDefined && lastSignalState.get.get != state.get) {
+        // we signaled something different before, let's signal again.
+        1
+      } else {
+        //same thing as last time, let's not signal the same thing again.
+        0
+      }
+    } else if (state.isDefined) {
+      // we have not signaled before, but we do know a path. let's signal it then.
+      1
+    } else {
+      // we have not signaled before and do not know a path. nothing to do here.
+      0
+    }
+  }
+
+  override def scoreCollect(signals: Iterable[SignalMessage[_, _, _]]): Double = {
+    signals.size // changed so it only gets called once signals were received 
+  }
+
 }
 
 /** Builds a Single-Source Shortest Path compute graph and executes the computation */
@@ -75,7 +99,9 @@ object SSSP extends App {
   graph.addVertex(new Location(4))
   graph.addVertex(new Location(5))
   graph.addVertex(new Location(6))
+  graph.addVertex(new Location(7))
   graph.addEdge(new Path(1, 2))
+  graph.addEdge(new Path(2, 1))
   graph.addEdge(new Path(2, 3))
   graph.addEdge(new Path(3, 4))
   graph.addEdge(new Path(1, 5))

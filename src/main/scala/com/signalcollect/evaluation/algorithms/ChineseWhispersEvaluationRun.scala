@@ -28,24 +28,28 @@ import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.graphproviders.GraphProvider
 
-class PageRankEvaluationRun(
+class ChineseWhispersEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
   graphProvider: GraphProvider,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
+  var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
     computeGraph = graphProvider.populateGraph(builder,
-      (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85),
-      (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
+      (id) => new ChineseWhispersVertex(id.asInstanceOf[Int]),
+      (srcId, targetId) => {
+        new ChineseWhispersEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int])
+        new ChineseWhispersEdge(targetId.asInstanceOf[Int], srcId.asInstanceOf[Int])
+      })
   }
 
   def execute = {
     computeGraph.execute(executionConfiguration)
   }
 
-  def algorithmName = "PageRank"
+  def algorithmName = "ChineseWhispers"
 
   def graphStructure = graphProvider.toString
 

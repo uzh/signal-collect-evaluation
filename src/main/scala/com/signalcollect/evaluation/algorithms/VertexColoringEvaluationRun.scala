@@ -27,25 +27,31 @@ import com.signalcollect.Graph
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.graphproviders.GraphProvider
+import com.signalcollect.StateForwarderEdge
 
-class PageRankEvaluationRun(
+class VertexColoringEvaluationRun(
+  numColors: Int,
   graphBuilder: GraphBuilder = GraphBuilder,
   graphProvider: GraphProvider,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
+  var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
     computeGraph = graphProvider.populateGraph(builder,
-      (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85),
-      (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
+      (id) => new ColoredVertex(id.asInstanceOf[Int], numColors: Int, initialColor = id.asInstanceOf[Int] % numColors),
+      (srcId, targetId) => {
+        new StateForwarderEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int])
+        new StateForwarderEdge(targetId.asInstanceOf[Int], srcId.asInstanceOf[Int])
+      })
   }
 
   def execute = {
     computeGraph.execute(executionConfiguration)
   }
 
-  def algorithmName = "PageRank"
+  def algorithmName = "Vertex Coloring"
 
   def graphStructure = graphProvider.toString
 

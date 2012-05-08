@@ -79,6 +79,9 @@ class EvaluationSuiteCreator(evaluationName: String,
       statsMap += (("startDate", dateFormat.format(startDate)))
       statsMap += (("startTime", timeFormat.format(startDate)))
 
+      // garbage collection before executing
+      System.gc
+      
       //Execute the algorithm
       val externallyMeasuredExecutionStartTime = System.nanoTime
       val stats = run.execute

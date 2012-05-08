@@ -27,39 +27,31 @@ import com.signalcollect.evaluation.util.VertexFactory
 import com.signalcollect.evaluation.util.LogNormalParameters
 import com.signalcollect.graphproviders.GraphProvider
 
-class SSSPEvaluationRun(
+class SsspEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
-  graph: GraphProvider,
+  graphProvider: GraphProvider,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
 
-  /*
-   * Synthetic graph parameters
-   */
-  val seed = 0
-  val sigma = 1.3
-  val mu = 4.0
-
   def loadGraph = {
-    computeGraph = graph.populateGraph(builder, 
-        (id) => {
-        	if(id != 0) {
-        	  new Location(id)
-        	}
-        	else {
-        	  new Location(id, Some(0))
-        	}
-    },
-    (source, target) => new Path(source, target))
+    computeGraph = graphProvider.populateGraph(builder,
+      (id) => {
+        if (id != 0) {
+          new Location(id)
+        } else {
+          new Location(id, Some(0))
+        }
+      },
+      (source, target) => new Path(source, target))
   }
 
   def execute = {
-    computeGraph.execute(ExecutionConfiguration)
+    computeGraph.execute(executionConfiguration)
   }
 
   def algorithmName = "SSSP"
 
-  def graphStructure = graph.toString
+  def graphStructure = graphProvider.toString
 }
