@@ -91,18 +91,18 @@ object MulticoreScalabilityEvaluation extends App {
         val googleWebGraph = new GoogleGraphLoader(numberOfWorkers: Int)
         for (graphLoader <- List(googleWebGraph)) { //sparseSmallDirectedGraphLoader, denseSmallDirectedGraphLoaderdenseLargeDirectedGraphLoader, sparseLargeDirectedGraphLoaderdenseSmallDirectedGraphLoader
           if (numberOfWorkers <= 2) {
-            slowEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig))
-            //            slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig))
+            slowEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+            //            slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
           } else {
-            fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig))
-            //            fastEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig))
+            fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+            //            fastEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
           }
         }
         //        for (graphLoader <- List(denseSmallUndirectedGraphLoader)) {
         //          if (numberOfWorkers <= 2) {
-        //            slowEval.addJobForEvaluationAlgorithm(new ChineseWhispersEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig))
+        //            slowEval.addJobForEvaluationAlgorithm(new ChineseWhispersEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
         //          } else {
-        //            fastEval.addJobForEvaluationAlgorithm(new ChineseWhispersEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig))
+        //            fastEval.addJobForEvaluationAlgorithm(new ChineseWhispersEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
         //          }
         //        }
       }

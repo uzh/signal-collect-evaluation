@@ -28,16 +28,17 @@ import com.signalcollect.graphproviders.synthetic._
 import com.signalcollect.evaluation.jobsubmission.EvaluationSuiteCreator
 
 object TestEvaluationSuite extends App {
-  val evaluation = new EvaluationSuiteCreator(evaluationName = "Test_Suite_Name", 
-//     executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name"))
-      executionHost = new LocalHost
-      )
-  
-//  val evaluation = new EvaluationSuiteCreator(evaluationName = "SSSP_Test")
+  val evaluation = new EvaluationSuiteCreator(evaluationName = "Test_Suite_Name",
+    //     executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name"))
+    executionHost = new LocalHost)
 
-//  evaluation.addJobForEvaluationAlgorithm(new PageRankMemoryConsumptionEvaluation(graph = new IdOnlyGraph(graphSize = 1000 )))
-  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new LogNormalGraph(graphSize = 1000)))
-//  evaluation.addJobForEvaluationAlgorithm(new SSSPEvaluationRun)
+  val jvmParameters = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC"
+
+  //  val evaluation = new EvaluationSuiteCreator(evaluationName = "SSSP_Test")
+
+  //  evaluation.addJobForEvaluationAlgorithm(new PageRankMemoryConsumptionEvaluation(graph = new IdOnlyGraph(graphSize = 1000 )))
+  evaluation.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new LogNormalGraph(graphSize = 1000), jvmParams = jvmParameters))
+  //  evaluation.addJobForEvaluationAlgorithm(new SSSPEvaluationRun)
 
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
 

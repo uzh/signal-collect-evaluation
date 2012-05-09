@@ -92,6 +92,7 @@ class EvaluationSuiteCreator(evaluationName: String,
 
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))
+      statsMap += (("jvmParameters", run.jvmParameters))
       if (stats != null) {
         statsMap += (("numberOfWorkers", stats.numberOfWorkers.toString))
         statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTime.toMillis.toString))
