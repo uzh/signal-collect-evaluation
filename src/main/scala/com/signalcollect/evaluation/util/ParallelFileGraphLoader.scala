@@ -63,7 +63,7 @@ class ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename: String, edge
     graph.awaitIdle
     graph
   }
-
+  
   override def toString = "ParallelFileGraphLoader" + vertexFilename + "-" + edgeFilename
 
 }
