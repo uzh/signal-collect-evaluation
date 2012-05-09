@@ -18,6 +18,7 @@
  */
 
 package com.signalcollect.evaluation.resulthandling
+import com.signalcollect.nodeprovisioning.torque._
 
 class ConsoleResultHandler(useListDisplay: Boolean = false) extends ResultHandler {
   def addEntry(data: Map[String, String]) = {

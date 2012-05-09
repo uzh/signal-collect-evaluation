@@ -31,7 +31,8 @@ import com.signalcollect.graphproviders.GraphProvider
 class PageRankEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
   graphProvider: GraphProvider,
-  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
+  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
+  jvmParams: String = "") extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
 
@@ -48,5 +49,7 @@ class PageRankEvaluationRun(
   def algorithmName = "PageRank"
 
   def graphStructure = graphProvider.toString
+
+  override def jvmParameters = jvmParams
 
 }

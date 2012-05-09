@@ -31,7 +31,8 @@ import com.signalcollect.graphproviders.GraphProvider
 class ChineseWhispersEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
   graphProvider: GraphProvider,
-  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
+  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
+  jvmParams: String = "") extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
@@ -52,5 +53,7 @@ class ChineseWhispersEvaluationRun(
   def algorithmName = "ChineseWhispers"
 
   def graphStructure = graphProvider.toString
+
+  override def jvmParameters = jvmParams
 
 }

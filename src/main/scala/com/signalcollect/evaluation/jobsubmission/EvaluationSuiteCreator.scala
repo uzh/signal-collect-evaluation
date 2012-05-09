@@ -27,7 +27,7 @@ import com.signalcollect.ExecutionInformation
 import scala.collection.mutable.ListBuffer
 import akka.util.FiniteDuration
 import java.util.concurrent.TimeUnit
-import com.signalcollect.evaluation.jobexecution._
+import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms._
 
@@ -35,7 +35,7 @@ class EvaluationSuiteCreator(evaluationName: String,
   evaluationCreator: String = System.getProperty("user.name"),
   executionHost: ExecutionHost = new LocalHost) {
 
-  val jobs = ListBuffer[Job]()
+  val jobs = ListBuffer[TorqueJob]()
 
   /**
    * Create a job to be run later
@@ -58,10 +58,11 @@ class EvaluationSuiteCreator(evaluationName: String,
     executionHost.executeJobs(jobs.toList)
   }
 
-  def buildEvaluationJob(run: EvaluationAlgorithmRun): Job = new Job(
+  def buildEvaluationJob(run: EvaluationAlgorithmRun): TorqueJob = new TorqueJob(
     submittedByUser = evaluationCreator,
     jobId = Random.nextInt.abs,
     jobDescription = evaluationName,
+    jvmParameters = run.jvmParameters,
     execute = { () =>
       var statsMap = Map[String, String]()
 

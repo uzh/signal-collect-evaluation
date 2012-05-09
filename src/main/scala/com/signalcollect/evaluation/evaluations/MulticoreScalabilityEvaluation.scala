@@ -21,7 +21,7 @@
 package com.signalcollect.evaluation.evaluations
 
 import com.signalcollect.evaluation.jobsubmission._
-import com.signalcollect.evaluation.jobexecution._
+import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms.PageRankEvaluationRun
 import com.signalcollect.evaluation.algorithms.SsspEvaluationRun
@@ -47,12 +47,13 @@ import com.signalcollect.evaluation.util.GoogleGraphLoader
 object MulticoreScalabilityEvaluation extends App {
 
   val evalName = "MulticoreScalability GoogleWebgraph"
+  val jvmParameters = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC"
 
   val slowEval = new EvaluationSuiteCreator(evaluationName = evalName,
-    executionHost = new TorqueHost(System.getProperty("user.name"), recompileCore = false, jvmParameters = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC", priority = TorquePriority.fast))
+    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name"), priority = TorquePriority.fast))
 
   val fastEval = new EvaluationSuiteCreator(evaluationName = evalName,
-    executionHost = new TorqueHost(System.getProperty("user.name"), recompileCore = false, jvmParameters = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC", priority = TorquePriority.superfast))
+    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name"), priority = TorquePriority.superfast))
 
   //  val kraken = new com.signalcollect.nodeprovisioning.torque.TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", privateKeyFilePath = "/home/user/stutz/.ssh/id_rsa")
   //  val krakenNodeProvisioner = new TorqueNodeProvisioner(kraken, 1)

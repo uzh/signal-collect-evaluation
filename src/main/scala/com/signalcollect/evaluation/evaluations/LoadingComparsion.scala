@@ -1,7 +1,7 @@
 package com.signalcollect.evaluation.evaluations
 
 import com.signalcollect.evaluation.jobsubmission._
-import com.signalcollect.evaluation.jobexecution._
+import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.configuration._
 import com.signalcollect.evaluation.resulthandling._
@@ -11,7 +11,7 @@ import com.signalcollect.graphproviders.synthetic._
 object LoadingComparsion extends App {
 
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Loading Evaluation",
-  executionHost = new TorqueHost("strebel"/*System.getProperty("user.name")*/, recompileCore = false))
+  executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name")))
   
   val centralizedLoading = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new LogNormalGraph(graphSize = 200000))
   

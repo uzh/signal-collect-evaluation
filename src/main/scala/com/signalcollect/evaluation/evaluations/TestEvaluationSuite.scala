@@ -20,7 +20,7 @@
 package com.signalcollect.evaluation.evaluations
 
 import com.signalcollect.evaluation.resulthandling._
-import com.signalcollect.evaluation.jobexecution._
+import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.configuration.ExecutionMode
@@ -29,8 +29,8 @@ import com.signalcollect.evaluation.jobsubmission.EvaluationSuiteCreator
 
 object TestEvaluationSuite extends App {
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Test_Suite_Name", 
-     executionHost = new TorqueHost(torqueUsername = "strebel", recompileCore = false)
-//      executionHost = new LocalHost
+//     executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name"))
+      executionHost = new LocalHost
       )
   
 //  val evaluation = new EvaluationSuiteCreator(evaluationName = "SSSP_Test")

@@ -33,7 +33,8 @@ class VertexColoringEvaluationRun(
   numColors: Int,
   graphBuilder: GraphBuilder = GraphBuilder,
   graphProvider: GraphProvider,
-  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
+  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
+  jvmParams:String = "") extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
@@ -54,5 +55,7 @@ class VertexColoringEvaluationRun(
   def algorithmName = "Vertex Coloring"
 
   def graphStructure = graphProvider.toString
+  
+  override def jvmParameters = jvmParams
 
 }

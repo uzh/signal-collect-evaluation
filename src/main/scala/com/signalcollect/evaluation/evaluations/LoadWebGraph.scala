@@ -19,7 +19,7 @@
 package com.signalcollect.evaluation.evaluations
 
 import com.signalcollect.evaluation.jobsubmission._
-import com.signalcollect.evaluation.jobexecution._
+import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.evaluation.util._
 import com.signalcollect.configuration._
@@ -36,7 +36,7 @@ object LoadWebGraph extends App {
   val loggerFile = Some("/home/user/strebel/status.txt")
 
   val evaluation = new EvaluationSuiteCreator(evaluationName = runName,
-    executionHost = new TorqueHost("strebel"/*System.getProperty("user.name")*/, priority = TorquePriority.fast, recompileCore = false))
+    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name")))
 
   evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(graph = new WebGraphParser(locationSplits, loggerFile, (0 until 24)), runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)))
 
