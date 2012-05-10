@@ -70,7 +70,7 @@ class Location(id: Any, initialState: Option[Int] = None) extends DataGraphVerte
       // we signaled before
       if (lastSignalState.get.isDefined && lastSignalState.get.get != state.get) {
         // we signaled something different before, let's signal again.
-        1
+        state.get - lastSignalState.get.get
       } else {
         //same thing as last time, let's not signal the same thing again.
         0

@@ -61,25 +61,25 @@ object MulticoreScalabilityEvaluation extends App {
 
   val executionConfigAsync = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)
   val executionConfigSync = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)
-  //  val aboveAverageScheduler = AboveAverage
+  val aboveAverageScheduler = AboveAverage
 
-  val repetitions = 3
+  val repetitions = 10
   for (i <- 0 until repetitions) {
-    //    val graphStructure = new LogNormalGraph(graphSize = 200000)
-    //graphSize: Int, seed: Long = 0, sigma: Double = 1, mu: Double = 3
-    //    val graphStructureDense = new LogNormalGraph(graphSize = 1000000, seed = 0, sigma = 1, mu = 3)
-    //    val graphStructureSparse = new LogNormalGraph(graphSize = 1000000, seed = 0, sigma = 1, mu = 1)
-    //        for (numberOfWorkers <- List(24)) {
-    for (numberOfWorkers <- List(24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)) {
-      //    for (numberOfWorkers <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)) {
-      val graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
-        override def getNodes: List[Node] = {
-          List(new LocalNode {
-            override def numberOfCores = numberOfWorkers
-          })
-        }
-      })
-      for (executionConfig <- List(executionConfigAsync, executionConfigSync)) { //executionConfigSync
+    for (executionConfig <- List(executionConfigAsync, executionConfigSync)) { //executionConfigSync
+      //    val graphStructure = new LogNormalGraph(graphSize = 200000)
+      //graphSize: Int, seed: Long = 0, sigma: Double = 1, mu: Double = 3
+      //    val graphStructureDense = new LogNormalGraph(graphSize = 1000000, seed = 0, sigma = 1, mu = 3)
+      //    val graphStructureSparse = new LogNormalGraph(graphSize = 1000000, seed = 0, sigma = 1, mu = 1)
+      //        for (numberOfWorkers <- List(24)) {
+      for (numberOfWorkers <- List(24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)) {
+        //    for (numberOfWorkers <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)) {
+        val graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
+          override def getNodes: List[Node] = {
+            List(new LocalNode {
+              override def numberOfCores = numberOfWorkers
+            })
+          }
+        })
         //        val sparseSmallDirectedGraphLoader = new ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename = "./lognormal-vertices200000-sigma1-mu1", edgeFilename = "lognormal-edges896737-sigma1-mu1", directed = true)
         //        val sparseSmallUndirectedGraphLoader = new ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename = "./lognormal-vertices200000-sigma1-mu1", edgeFilename = "lognormal-edges896737-sigma1-mu1", directed = false)
         //        val denseSmallDirectedGraphLoader = new ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename = "./lognormal-vertices200000-sigma1-mu3", edgeFilename = "lognormal-edges6597583-sigma1-mu3", directed = true)
@@ -90,13 +90,19 @@ object MulticoreScalabilityEvaluation extends App {
         //        val denseLargeUndirectedGraphLoader = new ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename = "./lognormal-vertices1000000-sigma1-mu3", edgeFilename = "lognormal-edges33086286-sigma1-mu3", directed = false)
         val googleWebGraph = new GoogleGraphLoader(numberOfWorkers: Int)
         for (graphLoader <- List(googleWebGraph)) { //sparseSmallDirectedGraphLoader, denseSmallDirectedGraphLoaderdenseLargeDirectedGraphLoader, sparseLargeDirectedGraphLoaderdenseSmallDirectedGraphLoader
-          if (numberOfWorkers <= 2) {
-            slowEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
-            //            slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
-          } else {
-            fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
-            //            fastEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          //          if (numberOfWorkers <= 2) {
+          slowEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          if (executionConfig == executionConfigAsync) {
+            slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder.withStorageFactory(aboveAverageScheduler), graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
           }
+          //          } else {
+          //            fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          //            fastEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          //            if (executionConfig == executionConfigAsync) {
+          //              fastEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder.withStorageFactory(aboveAverageScheduler), graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          //            }
+          //          }
         }
         //        for (graphLoader <- List(denseSmallUndirectedGraphLoader)) {
         //          if (numberOfWorkers <= 2) {
