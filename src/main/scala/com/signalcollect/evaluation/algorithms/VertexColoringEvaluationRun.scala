@@ -34,18 +34,15 @@ class VertexColoringEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
   graphProvider: GraphProvider,
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
-  jvmParams:String = "") extends EvaluationAlgorithmRun {
+  jvmParams: String = "") extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
     computeGraph = graphProvider.populateGraph(builder,
-      (id) => new ColoredVertex(id.asInstanceOf[Int], numColors: Int, initialColor = id.asInstanceOf[Int] % numColors),
-      (srcId, targetId) => {
-        new StateForwarderEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int])
-        new StateForwarderEdge(targetId.asInstanceOf[Int], srcId.asInstanceOf[Int])
-      })
+      (id) => new ColoredVertex(id.asInstanceOf[Int], numColors, 1),
+      (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
   }
 
   def execute = {
@@ -55,7 +52,7 @@ class VertexColoringEvaluationRun(
   def algorithmName = "Vertex Coloring"
 
   def graphStructure = graphProvider.toString
-  
+
   override def jvmParameters = jvmParams
 
 }

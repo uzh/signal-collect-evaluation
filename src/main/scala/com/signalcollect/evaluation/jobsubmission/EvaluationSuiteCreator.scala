@@ -40,8 +40,8 @@ class EvaluationSuiteCreator(evaluationName: String,
   /**
    * Create a job to be run later
    */
-  def addJobForEvaluationAlgorithm(run: EvaluationAlgorithmRun) {
-    jobs += buildEvaluationJob(run)
+  def addJobForEvaluationAlgorithm(run: EvaluationAlgorithmRun, extraInformation: Map[String, String] = Map[String, String]()) {
+    jobs += buildEvaluationJob(run, extraInformation)
   }
 
   /**
@@ -58,13 +58,13 @@ class EvaluationSuiteCreator(evaluationName: String,
     executionHost.executeJobs(jobs.toList)
   }
 
-  def buildEvaluationJob(run: EvaluationAlgorithmRun): TorqueJob = new TorqueJob(
+  def buildEvaluationJob(run: EvaluationAlgorithmRun, extraInformation: Map[String, String]): TorqueJob = new TorqueJob(
     submittedByUser = evaluationCreator,
     jobId = Random.nextInt.abs,
     jobDescription = evaluationName,
     jvmParameters = run.jvmParameters,
     execute = { () =>
-      var statsMap = Map[String, String]()
+      var statsMap = extraInformation
 
       //Load Graph
       val graphLoadingStart = System.nanoTime
@@ -82,7 +82,7 @@ class EvaluationSuiteCreator(evaluationName: String,
 
       // garbage collection before executing
       System.gc
-      
+
       //Execute the algorithm
       val externallyMeasuredExecutionStartTime = System.nanoTime
       val stats = run.execute
