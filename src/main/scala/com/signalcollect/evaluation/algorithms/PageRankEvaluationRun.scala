@@ -30,20 +30,19 @@ import com.signalcollect.graphproviders.GraphProvider
 
 class PageRankEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
-  graphProvider: GraphProvider,
+  graphProvider: GraphProvider[_],
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
   jvmParams: String = "") extends EvaluationAlgorithmRun {
 
-  val builder = graphBuilder
-
   def loadGraph = {
-    computeGraph = graphProvider.populateGraph(builder,
+    graph = graphBuilder.build
+    graphProvider.populate(graph,
       (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85),
-      (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
+      (srcId, targetId) => new PageRankEdge(targetId.asInstanceOf[Int]))
   }
 
   def execute = {
-    computeGraph.execute(executionConfiguration)
+    graph.execute(executionConfiguration)
   }
 
   def algorithmName = "PageRank"

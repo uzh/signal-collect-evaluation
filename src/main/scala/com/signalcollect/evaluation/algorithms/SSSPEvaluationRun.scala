@@ -23,13 +23,11 @@ package com.signalcollect.evaluation.algorithms
 import com.signalcollect._
 import com.signalcollect.configuration._
 import com.signalcollect.graphproviders.synthetic._
-import com.signalcollect.evaluation.util.VertexFactory
-import com.signalcollect.evaluation.util.LogNormalParameters
 import com.signalcollect.graphproviders.GraphProvider
 
 class SsspEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
-  graphProvider: GraphProvider,
+  graphProvider: GraphProvider[_],
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
   jvmParams: String = "") extends EvaluationAlgorithmRun {
 
@@ -37,7 +35,8 @@ class SsspEvaluationRun(
   var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
-    computeGraph = graphProvider.populateGraph(builder,
+    graph = builder.build
+    graphProvider.populate(graph,
       (id) => {
         if (id != 0) {
           new Location(id)
@@ -49,7 +48,7 @@ class SsspEvaluationRun(
   }
 
   def execute = {
-    computeGraph.execute(executionConfiguration)
+    graph.execute(executionConfiguration)
   }
 
   def algorithmName = "SSSP"

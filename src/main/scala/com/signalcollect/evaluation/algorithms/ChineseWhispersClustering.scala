@@ -33,7 +33,7 @@ class ChineseWhispersVertex(id: Any, selfPreference: Double = 1.0) extends DataG
 
   type Signal = (Any, Double)
 
-  def collect(oldState: State, mostRecentSignals: Iterable[(Any, Double)]): Any = {
+  def collect(oldState: Any, mostRecentSignals: Iterable[(Any, Double)], graphEditor: GraphEditor): Any = {
     //group most recent signals by clustering label
     val grouped = (((state, selfPreference)) :: mostRecentSignals.toList).groupBy(_._1)
     //sort the grouped list by the sum of all clustering label weights
@@ -47,11 +47,8 @@ class ChineseWhispersVertex(id: Any, selfPreference: Double = 1.0) extends DataG
  * Connects two entities in a Chinese Whispers algorithm and sets the signal to be
  * the source vertex's state plus together with the weight of the connection.
  */
-class ChineseWhispersEdge(s: Any, t: Any, weight: Double = 1.0) extends DefaultEdge(s, t) {
-  type SourceVertex = ChineseWhispersVertex
-
-  override def signal(sourceVertex: ChineseWhispersVertex) = (sourceVertex.state, weight)
-
+class ChineseWhispersEdge(t: Any, weight: Double = 1.0) extends DefaultEdge(t) {
+  override def signal(sourceVertex: Vertex[_, _]) = (sourceVertex.state, weight)
 }
 
 /**
@@ -67,8 +64,9 @@ object ChineseWhispersClustering extends App {
 //  }
 
   val loader = new LogNormalGraph(5000)
-
-  val graph = loader.populateGraph(GraphBuilder, new ChineseWhispersVertex(_), new ChineseWhispersEdge(_, _))
+  
+  val graph = GraphBuilder.build
+  loader.populate(graph, (id: Int) => new ChineseWhispersVertex(id), (sourceId: Int, targetId: Int) => new ChineseWhispersEdge(targetId))
 
   //  graph.addVertex(new ChineseWhispersVertex(1))
   //  graph.addVertex(new ChineseWhispersVertex(2))

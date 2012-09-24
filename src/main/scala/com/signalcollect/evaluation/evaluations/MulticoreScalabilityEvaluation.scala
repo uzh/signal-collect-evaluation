@@ -46,7 +46,7 @@ import com.signalcollect.evaluation.util.GoogleGraphLoader
  */
 object MulticoreScalabilityEvaluation extends App {
 
-  val evalName = "MulticoreScalability GoogleWebgraph"
+  val evalName = "Specialization removed eval"
   val jvmParameters = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC"
 
   val slowEval = new EvaluationSuiteCreator(evaluationName = evalName,
@@ -65,13 +65,13 @@ object MulticoreScalabilityEvaluation extends App {
 
   val repetitions = 10
   for (i <- 0 until repetitions) {
-    for (executionConfig <- List(executionConfigAsync, executionConfigSync)) { //executionConfigSync
+    for (executionConfig <- List(executionConfigAsync)) { //executionConfigSync
       //    val graphStructure = new LogNormalGraph(graphSize = 200000)
       //graphSize: Int, seed: Long = 0, sigma: Double = 1, mu: Double = 3
       //    val graphStructureDense = new LogNormalGraph(graphSize = 1000000, seed = 0, sigma = 1, mu = 3)
       //    val graphStructureSparse = new LogNormalGraph(graphSize = 1000000, seed = 0, sigma = 1, mu = 1)
-      //        for (numberOfWorkers <- List(24)) {
-      for (numberOfWorkers <- List(24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)) {
+              for (numberOfWorkers <- List(24)) {
+//      for (numberOfWorkers <- List(24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)) {
         //    for (numberOfWorkers <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)) {
         val graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
           override def getNodes: List[Node] = {
@@ -91,10 +91,10 @@ object MulticoreScalabilityEvaluation extends App {
         val googleWebGraph = new GoogleGraphLoader(numberOfWorkers: Int)
         for (graphLoader <- List(googleWebGraph)) { //sparseSmallDirectedGraphLoader, denseSmallDirectedGraphLoaderdenseLargeDirectedGraphLoader, sparseLargeDirectedGraphLoaderdenseSmallDirectedGraphLoader
           //          if (numberOfWorkers <= 2) {
-          slowEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
-          slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
-          if (executionConfig == executionConfigAsync) {
-            slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder.withStorageFactory(aboveAverageScheduler), graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+//          slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+//          if (executionConfig == executionConfigAsync) {
+//            slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder.withStorageFactory(aboveAverageScheduler), graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
           }
           //          } else {
           //            fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
@@ -111,7 +111,7 @@ object MulticoreScalabilityEvaluation extends App {
         //            fastEval.addJobForEvaluationAlgorithm(new ChineseWhispersEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
         //          }
         //        }
-      }
+//      }
     }
 
   }

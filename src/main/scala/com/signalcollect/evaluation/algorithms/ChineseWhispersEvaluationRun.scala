@@ -29,16 +29,17 @@ import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.graphproviders.GraphProvider
 
 class ChineseWhispersEvaluationRun(
-  graphBuilder: GraphBuilder = GraphBuilder,
-  graphProvider: GraphProvider,
-  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
-  jvmParams: String = "") extends EvaluationAlgorithmRun {
+    graphBuilder: GraphBuilder = GraphBuilder,
+    graphProvider: GraphProvider[Int],
+    executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
+    jvmParams: String = "") extends EvaluationAlgorithmRun {
 
   val builder = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
-    computeGraph = graphProvider.populateGraph(builder,
+    graph = builder.build
+    graphProvider.populate(graph,
       (id) => new ChineseWhispersVertex(id.asInstanceOf[Int]),
       (srcId, targetId) => {
         new ChineseWhispersEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int])
@@ -47,7 +48,7 @@ class ChineseWhispersEvaluationRun(
   }
 
   def execute = {
-    computeGraph.execute(executionConfiguration)
+    graph.execute(executionConfiguration)
   }
 
   def algorithmName = "ChineseWhispers"

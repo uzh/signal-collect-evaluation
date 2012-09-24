@@ -24,13 +24,13 @@ import java.io.Serializable
 import com.signalcollect.Graph
 
 abstract class EvaluationAlgorithmRun extends Serializable {
-  var computeGraph: Graph = null
+  var graph: Graph = _
   def jvmParameters: String = ""
   def loadGraph: Unit
   def execute: ExecutionInformation
   def postExecute = {}
-  def shutdown: Unit = computeGraph.shutdown
+  def shutdown: Unit = graph.shutdown
   def algorithmName: String
   def graphStructure: String
-  def awaitIdle = computeGraph.awaitIdle
+  def awaitIdle = graph.awaitIdle
 }

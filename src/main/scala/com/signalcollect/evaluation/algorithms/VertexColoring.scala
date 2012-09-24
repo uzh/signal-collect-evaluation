@@ -27,6 +27,7 @@ import com.signalcollect.interfaces.MessageBus
 import com.signalcollect.interfaces.SignalMessage
 import scala.collection.mutable.HashMap
 import com.signalcollect.graphproviders.synthetic.Chain
+import com.signalcollect.interfaces.EdgeId
 
 /**
  * 	This algorithm attempts to find a vertex coloring.
@@ -40,17 +41,19 @@ import com.signalcollect.graphproviders.synthetic.Chain
  * @param id: the vertex id
  * @param numColors: the number of colors (labels) used to color the graph
  */
-class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex {
+class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex[Int, Int] {
 
-  type Id = Int
-  type State = Int
   type Signal = Int
 
   var lastSignalState: Int = -1
 
+  def setState(s: Int) {
+    state = s
+  }
+  
   protected var targetIdArray = Array[Int]()
 
-  override def addOutgoingEdge(e: Edge, graphEditor: GraphEditor): Boolean = {
+  override def addEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = {
     var edgeAdded = false
     val targetId = e.id.targetId.asInstanceOf[Int]
     if (!targetIdArray.contains(targetId)) {
@@ -65,12 +68,12 @@ class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex 
 
   def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
-  def executeSignalOperation(messageBus: MessageBus) {
+  def executeSignalOperation(graphEditor: GraphEditor) {
     println("signaling " + id + " signal:" + state)
     if (!targetIdArray.isEmpty) {
       val signal = state
       targetIdArray.foreach(targetId => {
-        messageBus.sendToWorkerForVertexId(SignalMessage(new DefaultEdgeId(id, targetId), signal), targetId)
+        graphEditor.sendSignal(signal, EdgeId(id, targetId))
       })
     }
     lastSignalState = state
@@ -78,8 +81,8 @@ class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex 
 
   protected val mostRecentSignalMap = new HashMap[Int, Int]()
 
-  override def executeCollectOperation(signals: Iterable[SignalMessage[_, _, _]], messageBus: MessageBus) {
-    val castS = signals.asInstanceOf[Iterable[SignalMessage[_, Id, Signal]]]
+  override def executeCollectOperation(signals: Iterable[SignalMessage[_]], graphEditor: GraphEditor) {
+    val castS = signals.asInstanceOf[Iterable[SignalMessage[Signal]]]
     // faster than scala foreach
     val i = castS.iterator
     while (i.hasNext) {
@@ -89,34 +92,34 @@ class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex 
     state = collect(state, mostRecentSignalMap.values)
   }
 
-  def scoreCollect(signals: Iterable[SignalMessage[_, _, _]]) = signals.size
+  def scoreCollect(signals: Iterable[SignalMessage[_]]) = signals.size
 
-  def outgoingEdgeCount = targetIdArray.size
+  def edgeCount = targetIdArray.size
 
   def afterInitialization(graphEditor: GraphEditor) = {}
   def beforeRemoval(graphEditor: GraphEditor) = {}
-  def addIncomingEdge(e: Edge, graphEditor: GraphEditor): Boolean = true
-  def removeIncomingEdge(edgeId: EdgeId[_, _], graphEditor: GraphEditor): Boolean = true
+  def addIncomingEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = true
+  def removeIncomingEdge(edgeId: EdgeId, graphEditor: GraphEditor): Boolean = true
 
-  override def removeOutgoingEdge(edgeId: EdgeId[_, _], graphEditor: GraphEditor): Boolean = {
+  override def removeEdge(targetId: Any, graphEditor: GraphEditor): Boolean = {
     throw new UnsupportedOperationException
   }
 
-  override def removeAllOutgoingEdges(graphEditor: GraphEditor): Int = {
+  override def removeAllEdges(graphEditor: GraphEditor): Int = {
     throw new UnsupportedOperationException
   }
 
   def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
 
   def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
-  def getOutgoingEdgeMap: Option[Map[EdgeId[Id, _], Edge]] = None
-  def getOutgoingEdges: Option[Iterable[Edge]] = None
+  def getOutgoingEdgeMap: Option[Map[Any, Edge[_]]] = None
+  def getOutgoingEdges: Option[Iterable[Edge[_]]] = None
 
   /**
    * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
    * supported or if there is no such signal.
    */
-  def getMostRecentSignal(id: EdgeId[_, _]): Option[Any] = None
+  def getMostRecentSignal(id: EdgeId): Option[Any] = None
 
   /** The set of available colors */
   val colors: Set[Int] = (1 to numColors).toSet
@@ -135,7 +138,7 @@ class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex 
    *  set to a random color and the neighbors are informed about this vertex'
    *  new color. If no neighbor shares the same color, we stay with the old color.
    */
-  def collect(oldState: State, mostRecentSignals: Iterable[Int]): Int = {
+  def collect(oldState: Int, mostRecentSignals: Iterable[Int]): Int = {
     println("collecting: " + id + "received: " + mostRecentSignals.foldLeft("")(_ + ", " + _))
     if (mostRecentSignals.iterator.contains(state)) {
       println("problem!")
@@ -180,7 +183,6 @@ class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex 
  * not require a custom edge type.
  */
 object VertexColoring extends App {
-  val graph = GraphBuilder.build
   //  graph.addVertex(new ColoredVertex(1, numColors = 1, state = 1))
   //  graph.addVertex(new ColoredVertex(2, numColors = 1, state = 1))
   //  graph.addVertex(new ColoredVertex(3, numColors = 1, state = 1))
@@ -189,13 +191,9 @@ object VertexColoring extends App {
   //  graph.addEdge(new StateForwarderEdge(2, 3))
   //  graph.addEdge(new StateForwarderEdge(3, 2))
   //  val grid = new Grid(100, 100)
-  val edges = new Chain(3)
-  for (edge <- edges) {
-    graph.addVertex(new ColoredVertex(edge._1, numColors = 2, state = 1))
-    graph.addVertex(new ColoredVertex(edge._2, numColors = 2, state = 1))
-    graph.addEdge(new StateForwarderEdge(edge._1, edge._2))
-    graph.addEdge(new StateForwarderEdge(edge._2, edge._1))
-  }
+  val chainBuilder = new Chain(3, true)
+  val graph = GraphBuilder.build
+  chainBuilder.populate(graph, (id: Int) => new ColoredVertex(id, numColors = 2, state = 1), (sourceId, targetId) => new StateForwarderEdge(targetId))
   val stats = graph.execute(ExecutionConfiguration.withTimeLimit(10000))
   graph.foreachVertex(println(_))
   println(stats)

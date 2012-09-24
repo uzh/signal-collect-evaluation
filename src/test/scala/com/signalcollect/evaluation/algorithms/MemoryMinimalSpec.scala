@@ -19,7 +19,7 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
   "PageRank algorithm" should {
     "deliver correct results on a 5-cycle graph" in {
       println("PageRank algorithm on a 5-cycle graph")
-      def pageRankFiveCycleVerifier(v: Vertex): Boolean = {
+      def pageRankFiveCycleVerifier(v: Vertex[_, _]): Boolean = {
         val state = v.state.asInstanceOf[Float]
         val expectedState = 1.0
         val correct = (state - expectedState).abs < 0.00001f
@@ -40,7 +40,7 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
       var allcorrect = graph.aggregate(new AggregationOperation[Boolean] {
           val neutralElement = true
           def aggregate(a: Boolean, b: Boolean): Boolean = a && b
-          def extract(v: Vertex): Boolean = pageRankFiveCycleVerifier(v)
+          def extract(v: Vertex[_, _]): Boolean = pageRankFiveCycleVerifier(v)
         })
       allcorrect
     }

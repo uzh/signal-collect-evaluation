@@ -38,7 +38,10 @@ object LoadWebGraph extends App {
   val evaluation = new EvaluationSuiteCreator(evaluationName = runName,
     executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name")))
 
-  evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(graph = new WebGraphParser(locationSplits, loggerFile, (0 until 24)), runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)))
+  evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
+    graphProvider = new WebGraphParser(locationSplits, loggerFile, (0 until 24)),
+    runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous))
+  )
 
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
   evaluation.runEvaluation

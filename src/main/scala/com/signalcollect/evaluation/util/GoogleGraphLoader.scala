@@ -23,10 +23,8 @@ import scala.util.Random
 import scala.math._
 import graphproviders.GraphProvider
 
-class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google.txt", directed: Boolean = true) extends GraphProvider {
-  def populateGraph(builder: GraphBuilder, vertexBuilder: (Any) => Vertex, edgeBuilder: (Any, Any) => Edge) = {
-    val graph = builder.build
-
+class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google.txt", directed: Boolean = true) extends GraphProvider[Any] {
+  def populate(graph: Graph, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
     //    //Load the vertices
     //    for (i <- (0 until numberOfWorkers).par) {
     //      graph.loadGraph(Some(i), graph => {
@@ -60,9 +58,9 @@ class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google
               val targetId = ids(1).toInt
               graph.addVertex(vertexBuilder(targetId))
               graph.addVertex(vertexBuilder(sourceId))
-              graph.addEdge(edgeBuilder(sourceId, targetId))
+              graph.addEdge(sourceId, edgeBuilder(sourceId, targetId))
               if (!directed) {
-                graph.addEdge(edgeBuilder(targetId, sourceId))
+                graph.addEdge(targetId, edgeBuilder(targetId, sourceId))
               }
             }
           }
@@ -71,7 +69,6 @@ class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google
     }
 
     graph.awaitIdle
-    graph
   }
 
   override def toString = "GoogleFileGraphLoader" + edgeFilename

@@ -32,7 +32,7 @@ import com.signalcollect.StateForwarderEdge
 class VertexColoringEvaluationRun(
   numColors: Int,
   graphBuilder: GraphBuilder = GraphBuilder,
-  graphProvider: GraphProvider,
+  graphProvider: GraphProvider[_],
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
   jvmParams: String = "") extends EvaluationAlgorithmRun {
 
@@ -40,13 +40,14 @@ class VertexColoringEvaluationRun(
   var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
-    computeGraph = graphProvider.populateGraph(builder,
+    graph = builder.build
+    graphProvider.populate(graph,
       (id) => new ColoredVertex(id.asInstanceOf[Int], numColors, 1),
-      (srcId, targetId) => new PageRankEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int]))
+      (srcId, targetId) => new PageRankEdge(targetId.asInstanceOf[Int]))
   }
 
   def execute = {
-    computeGraph.execute(executionConfiguration)
+    graph.execute(executionConfiguration)
   }
 
   def algorithmName = "Vertex Coloring"

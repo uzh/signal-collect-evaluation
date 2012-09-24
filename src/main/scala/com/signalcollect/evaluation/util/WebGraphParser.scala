@@ -29,15 +29,12 @@ import java.util.Date
  */
 class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Range) extends OptimizedGraphProvider {
 
-  def populateGraph(builder: GraphBuilder, combinedVertexBuilder: (Int, List[Int]) => Vertex): Graph = {
-    var graph = builder.build
+  def populate(graph: Graph, combinedVertexBuilder: (Int, List[Int]) => Vertex[_, _]) {
     for (workerId <- splitsToParse.par) {
       graph.loadGraph(Some(workerId), (new WebGraphParserHelper(inputFolder, externalLoggingFilePath)).parserForSplit(workerId, combinedVertexBuilder))
     }
-
     graph.awaitIdle
     val memoryUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory().asInstanceOf[Double] / 1073741824
-    graph
   }
 
   
@@ -48,11 +45,11 @@ class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String
  */
 case class WebGraphParserHelper(inputFolder: String, externalLoggingFilePath: Option[String] = None) {
   
-  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, List[Int]) => Vertex): GraphEditor => Unit = {
+  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, List[Int]) => Vertex[_, _]): GraphEditor => Unit = {
     graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt", combinedVertexBuilder)
   }
   
-  def parseFile(graphEditor: GraphEditor, filename: String, combinedVertexBuilder: (Int, List[Int]) => Vertex) {
+  def parseFile(graphEditor: GraphEditor, filename: String, combinedVertexBuilder: (Int, List[Int]) => Vertex[_, _]) {
     //initialize input reader
     logStatus("started parsing " + filename)
     val fstream = new FileInputStream(inputFolder + System.getProperty("file.separator") + filename)

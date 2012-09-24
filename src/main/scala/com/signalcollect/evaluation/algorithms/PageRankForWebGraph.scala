@@ -32,13 +32,12 @@ import com.signalcollect.evaluation.util.OptimizedGraphProvider
 class PageRankForWebGraph(
   graphBuilder: GraphBuilder = GraphBuilder,
   numberOfWorkers: Int = 24,
-  graph: OptimizedGraphProvider,
+  graphProvider: OptimizedGraphProvider,
   runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
-  val builder = graphBuilder
-
   def loadGraph = {
-    computeGraph = graph.populateGraph(builder, 
+    graph = graphBuilder.build
+    graphProvider.populate(graph, 
         (id, outgoingEdges) => {
           val vertex = new MemoryMinimalPage(id.asInstanceOf[Int])
           vertex.setTargetIdArray(outgoingEdges.toArray.asInstanceOf[Array[Int]])
@@ -47,7 +46,7 @@ class PageRankForWebGraph(
   }
 
   def execute = {
-    computeGraph.execute(runConfiguration)
+    graph.execute(runConfiguration)
   }
 
   def algorithmName = "PageRank"
