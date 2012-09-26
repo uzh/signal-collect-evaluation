@@ -91,7 +91,7 @@ object MulticoreScalabilityEvaluation extends App {
         val googleWebGraph = new GoogleGraphLoader(numberOfWorkers: Int)
         for (graphLoader <- List(googleWebGraph)) { //sparseSmallDirectedGraphLoader, denseSmallDirectedGraphLoaderdenseLargeDirectedGraphLoader, sparseLargeDirectedGraphLoaderdenseSmallDirectedGraphLoader
           //          if (numberOfWorkers <= 2) {
-          fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
+          fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters, reportMemoryStats = true))
 //          slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))
 //          if (executionConfig == executionConfigAsync) {
 //            slowEval.addJobForEvaluationAlgorithm(new SsspEvaluationRun(graphBuilder = graphBuilder.withStorageFactory(aboveAverageScheduler), graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters))

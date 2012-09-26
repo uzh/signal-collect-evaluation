@@ -118,6 +118,16 @@ class EvaluationSuiteCreator(evaluationName: String,
       val endDate = new Date
       statsMap += (("endDate", dateFormat.format(endDate)))
       statsMap += (("endTime", timeFormat.format(endDate)))
+      
+      if(run.memoryStatsEnabled) {
+        for(i <- 0 until 10) {
+          System.gc
+        }
+        val runtime = Runtime.getRuntime
+        val usedMemory = (runtime.totalMemory-runtime.freeMemory)/1048576.0
+        statsMap += (("memory", usedMemory.toString())) //report Memory consumption in MB
+      }
+      
       run.shutdown
 
       statsMap

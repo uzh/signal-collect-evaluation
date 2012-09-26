@@ -32,7 +32,8 @@ class PageRankEvaluationRun(
   graphBuilder: GraphBuilder = GraphBuilder,
   graphProvider: GraphProvider[_],
   executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
-  jvmParams: String = "") extends EvaluationAlgorithmRun {
+  jvmParams: String = "",
+  reportMemoryStats: Boolean = false) extends EvaluationAlgorithmRun {
 
   def loadGraph = {
     graph = graphBuilder.build
@@ -50,5 +51,7 @@ class PageRankEvaluationRun(
   def graphStructure = graphProvider.toString
 
   override def jvmParameters = jvmParams
+  
+  override def memoryStatsEnabled = reportMemoryStats
 
 }

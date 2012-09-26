@@ -33,4 +33,5 @@ abstract class EvaluationAlgorithmRun extends Serializable {
   def algorithmName: String
   def graphStructure: String
   def awaitIdle = graph.awaitIdle
+  def memoryStatsEnabled: Boolean = false
 }
