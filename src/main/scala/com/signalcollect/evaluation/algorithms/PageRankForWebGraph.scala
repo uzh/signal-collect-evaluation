@@ -28,25 +28,68 @@ import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.graphproviders._
 import com.signalcollect.evaluation.util.OptimizedGraphProvider
+import java.io.File
+import org.apache.commons.io.FileUtils
 
 class PageRankForWebGraph(
-  graphBuilder: GraphBuilder = GraphBuilder,
-  numberOfWorkers: Int = 24,
-  graphProvider: OptimizedGraphProvider,
-  runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
-
+    jvmParams: String = "",
+    jdkBinaryPath: String = "",
+    graphBuilder: GraphBuilder = GraphBuilder,
+    graphProvider: OptimizedGraphProvider,
+    dummyVertices: Boolean = false,
+    numberOfWorkers: Int = 24,
+    runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
+  
+  override def jvmParameters = jvmParams
+  
+  override def jdkBinPath = jdkBinaryPath 
+  
   def loadGraph = {
+    val localHostName = java.net.InetAddress.getLocalHost().getHostName()
+    if (localHostName.contains("kraken") || localHostName.contains("claudio")) {
+      val localFileDir = "/home/torque/tmp/webgraph-tmp"
+      val remoteFileDir = "/home/user/" + System.getProperty("user.name") + "/webgraph"
+
+      def existsLocalCopy: Boolean = {
+        val f = new File(localFileDir)
+        f.exists
+      }
+
+      def createDirectory {
+        val f = new File(localFileDir)
+        if (!f.exists) {
+          f.mkdir
+        }
+      }
+
+      def copyAllSplits {
+        val source = new File(remoteFileDir);
+        val dest = new File(localFileDir);
+        FileUtils.copyDirectory(source, dest);
+      }
+
+      if (!existsLocalCopy) {
+        createDirectory
+        println("Copying splits to local machine ...")
+        copyAllSplits
+        println("Done")
+      }
+    }
+
     graph = graphBuilder.build
-    graphProvider.populate(graph, 
-        (id, outgoingEdges) => {
-          val vertex = new MemoryMinimalPage(id.asInstanceOf[Int])
-          vertex.setTargetIdArray(outgoingEdges.toArray.asInstanceOf[Array[Int]])
-          vertex
-        })
+    graphProvider.populate(graph,
+      (id, outgoingEdges) => {
+        val vertex = if (dummyVertices) new DummyPage(id) else new MemoryMinimalPage(id)
+        vertex.setTargetIdArray(outgoingEdges)
+        vertex
+      })
   }
 
   def execute = {
-    graph.execute(runConfiguration)
+    println("Running the algorithm ...")
+    val stats = graph.execute(runConfiguration)
+    println("Done.")
+    stats
   }
 
   def algorithmName = "PageRank"

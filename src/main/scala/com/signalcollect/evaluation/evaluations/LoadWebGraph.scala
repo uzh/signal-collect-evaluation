@@ -25,23 +25,48 @@ import com.signalcollect.evaluation.util._
 import com.signalcollect.configuration._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect._
+import com.signalcollect.nodeprovisioning.Node
+import com.signalcollect.nodeprovisioning.local._
 
 object LoadWebGraph extends App {
 
   /*
    * Config
    */
-  val runName = "Loading Webgraph 240th split"
-  val locationSplits = "/home/user/strebel/webgraph_part2/"
-  val loggerFile = Some("/home/user/strebel/status.txt")
+  val runName = "JDK8, G1 and all kinds of things"
+
+  val localMode = false
+  val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
+  val loggerFile = if (localMode) Some("/Users/" + System.getProperty("user.name") + "/status.txt") else Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
   val evaluation = new EvaluationSuiteCreator(evaluationName = runName,
-    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name")))
+    executionHost = if (localMode) {
+      new LocalHost()
+    } else {
+      new TorqueHost(
+        torqueHostname = "kraken.ifi.uzh.ch",
+        localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar",
+        torqueUsername = System.getProperty("user.name"))
+    })
 
-  evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
-    graphProvider = new WebGraphParser(locationSplits, loggerFile, (0 until 24)),
-    runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous))
-  )
+  for (splits <- List(24, 24, 24, 24)) {
+    evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
+        jvmParams = "-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:+UseNUMA -XX:+DoEscapeAnalysis",
+        jdkBinaryPath = "./jdk1.8.0/bin/",
+//      jvmParams = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC -XX:+DoEscapeAnalysis", //if (localMode) "" else " -agentpath:./profiler/libyjpagent.so ",  //-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC
+      graphBuilder = GraphBuilder,
+      //      graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
+      //        override def getNodes: List[Node] = {
+      //          List(new LocalNode {
+      //            override def numberOfCores = 1
+      //          })
+      //        }
+      //      }),
+      graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 1 else 24),
+      runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous),
+      dummyVertices = false
+    ))
+  }
 
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
   evaluation.runEvaluation

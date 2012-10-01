@@ -21,6 +21,7 @@ package com.signalcollect.evaluation.algorithms
 
 import com.signalcollect.interfaces._
 import com.signalcollect._
+import scala.collection.mutable.IndexedSeq
 import scala.collection.mutable.ArrayBuffer
 import java.io.{ ObjectInput, ObjectOutput, Externalizable }
 
@@ -52,7 +53,7 @@ class MemoryEfficientLocation(var id: Int) extends Vertex[Int, Int] with Externa
 
   def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
-  def executeCollectOperation(signals: Iterable[SignalMessage[_]], graphEditor: GraphEditor) {
+  def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
     val castSignals = signals.asInstanceOf[Iterable[SignalMessage[Int]]].map(_.signal)
     val newState = castSignals.foldLeft(state)(math.min(_, _))
     if (newState != state) {
@@ -79,7 +80,7 @@ class MemoryEfficientLocation(var id: Int) extends Vertex[Int, Int] with Externa
     }
   }
 
-  def scoreCollect(signals: Iterable[SignalMessage[_]]) = signals.size
+  def scoreCollect(signals: IndexedSeq[SignalMessage[_]]) = signals.size
 
   def edgeCount = targetIdArray.size
 
@@ -97,12 +98,6 @@ class MemoryEfficientLocation(var id: Int) extends Vertex[Int, Int] with Externa
     throw new UnsupportedOperationException
   }
 
-  def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
-
-  /**
-   * Returns the ids of all vertices from which this vertex has an incoming edge, optional.
-   */
-  def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
   def getOutgoingEdgeMap: Option[Map[Any, Edge[_]]] = None
   def getOutgoingEdges: Option[Iterable[Edge[_]]] = None
   

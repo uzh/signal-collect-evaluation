@@ -26,6 +26,7 @@ import com.signalcollect.Graph
 abstract class EvaluationAlgorithmRun extends Serializable {
   var graph: Graph = _
   def jvmParameters: String = ""
+  def jdkBinPath: String = ""
   def loadGraph: Unit
   def execute: ExecutionInformation
   def postExecute = {}

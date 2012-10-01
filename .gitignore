@@ -1,4 +1,5 @@
 .*
 !/.gitignore
-
+webgraph/*
 target/*
+*.hprof

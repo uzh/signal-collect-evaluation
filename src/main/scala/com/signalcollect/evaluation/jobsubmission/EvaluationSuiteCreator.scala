@@ -63,6 +63,7 @@ class EvaluationSuiteCreator(evaluationName: String,
     jobId = Random.nextInt.abs,
     jobDescription = evaluationName,
     jvmParameters = run.jvmParameters,
+    jdkBinPath = run.jdkBinPath,
     execute = { () =>
       var statsMap = extraInformation
 

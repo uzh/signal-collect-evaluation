@@ -22,7 +22,7 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
       def pageRankFiveCycleVerifier(v: Vertex[_, _]): Boolean = {
         val state = v.state.asInstanceOf[Float]
         val expectedState = 1.0
-        val correct = (state - expectedState).abs < 0.00001f
+        val correct = (state - expectedState).abs < 0.0001f
         if (!correct) {
           System.out.println("Problematic vertex:  id=" + v.id + ", expected state=" + expectedState + " actual state=" + state)
         }
@@ -36,7 +36,7 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
         graph.addVertex(v)
       }
       
-      graph.execute(ExecutionConfiguration.withCollectThreshold(0).withSignalThreshold(0))
+      graph.execute(ExecutionConfiguration.withCollectThreshold(0).withSignalThreshold(0.00001))
       var allcorrect = graph.aggregate(new AggregationOperation[Boolean] {
           val neutralElement = true
           def aggregate(a: Boolean, b: Boolean): Boolean = a && b

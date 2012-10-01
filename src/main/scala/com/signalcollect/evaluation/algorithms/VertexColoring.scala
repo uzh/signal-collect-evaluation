@@ -22,6 +22,7 @@ package com.signalcollect.evaluation.algorithms
 import com.signalcollect._
 import scala.util.Random
 import com.signalcollect.graphproviders.synthetic.Grid
+import scala.collection.mutable.IndexedSeq
 import scala.collection.mutable.ArrayBuffer
 import com.signalcollect.interfaces.MessageBus
 import com.signalcollect.interfaces.SignalMessage
@@ -81,7 +82,7 @@ class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex[
 
   protected val mostRecentSignalMap = new HashMap[Int, Int]()
 
-  override def executeCollectOperation(signals: Iterable[SignalMessage[_]], graphEditor: GraphEditor) {
+  override def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
     val castS = signals.asInstanceOf[Iterable[SignalMessage[Signal]]]
     // faster than scala foreach
     val i = castS.iterator
@@ -92,7 +93,7 @@ class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex[
     state = collect(state, mostRecentSignalMap.values)
   }
 
-  def scoreCollect(signals: Iterable[SignalMessage[_]]) = signals.size
+  def scoreCollect(signals: IndexedSeq[SignalMessage[_]]) = signals.size
 
   def edgeCount = targetIdArray.size
 

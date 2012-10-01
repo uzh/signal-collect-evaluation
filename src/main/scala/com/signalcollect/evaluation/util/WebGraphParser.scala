@@ -23,13 +23,14 @@ import java.io._
 import scala.collection.mutable.ArrayBuffer
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.zip.GZIPInputStream
 
 /**
  * Loads the specified range of splits of the web graph.
  */
 class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Range) extends OptimizedGraphProvider {
 
-  def populate(graph: Graph, combinedVertexBuilder: (Int, List[Int]) => Vertex[_, _]) {
+  def populate(graph: Graph, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
     for (workerId <- splitsToParse.par) {
       graph.loadGraph(Some(workerId), (new WebGraphParserHelper(inputFolder, externalLoggingFilePath)).parserForSplit(workerId, combinedVertexBuilder))
     }
@@ -45,15 +46,15 @@ class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String
  */
 case class WebGraphParserHelper(inputFolder: String, externalLoggingFilePath: Option[String] = None) {
   
-  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, List[Int]) => Vertex[_, _]): GraphEditor => Unit = {
-    graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt", combinedVertexBuilder)
+  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]): GraphEditor => Unit = {
+    graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt.gz", combinedVertexBuilder)
   }
   
-  def parseFile(graphEditor: GraphEditor, filename: String, combinedVertexBuilder: (Int, List[Int]) => Vertex[_, _]) {
+  def parseFile(graphEditor: GraphEditor, filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
     //initialize input reader
     logStatus("started parsing " + filename)
     val fstream = new FileInputStream(inputFolder + System.getProperty("file.separator") + filename)
-    val in = new DataInputStream(fstream)
+    val in = new DataInputStream(new GZIPInputStream(fstream))
     val input = new BufferedReader(new InputStreamReader(in))
     var line = input.readLine
     var verticesRead = 0
@@ -63,10 +64,12 @@ case class WebGraphParserHelper(inputFolder: String, externalLoggingFilePath: Op
       val numberOfLinks = getInt(vertexData(1))
       val outlinks = new Array[Int](numberOfLinks)
 
-      for (i <- (0 until numberOfLinks).par) {
+      var i = 0
+      while (i < numberOfLinks) {
         outlinks(i) = getInt(vertexData(i + 2))
+        i += 1
       }
-      val vertex = combinedVertexBuilder(id, outlinks.toList)
+      val vertex = combinedVertexBuilder(id, outlinks)
       graphEditor.addVertex(vertex)
 
       verticesRead += 1

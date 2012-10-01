@@ -21,6 +21,7 @@ package com.signalcollect.evaluation.algorithms
 
 import com.signalcollect._
 import com.signalcollect.interfaces._
+import scala.collection.mutable.IndexedSeq
 
 /**
  * Represents an edge in a Single-Source Shortest Path compute graph.
@@ -83,7 +84,7 @@ class Location(id: Any, initialState: Option[Int] = None) extends DataGraphVerte
     }
   }
 
-  override def scoreCollect(signals: Iterable[SignalMessage[_]]): Double = {
+  override def scoreCollect(signals: IndexedSeq[SignalMessage[_]]): Double = {
     signals.size // changed so it only gets called once signals were received 
   }
 

@@ -22,76 +22,66 @@ package com.signalcollect.evaluation.algorithms
 
 import com.signalcollect.interfaces._
 import com.signalcollect._
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.IndexedSeq
 import java.io.{ ObjectInput, ObjectOutput, Externalizable }
+
+class DummyPage(vId: Int) extends MemoryMinimalPage(vId) {
+  override def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
+    0.15f
+  }
+  override def scoreSignal = 0
+  override def scoreCollect(signals: IndexedSeq[SignalMessage[_]]) = 0
+}
 
 class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externalizable {
 
   type Signal = Float
 
   var state = 0.15f
-  var lastSignalState: Float = -1
-  var othersStateSum = 0.0f
+  var lastSignalState: Float = 0
+  //var othersStateSum = 0.0f
 
   def setState(s: Float) {
     state = s
   }
 
-  protected var targetIdArray = Array[Int]()
+  protected var targetIdArray: Array[Int] = null
 
   override def addEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = {
-    var edgeAdded = false
-    val targetId = e.id.targetId.asInstanceOf[Int]
-    if (!targetIdArray.contains(targetId)) {
-      val tmp = new ArrayBuffer[Int]()
-      tmp ++= targetIdArray
-      tmp += targetId
-      targetIdArray = tmp.toArray
-      edgeAdded = true
-    }
-    edgeAdded
+    throw new UnsupportedOperationException
   }
 
   def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
-  def collect: Float = {
-    0.15f + 0.85f * othersStateSum
-  }
-
   override def executeSignalOperation(graphEditor: GraphEditor) {
-    if (!targetIdArray.isEmpty) {
-      val signal = (state - math.max(0, lastSignalState)) / targetIdArray.size
-      targetIdArray.foreach(targetId => {
-        graphEditor.sendSignal(signal, EdgeId(id, targetId))
-      })
+    val tIds = targetIdArray
+    val tIdLength = tIds.length
+    if (tIds.length != 0) {
+      val signal = (state - lastSignalState) / tIdLength
+      var i = 0
+      while (i < tIdLength) {
+        graphEditor.sendSignal(signal, EdgeId(null, tIds(i)))
+        i += 1
+      }
     }
     lastSignalState = state
   }
 
-  def executeCollectOperation(signals: Iterable[SignalMessage[_]], graphEditor: GraphEditor) {
-    val castS = signals.asInstanceOf[Traversable[SignalMessage[Float]]]
-    castS foreach { message =>
-      othersStateSum = othersStateSum + message.signal
-    }
-    state = collect
+  def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
+    state += 0.85f * (signals.asInstanceOf[IndexedSeq[SignalMessage[Float]]] map (_.signal) sum)
   }
 
   override def scoreSignal: Double = {
-    if (lastSignalState >= 0) {
-      (state - lastSignalState).abs
-    } else {
-      1
-    }
+    val score = state - lastSignalState
+    if (score > 0) score else 0
   }
 
-  def scoreCollect(signals: Iterable[SignalMessage[_]]) = signals.size
+  def scoreCollect(signals: IndexedSeq[SignalMessage[_]]) = signals.length
 
-  def edgeCount = targetIdArray.size
+  def edgeCount = targetIdArray.length
 
   def afterInitialization(graphEditor: GraphEditor) = {}
   def beforeRemoval(graphEditor: GraphEditor) = {}
-  def addIncomingEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = true
-  def removeIncomingEdge(edgeId: EdgeId, graphEditor: GraphEditor): Boolean = true
 
   override def removeEdge(targetId: Any, graphEditor: GraphEditor): Boolean = {
     throw new UnsupportedOperationException
@@ -113,7 +103,6 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
       out.writeInt(targetIdArray(i))
     }
     //write delta buffer
-    out.writeFloat(othersStateSum)
     out.close
   }
 
@@ -127,10 +116,7 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
     for (i <- 0 until numberOfLinks) {
       targetIdArray(i) = in.readInt
     }
-
-    othersStateSum = in.readFloat
     in.close
-
   }
 
   def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
@@ -146,4 +132,33 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
   def getMostRecentSignal(id: EdgeId): Option[Any] = None
 
   override def toString = "MemoryMinimal (" + id + ", " + state + ")"
+}
+
+/** Builds a PageRank compute graph and executes the computation */
+object MemoryMinimalPageRankTest extends App {
+  val graph = GraphBuilder.build
+  val v1 = new MemoryMinimalPage(1)
+  val edges1 = new Array[Int](2)
+  edges1(0) = 2
+  edges1(1) = 3
+  v1.setTargetIdArray(edges1)
+  graph.addVertex(v1)
+
+  val v2 = new MemoryMinimalPage(2)
+  val edges2 = new Array[Int](1)
+  edges1(0) = 3
+  v2.setTargetIdArray(edges2)
+  graph.addVertex(v2)
+
+  val v3 = new MemoryMinimalPage(3)
+  val edges3 = new Array[Int](1)
+  edges1(0) = 1
+  v3.setTargetIdArray(edges3)
+  graph.addVertex(v3)
+
+  val stats = graph.execute //(ExecutionConfiguration())
+  graph.awaitIdle
+  println(stats)
+  graph.foreachVertex(println(_))
+  graph.shutdown
 }
