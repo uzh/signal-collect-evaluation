@@ -25,12 +25,15 @@ import com.signalcollect._
 import scala.collection.mutable.IndexedSeq
 import java.io.{ ObjectInput, ObjectOutput, Externalizable }
 
+/**
+ * Dummy for debugging loading.
+ * Will never execute any computation
+ */
 class DummyPage(vId: Int) extends MemoryMinimalPage(vId) {
-  override def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
+  override def executeCollectOperation(graphEditor: GraphEditor) {
     0.15f
   }
   override def scoreSignal = 0
-  override def scoreCollect(signals: IndexedSeq[SignalMessage[_]]) = 0
 }
 
 class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externalizable {
@@ -53,6 +56,11 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
 
   def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
+  def deliverSignal(signal: SignalMessage[_]): Boolean = {
+    state += 0.85f * signal.signal.asInstanceOf[Float]
+    true
+  }
+
   override def executeSignalOperation(graphEditor: GraphEditor) {
     val tIds = targetIdArray
     val tIdLength = tIds.length
@@ -67,8 +75,7 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
     lastSignalState = state
   }
 
-  def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
-    state += 0.85f * (signals.asInstanceOf[IndexedSeq[SignalMessage[Float]]] map (_.signal) sum)
+  def executeCollectOperation(graphEditor: GraphEditor) {
   }
 
   override def scoreSignal: Double = {
@@ -76,7 +83,7 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
     if (score > 0) score else 0
   }
 
-  def scoreCollect(signals: IndexedSeq[SignalMessage[_]]) = signals.length
+  def scoreCollect = 0 // because signals are directly collected at arrival
 
   def edgeCount = targetIdArray.length
 
@@ -124,12 +131,6 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
   def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
   def getOutgoingEdgeMap: Option[Map[Any, Edge[_]]] = None
   def getOutgoingEdges: Option[Iterable[Edge[_]]] = None
-
-  /**
-   * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
-   * supported or if there is no such signal.
-   */
-  def getMostRecentSignal(id: EdgeId): Option[Any] = None
 
   override def toString = "MemoryMinimal (" + id + ", " + state + ")"
 }

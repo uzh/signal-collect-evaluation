@@ -24,7 +24,7 @@ import com.signalcollect.evaluation.jobsubmission._
 import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms.PageRankEvaluationRun
-import com.signalcollect.evaluation.algorithms.SsspEvaluationRun
+//import com.signalcollect.evaluation.algorithms.SsspEvaluationRun
 import com.signalcollect.configuration._
 import com.signalcollect._
 import com.signalcollect.nodeprovisioning.torque.TorqueNodeProvisioner
@@ -32,8 +32,8 @@ import com.signalcollect.graphproviders.synthetic._
 import com.signalcollect.nodeprovisioning.local.LocalNodeProvisioner
 import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local.LocalNode
-import com.signalcollect.factory.storage.AboveAverage
-import com.signalcollect.evaluation.algorithms.VertexColoringEvaluationRun
+//import com.signalcollect.factory.storage.AboveAverage
+//import com.signalcollect.evaluation.algorithms.VertexColoringEvaluationRun
 import com.signalcollect.evaluation.algorithms.ChineseWhispersEvaluationRun
 import com.signalcollect.evaluation.util.ParallelFileGraphLoader
 import com.signalcollect.evaluation.util.GoogleGraphLoader
@@ -46,14 +46,14 @@ import com.signalcollect.evaluation.util.GoogleGraphLoader
  */
 object MulticoreScalabilityEvaluation extends App {
 
-  val evalName = "Specialization removed eval"
+  val evalName = "With toSignal as Object Ref"
   val jvmParameters = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC"
 
   val slowEval = new EvaluationSuiteCreator(evaluationName = evalName,
-    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name"), priority = TorquePriority.fast))
+    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = "strebel"/*System.getProperty("user.name")*/, priority = TorquePriority.fast))
 
   val fastEval = new EvaluationSuiteCreator(evaluationName = evalName,
-    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name"), priority = TorquePriority.superfast))
+    executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = "strebel"/*System.getProperty("user.name")*/, priority = TorquePriority.superfast))
 
   //  val kraken = new com.signalcollect.nodeprovisioning.torque.TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", privateKeyFilePath = "/home/user/stutz/.ssh/id_rsa")
   //  val krakenNodeProvisioner = new TorqueNodeProvisioner(kraken, 1)
@@ -61,7 +61,7 @@ object MulticoreScalabilityEvaluation extends App {
 
   val executionConfigAsync = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)
   val executionConfigSync = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01)
-  val aboveAverageScheduler = AboveAverage
+//  val aboveAverageScheduler = AboveAverage
 
   val repetitions = 10
   for (i <- 0 until repetitions) {
@@ -88,7 +88,7 @@ object MulticoreScalabilityEvaluation extends App {
         //        val sparseLargeUndirectedGraphLoader = new ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename = "./lognormal-vertices1000000-sigma1-mu1", edgeFilename = "lognormal-edges4484396-sigma1-mu1", directed = false)
         //        val denseLargeDirectedGraphLoader = new ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename = "./lognormal-vertices1000000-sigma1-mu3", edgeFilename = "lognormal-edges33086286-sigma1-mu3", directed = true)
         //        val denseLargeUndirectedGraphLoader = new ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename = "./lognormal-vertices1000000-sigma1-mu3", edgeFilename = "lognormal-edges33086286-sigma1-mu3", directed = false)
-        val googleWebGraph = new GoogleGraphLoader(numberOfWorkers: Int)
+        val googleWebGraph = new GoogleGraphLoader(numberOfWorkers: Int)//, edgeFilename="/Users/daniel/web-Google.txt")
         for (graphLoader <- List(googleWebGraph)) { //sparseSmallDirectedGraphLoader, denseSmallDirectedGraphLoaderdenseLargeDirectedGraphLoader, sparseLargeDirectedGraphLoaderdenseSmallDirectedGraphLoader
           //          if (numberOfWorkers <= 2) {
           fastEval.addJobForEvaluationAlgorithm(new PageRankEvaluationRun(graphBuilder = graphBuilder, graphProvider = graphLoader, executionConfiguration = executionConfig, jvmParams = jvmParameters, reportMemoryStats = true))

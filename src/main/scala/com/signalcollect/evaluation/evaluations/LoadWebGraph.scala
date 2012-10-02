@@ -35,7 +35,7 @@ object LoadWebGraph extends App {
    */
   val runName = "JDK8, G1 and all kinds of things"
 
-  val localMode = false
+  val localMode = true
   val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
   val loggerFile = if (localMode) Some("/Users/" + System.getProperty("user.name") + "/status.txt") else Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
@@ -49,19 +49,19 @@ object LoadWebGraph extends App {
         torqueUsername = System.getProperty("user.name"))
     })
 
-  for (splits <- List(24, 24, 24, 24)) {
+  for (splits <- List(2)) {
     evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
-        jvmParams = "-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:+UseNUMA -XX:+DoEscapeAnalysis",
-        jdkBinaryPath = "./jdk1.8.0/bin/",
+        jvmParams = "",
+        jdkBinaryPath = "",
 //      jvmParams = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC -XX:+DoEscapeAnalysis", //if (localMode) "" else " -agentpath:./profiler/libyjpagent.so ",  //-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC
-      graphBuilder = GraphBuilder,
-      //      graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
-      //        override def getNodes: List[Node] = {
-      //          List(new LocalNode {
-      //            override def numberOfCores = 1
-      //          })
-      //        }
-      //      }),
+//      graphBuilder = GraphBuilder,
+            graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
+              override def getNodes: List[Node] = {
+                List(new LocalNode {
+                  override def numberOfCores = 1
+                })
+              }
+            }),
       graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 1 else 24),
       runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous),
       dummyVertices = false
