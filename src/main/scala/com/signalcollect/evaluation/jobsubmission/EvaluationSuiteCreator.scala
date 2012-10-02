@@ -25,7 +25,7 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import com.signalcollect.ExecutionInformation
 import scala.collection.mutable.ListBuffer
-import akka.util.FiniteDuration
+import scala.concurrent.util.FiniteDuration
 import java.util.concurrent.TimeUnit
 import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.resulthandling._

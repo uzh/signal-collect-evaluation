@@ -21,7 +21,7 @@ package com.signalcollect.evaluation.util
 import com.signalcollect._
 import scala.util.Random
 import scala.math._
-import graphproviders.GraphProvider
+import com.signalcollect.graphproviders.GraphProvider
 
 //http://www.google.ch/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0CHAQFjAA&url=http%3A%2F%2Fmat.gsia.cmu.edu%2FCOLOR04%2FINSTANCES%2Fqg.order100.col&ei=Mw-tT-TXFfKK4gSe88WRDA&usg=AFQjCNHNPRbZUUvxTkkSaV7-k2dCVds44A
 

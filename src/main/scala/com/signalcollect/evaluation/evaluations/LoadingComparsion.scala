@@ -5,8 +5,8 @@ import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.configuration._
 import com.signalcollect.evaluation.resulthandling._
-import com.signalcollect._
 import com.signalcollect.graphproviders.synthetic._
+import com.signalcollect._
 
 object LoadingComparsion extends App {
 

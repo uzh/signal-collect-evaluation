@@ -88,7 +88,7 @@ class GoogleDocsResultHandler(username: String, password: String, spreadsheetNam
           println("Spreadsheet API exception: " + e)
           println("Spreadsheet API retry in 1 second")
           Thread.sleep(1000)
-          "Retrying."
+          println("Retrying.")
           action()
         } catch {
           case e: Exception =>

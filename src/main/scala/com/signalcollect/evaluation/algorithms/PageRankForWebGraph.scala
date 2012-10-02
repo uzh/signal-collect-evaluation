@@ -39,11 +39,11 @@ class PageRankForWebGraph(
     dummyVertices: Boolean = false,
     numberOfWorkers: Int = 24,
     runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
-  
+
   override def jvmParameters = jvmParams
-  
-  override def jdkBinPath = jdkBinaryPath 
-  
+
+  override def jdkBinPath = jdkBinaryPath
+
   def loadGraph = {
     val localHostName = java.net.InetAddress.getLocalHost().getHostName()
     if (localHostName.contains("kraken") || localHostName.contains("claudio")) {
@@ -75,14 +75,22 @@ class PageRankForWebGraph(
         println("Done")
       }
     }
-
-    graph = graphBuilder.build
-    graphProvider.populate(graph,
-      (id, outgoingEdges) => {
-        val vertex = if (dummyVertices) new DummyPage(id) else new MemoryMinimalPage(id)
-        vertex.setTargetIdArray(outgoingEdges)
-        vertex
-      })
+    try {
+      graph = graphBuilder.build
+      graphProvider.populate(graph,
+        (id, outgoingEdges) => {
+          val vertex = if (dummyVertices) new DummyPage(id) else new MemoryMinimalPage(id)
+          vertex.setTargetIdArray(outgoingEdges)
+          vertex
+        })
+    } catch {
+      case t: Throwable =>
+        // Ensure that the cause and message of the exception are printed, then propagate further.
+        t.printStackTrace()
+        println("Message:" + t.getMessage())
+        println("Cause:" + t.getCause())
+        throw t
+    }
   }
 
   def execute = {

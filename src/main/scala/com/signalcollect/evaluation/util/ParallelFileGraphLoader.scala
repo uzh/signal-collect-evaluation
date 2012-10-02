@@ -21,7 +21,7 @@ package com.signalcollect.evaluation.util
 import com.signalcollect._
 import scala.util.Random
 import scala.math._
-import graphproviders.GraphProvider
+import com.signalcollect.graphproviders.GraphProvider
 
 class ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename: String, edgeFilename: String, directed: Boolean = true) extends GraphProvider[Any] {
   def populate(graph: Graph, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {

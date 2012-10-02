@@ -33,13 +33,13 @@ object LoadWebGraph extends App {
   /*
    * Config
    */
-  val runName = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC"
+  val runName = "Scala 2.10-M7"
 
   val localMode = false
   val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
   val loggerFile = if (localMode) Some("/Users/" + System.getProperty("user.name") + "/status.txt") else Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
-  val evaluation = new EvaluationSuiteCreator(evaluationName = runName,
+  val evaluation: EvaluationSuiteCreator = new EvaluationSuiteCreator(evaluationName = runName,
     executionHost = if (localMode) {
       new LocalHost()
     } else {
@@ -49,22 +49,25 @@ object LoadWebGraph extends App {
         torqueUsername = System.getProperty("user.name"))
     })
 
-  //  for (splits <- List(24, 48, 24, 24)) {
-  for (splits <- List(24, 48, 72, 96)) {
+  for (splits <- List(24)) {
+    //  for (splits <- List(2)) {
     //  for (splits <- List(1)) {
     evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
       jvmParams = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC", //-XX:AutoBoxCacheMax=10000  -XX:MaxGCPauseMillis=50 -XX:+UseG1GC -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:+UseG1GC -XX:+UseNUMA -XX:+DoEscapeAnalysis -agentpath:./profiler/libyjpagent.so
       jdkBinaryPath = "", // "./jdk1.8.0/bin"
       //      jvmParams = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC -XX:+DoEscapeAnalysis", //if (localMode) "" else " -agentpath:./profiler/libyjpagent.so ",  //-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC
-      graphBuilder = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka),
-      //      graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
-      //        override def getNodes: List[Node] = {
-      //          List(new LocalNode {
-      //            override def numberOfCores = 1
-      //          })
-      //        }
-      //      }),
-      graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 1 else 24),
+      graphBuilder = if (localMode) {
+        GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
+          override def getNodes: List[Node] = {
+            List(new LocalNode {
+              override def numberOfCores = 4
+            })
+          }
+        })
+      } else {
+        GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka)
+      },
+      graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 4 else 24),
       runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous),
       dummyVertices = false
     ))
