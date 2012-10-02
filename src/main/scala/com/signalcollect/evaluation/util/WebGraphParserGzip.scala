@@ -27,7 +27,6 @@ import scala.sys.process._
 import java.util.zip.ZipFile
 import java.util.zip.ZipEntry
 import java.util.zip.GZIPInputStream
-import com.signalcollect.factory.worker.CollectFirstAkka
 import org.apache.commons.io.FileUtils
 
 /**
