@@ -82,7 +82,7 @@
 //
 //  protected val mostRecentSignalMap = new HashMap[Int, Int]()
 //
-//  override def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
+//  override def executeCollectOperation(graphEditor: GraphEditor) {
 //    val castS = signals.asInstanceOf[Iterable[SignalMessage[Signal]]]
 //    // faster than scala foreach
 //    val i = castS.iterator
@@ -109,18 +109,6 @@
 //  override def removeAllEdges(graphEditor: GraphEditor): Int = {
 //    throw new UnsupportedOperationException
 //  }
-//
-//  def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
-//
-//  def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
-//  def getOutgoingEdgeMap: Option[Map[Any, Edge[_]]] = None
-//  def getOutgoingEdges: Option[Iterable[Edge[_]]] = None
-//
-//  /**
-//   * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
-//   * supported or if there is no such signal.
-//   */
-//  def getMostRecentSignal(id: EdgeId): Option[Any] = None
 //
 //  /** The set of available colors */
 //  val colors: Set[Int] = (1 to numColors).toSet

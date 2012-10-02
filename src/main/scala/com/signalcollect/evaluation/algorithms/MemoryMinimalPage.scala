@@ -30,9 +30,7 @@ import java.io.{ ObjectInput, ObjectOutput, Externalizable }
  * Will never execute any computation
  */
 class DummyPage(vId: Int) extends MemoryMinimalPage(vId) {
-  override def executeCollectOperation(graphEditor: GraphEditor) {
-    0.15f
-  }
+  override def executeCollectOperation(graphEditor: GraphEditor) {}
   override def scoreSignal = 0
 }
 
@@ -72,18 +70,7 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
     lastSignalState = state
   }
 
-<<<<<<< HEAD
-  def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
-    var i = 0
-    var signalSum = 0.0f
-    while (i < signals.length) {
-      signalSum += signals(i).signal.asInstanceOf[Float]
-      i += 1
-    }
-    state += 0.85f * signalSum
-=======
   def executeCollectOperation(graphEditor: GraphEditor) {
->>>>>>> origin/Refactoring-Storage-Implementation
   }
 
   override def scoreSignal: Double = {
