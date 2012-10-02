@@ -91,6 +91,7 @@ class EvaluationSuiteCreator(evaluationName: String,
       val externallyMeasuredExecutionTime = externallyMeasuredExecutionStopTime - externallyMeasuredExecutionStartTime
       val externallyMeasuredExecutionTimeInMilliseconds = externallyMeasuredExecutionTime / 1000000l
 
+      statsMap += (("externallyMeasuredExecutionTimeInMilliseconds", externallyMeasuredExecutionTimeInMilliseconds.toString))
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))
       statsMap += (("jvmParameters", run.jvmParameters))

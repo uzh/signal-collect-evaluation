@@ -35,11 +35,8 @@ class DummyPage(vId: Int) extends MemoryMinimalPage(vId) {
 
 class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externalizable {
 
-  type Signal = Float
-
   var state = 0.15f
   var lastSignalState: Float = 0
-  //var othersStateSum = 0.0f
 
   def setState(s: Float) {
     state = s
@@ -68,7 +65,13 @@ class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externaliza
   }
 
   def executeCollectOperation(signals: IndexedSeq[SignalMessage[_]], graphEditor: GraphEditor) {
-    state += 0.85f * (signals.asInstanceOf[IndexedSeq[SignalMessage[Float]]] map (_.signal) sum)
+    var i = 0
+    var signalSum = 0.0f
+    while (i < signals.length) {
+      signalSum += signals(i).signal.asInstanceOf[Float]
+      i += 1
+    }
+    state += 0.85f * signalSum
   }
 
   override def scoreSignal: Double = {

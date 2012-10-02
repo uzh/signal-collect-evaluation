@@ -3,3 +3,5 @@
 webgraph/*
 target/*
 *.hprof
+
+*.config

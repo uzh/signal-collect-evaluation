@@ -33,7 +33,7 @@ object LoadWebGraph extends App {
   /*
    * Config
    */
-  val runName = "JDK8, G1 and all kinds of things"
+  val runName = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC"
 
   val localMode = false
   val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
@@ -49,12 +49,14 @@ object LoadWebGraph extends App {
         torqueUsername = System.getProperty("user.name"))
     })
 
-  for (splits <- List(24, 24, 24, 24)) {
+  //  for (splits <- List(24, 48, 24, 24)) {
+  for (splits <- List(24, 48, 72, 96)) {
+    //  for (splits <- List(1)) {
     evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
-        jvmParams = "-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:+UseNUMA -XX:+DoEscapeAnalysis",
-        jdkBinaryPath = "./jdk1.8.0/bin/",
-//      jvmParams = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC -XX:+DoEscapeAnalysis", //if (localMode) "" else " -agentpath:./profiler/libyjpagent.so ",  //-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC
-      graphBuilder = GraphBuilder,
+      jvmParams = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC", //-XX:AutoBoxCacheMax=10000  -XX:MaxGCPauseMillis=50 -XX:+UseG1GC -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:+UseG1GC -XX:+UseNUMA -XX:+DoEscapeAnalysis -agentpath:./profiler/libyjpagent.so
+      jdkBinaryPath = "", // "./jdk1.8.0/bin"
+      //      jvmParams = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC -XX:+DoEscapeAnalysis", //if (localMode) "" else " -agentpath:./profiler/libyjpagent.so ",  //-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC
+      graphBuilder = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka),
       //      graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
       //        override def getNodes: List[Node] = {
       //          List(new LocalNode {
