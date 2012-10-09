@@ -24,7 +24,7 @@ import scala.math._
 import com.signalcollect.graphproviders.GraphProvider
 
 class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google.txt", directed: Boolean = true) extends GraphProvider[Any] {
-  def populate(graph: Graph, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
+  def populate(graphEditor: GraphEditor, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
     //    //Load the vertices
     //    for (i <- (0 until numberOfWorkers).par) {
     //      graph.loadGraph(Some(i), graph => {
@@ -48,7 +48,7 @@ class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google
 
     //Load the edges
     for (i <- (0 until numberOfWorkers).par) {
-      graph.loadGraph(Some(i), graph => {
+      graphEditor.loadGraph(Some(i), graph => {
         val edgeSource = scala.io.Source.fromFile(edgeFilename)
         edgeSource.getLines.foreach({ line =>
           if (!line.startsWith("#")) {
@@ -67,8 +67,6 @@ class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google
         })
       })
     }
-
-    graph.awaitIdle
   }
 
   override def toString = "GoogleFileGraphLoader" + edgeFilename

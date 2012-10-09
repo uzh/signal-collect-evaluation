@@ -24,10 +24,10 @@ import scala.math._
 import com.signalcollect.graphproviders.GraphProvider
 
 class ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename: String, edgeFilename: String, directed: Boolean = true) extends GraphProvider[Any] {
-  def populate(graph: Graph, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
+  def populate(graphEditor: GraphEditor, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
     //Load the vertices
     for (i <- (0 until numberOfWorkers).par) {
-      graph.loadGraph(Some(i), graph => {
+      graphEditor.loadGraph(Some(i), graph => {
         val vertexSource = scala.io.Source.fromFile(vertexFilename)
         vertexSource.getLines.foreach({ line =>
           val vertexId = line.toInt
@@ -38,11 +38,9 @@ class ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename: String, edge
       })
     }
 
-    graph.awaitIdle
-
     //Load the edges
     for (i <- (0 until numberOfWorkers).par) {
-      graph.loadGraph(Some(i), graph => {
+      graphEditor.loadGraph(Some(i), graph => {
         val edgeSource = scala.io.Source.fromFile(edgeFilename)
         edgeSource.getLines.foreach({ line =>
           val ids = line.split(",")
@@ -57,8 +55,6 @@ class ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename: String, edge
         })
       })
     }
-
-    graph.awaitIdle
   }
   
   override def toString = "ParallelFileGraphLoader" + vertexFilename + "-" + edgeFilename

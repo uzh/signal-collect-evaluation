@@ -26,9 +26,9 @@ import com.signalcollect.graphproviders.GraphProvider
 //http://www.google.ch/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0CHAQFjAA&url=http%3A%2F%2Fmat.gsia.cmu.edu%2FCOLOR04%2FINSTANCES%2Fqg.order100.col&ei=Mw-tT-TXFfKK4gSe88WRDA&usg=AFQjCNHNPRbZUUvxTkkSaV7-k2dCVds44A
 
 class QuasigroupGraphLoader(numberOfWorkers: Int, edgeFilename: String = "quasigroup100", directed: Boolean = true) extends GraphProvider[Any] {
-  def populate(graph: Graph, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
+  def populate(graphEditor: GraphEditor, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
     for (i <- (0 until numberOfWorkers).par) {
-      graph.loadGraph(Some(i), graph => {
+      graphEditor.loadGraph(Some(i), ge => {
         val edgeSource = scala.io.Source.fromFile(edgeFilename)
         edgeSource.getLines.foreach({ line =>
           if (!line.startsWith("c") && !line.startsWith("p")) {
@@ -36,18 +36,17 @@ class QuasigroupGraphLoader(numberOfWorkers: Int, edgeFilename: String = "quasig
             val sourceId = ids(1).toInt
             if (sourceId % numberOfWorkers == i) {
               val targetId = ids(2).toInt
-              graph.addVertex(vertexBuilder(targetId))
-              graph.addVertex(vertexBuilder(sourceId))
-              graph.addEdge(sourceId, edgeBuilder(sourceId, targetId))
+              ge.addVertex(vertexBuilder(targetId))
+              ge.addVertex(vertexBuilder(sourceId))
+              ge.addEdge(sourceId, edgeBuilder(sourceId, targetId))
               if (!directed) {
-                graph.addEdge(targetId, edgeBuilder(targetId, sourceId))
+                ge.addEdge(targetId, edgeBuilder(targetId, sourceId))
               }
             }
           }
         })
       })
     }
-    graph.awaitIdle
   }
 
   override def toString = "QuasigroupFileGraphLoader" + edgeFilename

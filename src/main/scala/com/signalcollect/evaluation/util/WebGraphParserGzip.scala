@@ -34,15 +34,14 @@ import org.apache.commons.io.FileUtils
  */
 class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") extends OptimizedGraphProvider {
 
-  def populate(graph: Graph, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
+  def populate(graphEditor: GraphEditor, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
     println("started loading " + splitsToParse + " splits by WebGraphParserGzip")
     for (workerId <- (0 until numberOfWorkers).par) {
-      for (splitId <- (0 + workerId) until splitsToParse by numberOfWorkers) {
-        println("sending load command for " + splitId)
-        graph.loadGraph(Some(workerId), (new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder))
+      for (splitId <- workerId until splitsToParse by numberOfWorkers) {
+        println("sending load command for " + splitId + " to worker " + workerId)
+        graphEditor.loadGraph(Some(workerId), (new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder))
       }
     }
-    graph.awaitIdle
     println("done loading " + splitsToParse + " splits.")
     val usedMemory = (Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory) / 131072
     println("Used memory in MB " + usedMemory)
@@ -78,10 +77,8 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
   def parseFile(graphEditor: GraphEditor, filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
     //initialize input reader
     startTimeLoading = new Date()
+    println("started parsing " + filename)
     logStatus("started parsing " + filename)
-
-    //    val zipFile = new ZipFile(inputFolder + System.getProperty("file.separator") + filename)
-    //    val zipContent: ZipEntry = zipFile.entries().nextElement().asInstanceOf[ZipEntry]
 
     val gzipIn = new GZIPInputStream(new FileInputStream(inputFolder + System.getProperty("file.separator") + filename))
     val bufferedInput = new BufferedInputStream(gzipIn)

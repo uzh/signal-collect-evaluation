@@ -30,11 +30,10 @@ import java.util.zip.GZIPInputStream
  */
 class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Range) extends OptimizedGraphProvider {
 
-  def populate(graph: Graph, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
+  def populate(graphEditor: GraphEditor, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
     for (workerId <- splitsToParse.par) {
-      graph.loadGraph(Some(workerId), (new WebGraphParserHelper(inputFolder, externalLoggingFilePath)).parserForSplit(workerId, combinedVertexBuilder))
+      graphEditor.loadGraph(Some(workerId), (new WebGraphParserHelper(inputFolder, externalLoggingFilePath)).parserForSplit(workerId, combinedVertexBuilder))
     }
-    graph.awaitIdle
     val memoryUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory().asInstanceOf[Double] / 1073741824
   }
 

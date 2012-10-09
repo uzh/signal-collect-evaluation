@@ -9,6 +9,11 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import com.signalcollect.evaluation.algorithms._
+import com.signalcollect.factory.messagebus.BulkFloatSummer
+import com.signalcollect.nodeprovisioning.torque.LocalHost
+import com.signalcollect.nodeprovisioning.local.LocalNodeProvisioner
+import com.signalcollect.nodeprovisioning.Node
+import com.signalcollect.nodeprovisioning.local.LocalNode
 
 /**
  * Hint: For information on how to run specs see the specs v.1 website
@@ -28,20 +33,20 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
         }
         correct
       }
-      
-      val graph = GraphBuilder.build
+
+      val graph = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(BulkFloatSummer).build //.withLoggingLevel(LoggingLevel.Debug)
       for (i <- 0 until 5) {
         val v = new MemoryMinimalPage(i)
-        v.setTargetIdArray(Array((i+1)%5))
+        v.setTargetIdArray(Array((i + 1) % 5))
         graph.addVertex(v)
       }
-      
+
       graph.execute(ExecutionConfiguration.withCollectThreshold(0).withSignalThreshold(0.00001))
       var allcorrect = graph.aggregate(new AggregationOperation[Boolean] {
-          val neutralElement = true
-          def aggregate(a: Boolean, b: Boolean): Boolean = a && b
-          def extract(v: Vertex[_, _]): Boolean = pageRankFiveCycleVerifier(v)
-        })
+        val neutralElement = true
+        def aggregate(a: Boolean, b: Boolean): Boolean = a && b
+        def extract(v: Vertex[_, _]): Boolean = pageRankFiveCycleVerifier(v)
+      })
       allcorrect
     }
   }

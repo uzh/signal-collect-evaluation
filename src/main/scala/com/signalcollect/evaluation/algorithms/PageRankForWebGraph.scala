@@ -32,17 +32,19 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 
 class PageRankForWebGraph(
+    memoryStats: Boolean = true,
     jvmParams: String = "",
     jdkBinaryPath: String = "",
     graphBuilder: GraphBuilder = GraphBuilder,
     graphProvider: OptimizedGraphProvider,
-    dummyVertices: Boolean = false,
     numberOfWorkers: Int = 24,
     runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
 
   override def jvmParameters = jvmParams
 
   override def jdkBinPath = jdkBinaryPath
+  
+  override def memoryStatsEnabled = memoryStats
 
   def loadGraph = {
     val localHostName = java.net.InetAddress.getLocalHost().getHostName()
@@ -79,7 +81,7 @@ class PageRankForWebGraph(
       graph = graphBuilder.build
       graphProvider.populate(graph,
         (id, outgoingEdges) => {
-          val vertex = if (dummyVertices) new DummyPage(id) else new MemoryMinimalPage(id)
+          val vertex = new MemoryMinimalPage(id)
           vertex.setTargetIdArray(outgoingEdges)
           vertex
         })

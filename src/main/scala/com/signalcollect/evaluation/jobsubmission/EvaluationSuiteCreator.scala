@@ -30,10 +30,12 @@ import java.util.concurrent.TimeUnit
 import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms._
+import collection.JavaConversions._
+import java.lang.management.ManagementFactory
 
 class EvaluationSuiteCreator(evaluationName: String,
-  evaluationCreator: String = System.getProperty("user.name"),
-  executionHost: ExecutionHost = new LocalHost) {
+                             evaluationCreator: String = System.getProperty("user.name"),
+                             executionHost: ExecutionHost = new LocalHost) {
 
   val jobs = ListBuffer[TorqueJob]()
 
@@ -82,7 +84,7 @@ class EvaluationSuiteCreator(evaluationName: String,
       statsMap += (("startTime", timeFormat.format(startDate)))
 
       // garbage collection before executing
-      System.gc
+      // System.gc -> Removed, because it gives a huge advantage to stupid GCs that defer collecting
 
       //Execute the algorithm
       val externallyMeasuredExecutionStartTime = System.nanoTime
@@ -95,10 +97,19 @@ class EvaluationSuiteCreator(evaluationName: String,
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))
       statsMap += (("jvmParameters", run.jvmParameters))
+      var gcCount = 0l
+      var gcTimeMilliseconds = 0l
+      for (gc <- ManagementFactory.getGarbageCollectorMXBeans) {
+        gcCount += gc.getCollectionCount
+        gcTimeMilliseconds += gc.getCollectionTime
+      }
+      statsMap += (("gcCount", gcCount.toString))
+      statsMap += (("gcTimeMilliseconds", gcTimeMilliseconds.toString))
       if (stats != null) {
         statsMap += (("numberOfWorkers", stats.numberOfWorkers.toString))
         statsMap += (("computationTimeInMilliseconds", stats.executionStatistics.computationTime.toMillis.toString))
         statsMap += (("jvmCpuTimeInMilliseconds", stats.executionStatistics.jvmCpuTime.toMillis.toString))
+        statsMap += (("gcTimePercentage", (100 * gcTimeMilliseconds / stats.executionStatistics.jvmCpuTime.toMillis).floor.toInt.toString))
         statsMap += (("graphIdleWaitingTimeInMilliseconds", stats.executionStatistics.graphIdleWaitingTime.toMillis.toString))
         statsMap += (("totalExecutionTimeInMilliseconds", stats.executionStatistics.totalExecutionTime.toMillis.toString))
         statsMap += (("terminationReason", stats.executionStatistics.terminationReason.toString))
@@ -117,21 +128,31 @@ class EvaluationSuiteCreator(evaluationName: String,
         statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString))
         statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString))
       }
+
       val endDate = new Date
       statsMap += (("endDate", dateFormat.format(endDate)))
       statsMap += (("endTime", timeFormat.format(endDate)))
-      
-      if(run.memoryStatsEnabled) {
-        for(i <- 0 until 10) {
+
+      val runtime = Runtime.getRuntime
+      val freeMemoryPercentage = ((runtime.freeMemory.toDouble / runtime.totalMemory.toDouble) * 100.0).floor.toInt
+      statsMap += (("freeMemoryPercentage", freeMemoryPercentage.toString()))
+      val usedMemoryBeforeGc = ((runtime.totalMemory - runtime.freeMemory) / 1073741824.0).ceil.toInt
+      statsMap += (("usedMemoryBeforeGc", usedMemoryBeforeGc.toString()))
+      val totalMemory = (runtime.totalMemory / 1073741824.0).floor.toInt
+      statsMap += (("totalMemory", totalMemory.toString()))
+      if (run.memoryStatsEnabled) {
+        for (i <- 0 until 10) {
           System.gc
         }
-        val runtime = Runtime.getRuntime
-        val usedMemory = (runtime.totalMemory-runtime.freeMemory)/1048576.0
-        statsMap += (("memory", usedMemory.toString())) //report Memory consumption in MB
+        val usedMemory = ((runtime.totalMemory - runtime.freeMemory) / 1073741824.0).ceil.toInt
+        statsMap += (("memory", usedMemory.toString()))
       }
-      
+
       run.shutdown
 
+      val allDone = System.nanoTime
+      val totalRunningTime = new FiniteDuration(allDone - graphLoadingStart, TimeUnit.NANOSECONDS)
+      statsMap += (("totalRunningTime", totalRunningTime.toSeconds.toString))
       statsMap
     })
 
