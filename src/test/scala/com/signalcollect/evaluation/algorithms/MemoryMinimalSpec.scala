@@ -9,11 +9,11 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import com.signalcollect.evaluation.algorithms._
-import com.signalcollect.factory.messagebus.BulkFloatSummer
 import com.signalcollect.nodeprovisioning.torque.LocalHost
 import com.signalcollect.nodeprovisioning.local.LocalNodeProvisioner
 import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local.LocalNode
+import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 
 /**
  * Hint: For information on how to run specs see the specs v.1 website
@@ -34,7 +34,7 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
         correct
       }
 
-      val graph = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(BulkFloatSummer).build //.withLoggingLevel(LoggingLevel.Debug)
+      val graph = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float])).withLoggingLevel(LoggingLevel.Debug).build
       for (i <- 0 until 5) {
         val v = new MemoryMinimalPage(i)
         v.setTargetIdArray(Array((i + 1) % 5))

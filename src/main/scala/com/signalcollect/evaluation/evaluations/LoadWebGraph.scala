@@ -27,14 +27,14 @@ import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect._
 import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local._
-import com.signalcollect.factory.messagebus.BulkFloatSummer
+import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 
 object LoadWebGraph extends App {
 
   /*
    * Config
    */
-  val runName = "Kraken Bulk Float Summer 24-480 Splits"
+  val runName = "Updated bulk sending"
 
   val localMode = false
   val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
@@ -65,27 +65,27 @@ object LoadWebGraph extends App {
   //-XX:AutoBoxCacheMax=10000  -XX:MaxGCPauseMillis=50 -XX:+UseG1GC -XX:+DoEscapeAnalysis -XX:+UseNUMA -XX:+UseG1GC -XX:+UseNUMA -XX:+DoEscapeAnalysis -agentpath:./profiler/libyjpagent.so -XX:+UseCondCardMark -XX:+UseParallelGC
   //"-XX:+UnlockExperimentalVMOptions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+UseTLAB", "-XX:+UnlockExperimentalVMOptions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+DoEscapeAnalysis -XX:+UseCondCardMark"
   //"-XX:ParallelGCThreads=20 -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:SurvivorRatio=8 -XX:TargetSurvivorRatio=90 -XX:MaxTenuringThreshold=31"
-  val baseOptions = 
+  val baseOptions =
     " -Xmx64000m" +
-    " -Xms64000m" +
-    " -Xmn8000m" +
-    " -d64"
+      " -Xms64000m" +
+      " -Xmn8000m" +
+      " -d64"
   val repetitions = 1
   for (
     jvmParams <- List(
       " -XX:+UnlockExperimentalVMOptions" +
-      " -XX:+UseConcMarkSweepGC" +
-      " -XX:+UseParNewGC" +
-      " -XX:+CMSIncrementalPacing" +
-      " -XX:+CMSIncrementalMode" +
-      " -XX:ParallelGCThreads=20" +
-      " -XX:ParallelCMSThreads=20" +
-      " -agentpath:./profiler/libyjpagent.so"
-     )
+        " -XX:+UseConcMarkSweepGC" +
+        " -XX:+UseParNewGC" +
+        " -XX:+CMSIncrementalPacing" +
+        " -XX:+CMSIncrementalMode" +
+        " -XX:ParallelGCThreads=20" +
+        " -XX:ParallelCMSThreads=20" +
+        " -agentpath:./profiler/libyjpagent.so"
+    )
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(24, 48, 96, 182, 384, 480)) { //480
+        for (splits <- List(24, 48, 96, 192, 384, 480)) { //480
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
@@ -97,9 +97,9 @@ object LoadWebGraph extends App {
                     override def numberOfCores = 4
                   })
                 }
-              }).withMessageBusFactory(BulkFloatSummer)
+              }).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float]))
             } else {
-              GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(BulkFloatSummer)
+              GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float]))
             },
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 4 else 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)

@@ -27,13 +27,14 @@ import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect._
 import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local._
+import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 
 object DistrubutedWebGraph extends App {
 
   /*
    * Config
    */
-  val runName = "Correct number of workers: Distributed Web Graph 4 nodes 96 splits"
+  val runName = "Comparing sent messages, 384 split, 100 000 bulk sending"
 
   val locationSplits = "/home/torque/tmp/webgraph-tmp"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
@@ -65,12 +66,12 @@ object DistrubutedWebGraph extends App {
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(96)) { //10
+        for (splits <- List(384)) { //10
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
-            jdkBinaryPath = jvm,
-            graphBuilder = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withNodeProvisioner(new TorqueNodeProvisioner(
+            jdkBinaryPath = jvm, //.withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float]))
+            graphBuilder = GraphBuilder.withMessageBusFactory(new BulkAkkaMessageBusFactory(100000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float])).withWorkerFactory(factory.worker.CollectFirstAkka).withNodeProvisioner(new TorqueNodeProvisioner(
               torqueHost = new TorqueHost(
                 torqueHostname = "kraken.ifi.uzh.ch",
                 localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar",

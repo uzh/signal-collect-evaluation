@@ -19,6 +19,7 @@
  */
 package com.signalcollect.evaluation.algorithms
 
+import scala.sys.process._
 import com.signalcollect.GraphBuilder
 import com.signalcollect.ExecutionInformation
 import com.signalcollect.graphproviders.synthetic._
@@ -43,7 +44,7 @@ class PageRankForWebGraph(
   override def jvmParameters = jvmParams
 
   override def jdkBinPath = jdkBinaryPath
-  
+
   override def memoryStatsEnabled = memoryStats
 
   def loadGraph = {
@@ -65,9 +66,9 @@ class PageRankForWebGraph(
       }
 
       def copyAllSplits {
-        val source = new File(remoteFileDir);
-        val dest = new File(localFileDir);
-        FileUtils.copyDirectory(source, dest);
+        val source = new File(remoteFileDir)
+        val dest = new File(localFileDir)
+        FileUtils.copyDirectory(source, dest)
       }
 
       if (!existsLocalCopy) {
