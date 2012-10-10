@@ -83,9 +83,6 @@ class EvaluationSuiteCreator(evaluationName: String,
       statsMap += (("startDate", dateFormat.format(startDate)))
       statsMap += (("startTime", timeFormat.format(startDate)))
 
-      // garbage collection before executing
-      // System.gc -> Removed, because it gives a huge advantage to stupid GCs that defer collecting
-
       //Execute the algorithm
       val externallyMeasuredExecutionStartTime = System.nanoTime
       val stats = run.execute
@@ -122,6 +119,7 @@ class EvaluationSuiteCreator(evaluationName: String,
         statsMap += (("collectSteps", stats.executionStatistics.collectSteps.toString))
         statsMap += (("numberOfVertices", stats.aggregatedWorkerStatistics.numberOfVertices.toString))
         statsMap += (("numberOfEdges", stats.aggregatedWorkerStatistics.numberOfOutgoingEdges.toString))
+        statsMap += (("totalMessagesReceived", stats.aggregatedWorkerStatistics.messagesReceived.toString))
         statsMap += (("collectOperationsExecuted", stats.aggregatedWorkerStatistics.collectOperationsExecuted.toString))
         statsMap += (("signalOperationsExecuted", stats.aggregatedWorkerStatistics.signalOperationsExecuted.toString))
         statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
