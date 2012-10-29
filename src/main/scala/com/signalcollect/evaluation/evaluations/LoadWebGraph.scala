@@ -1,5 +1,6 @@
 /*
  *  @author Daniel Strebel
+ *  @author Philip Stutz
  *  
  *  Copyright 2012 University of Zurich
  *      
@@ -28,13 +29,14 @@ import com.signalcollect._
 import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local._
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
+import com.typesafe.config.Config
 
 object LoadWebGraph extends App {
 
   /*
    * Config
    */
-  val runName = "Updated bulk sending"
+  val runName = "BULKING ENABLED - NEW EDGE FORMAT - 768/960 splits"
 
   val localMode = false
   val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
@@ -70,7 +72,7 @@ object LoadWebGraph extends App {
       " -Xms64000m" +
       " -Xmn8000m" +
       " -d64"
-  val repetitions = 1
+  val repetitions = 3
   for (
     jvmParams <- List(
       " -XX:+UnlockExperimentalVMOptions" +
@@ -80,26 +82,30 @@ object LoadWebGraph extends App {
         " -XX:+CMSIncrementalMode" +
         " -XX:ParallelGCThreads=20" +
         " -XX:ParallelCMSThreads=20" +
-        " -agentpath:./profiler/libyjpagent.so"
+//        " -Xincgc" +
+//        " -XX:-DontCompileHugeMethods" +
+        " -XX:MaxInlineSize=1024" //+
+//        " -XX:FreqInlineSize=1024"
+    //" -agentpath:./profiler/libyjpagent.so"
     )
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(24, 48, 96, 192, 384, 480)) { //480
+        for (splits <- List(768, 960)) { //480
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
             jdkBinaryPath = jvm,
             graphBuilder = if (localMode) {
-              GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
-                override def getNodes: List[Node] = {
+              new GraphBuilder[Int, Float]().withNodeProvisioner(new LocalNodeProvisioner {
+                override def getNodes(akkaConfig: Config): List[Node] = {
                   List(new LocalNode {
                     override def numberOfCores = 4
                   })
                 }
-              }).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float]))
+              }).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000))
             } else {
-              GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float]))
+              new GraphBuilder[Int, Float]().withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000))
             },
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 4 else 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)

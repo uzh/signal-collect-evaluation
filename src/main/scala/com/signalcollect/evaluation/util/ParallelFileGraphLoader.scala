@@ -23,8 +23,8 @@ import scala.util.Random
 import scala.math._
 import com.signalcollect.graphproviders.GraphProvider
 
-class ParallelFileGraphLoader(numberOfWorkers: Int, vertexFilename: String, edgeFilename: String, directed: Boolean = true) extends GraphProvider[Any] {
-  def populate(graphEditor: GraphEditor, vertexBuilder: (Any) => Vertex[_, _], edgeBuilder: (Any, Any) => Edge[_]) {
+class ParallelFileGraphLoader[Signal](numberOfWorkers: Int, vertexFilename: String, edgeFilename: String, directed: Boolean = true) extends GraphProvider[Int, Signal] {
+  def populate(graphEditor: GraphEditor[Int, Signal], vertexBuilder: (Int) => Vertex[Int, _], edgeBuilder: (Int, Int) => Edge[Int]) {
     //Load the vertices
     for (i <- (0 until numberOfWorkers).par) {
       graphEditor.loadGraph(Some(i), graph => {

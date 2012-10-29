@@ -80,8 +80,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.specs2</groupId>
-			<artifactId>specs2_2.10.0-M7</artifactId>
-			<version>1.12.1.1</version>
+			<artifactId>specs2_2.10.0-RC1</artifactId>
+			<version>1.12.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -192,7 +192,7 @@
 		<project.reporting.outputEncoding>
 			UTF-8
 		</project.reporting.outputEncoding>
-		<scala.version>2.10.0-M7</scala.version>
+		<scala.version>2.10.0-RC1</scala.version>
 		<maven-scala-plugin.version>2.15.2</maven-scala-plugin.version>
 	</properties>
 </project>

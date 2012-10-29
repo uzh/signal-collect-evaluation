@@ -23,8 +23,8 @@ import com.signalcollect.ExecutionInformation
 import java.io.Serializable
 import com.signalcollect.Graph
 
-abstract class EvaluationAlgorithmRun extends Serializable {
-  var graph: Graph = _
+abstract class EvaluationAlgorithmRun[Id, Signal] extends Serializable {
+  var graph: Graph[Id, Signal] = _
   def jvmParameters: String = ""
   def jdkBinPath: String = ""
   def loadGraph: Unit

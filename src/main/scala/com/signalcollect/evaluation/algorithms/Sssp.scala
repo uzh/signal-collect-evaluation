@@ -60,7 +60,7 @@ class Location(id: Any, initialState: Option[Int] = None) extends DataGraphVerte
    * up to now (= state) or one of the paths that had been advertised via a signal
    * by a neighbor.
    */
-  def collect(oldState: Option[Int], mostRecentSignals: Iterable[Int], graphEditor: GraphEditor): Option[Int] = {
+  def collect(oldState: Option[Int], mostRecentSignals: Iterable[Int]): Option[Int] = {
     val currentShortestPath = oldState.getOrElse(Int.MaxValue)
     Some(mostRecentSignals.foldLeft(currentShortestPath)(math.min(_, _)))
   }

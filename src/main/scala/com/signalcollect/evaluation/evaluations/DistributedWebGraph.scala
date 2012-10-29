@@ -1,5 +1,6 @@
 /*
  *  @author Daniel Strebel
+ *  @author Philip Stutz
  *  
  *  Copyright 2012 University of Zurich
  *      
@@ -29,12 +30,12 @@ import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local._
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 
-object DistrubutedWebGraph extends App {
+object DistributedWebGraph extends App {
 
   /*
    * Config
    */
-  val runName = "Comparing sent messages, 384 split, 100 000 bulk sending"
+  val runName = "3072 splits on 4 machines, KRYO NOVO - COMPRESSION DISABLED - BULK SIZE 1000 - NEW SIGNALING TIMING"
 
   val locationSplits = "/home/torque/tmp/webgraph-tmp"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
@@ -60,18 +61,19 @@ object DistrubutedWebGraph extends App {
         " -XX:+CMSIncrementalPacing" +
         " -XX:+CMSIncrementalMode" +
         " -XX:ParallelGCThreads=20" +
-        " -XX:ParallelCMSThreads=20" // +
+        " -XX:ParallelCMSThreads=20" +
+        " -XX:MaxInlineSize=1024" // +
     //" -agentpath:./profiler/libyjpagent.so"
     )
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(384)) { //10
+        for (splits <- List(3072)) { //10
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
-            jdkBinaryPath = jvm, //.withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float]))
-            graphBuilder = GraphBuilder.withMessageBusFactory(new BulkAkkaMessageBusFactory(100000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float])).withWorkerFactory(factory.worker.CollectFirstAkka).withNodeProvisioner(new TorqueNodeProvisioner(
+            jdkBinaryPath = jvm,
+            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000)).withAkkaMessageCompression(false).withWorkerFactory(factory.worker.CollectFirstAkka).withNodeProvisioner(new TorqueNodeProvisioner(
               torqueHost = new TorqueHost(
                 torqueHostname = "kraken.ifi.uzh.ch",
                 localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar",

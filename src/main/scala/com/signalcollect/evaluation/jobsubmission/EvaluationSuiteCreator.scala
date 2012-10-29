@@ -25,7 +25,7 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import com.signalcollect.ExecutionInformation
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.util.FiniteDuration
+import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
 import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.resulthandling._
@@ -42,7 +42,7 @@ class EvaluationSuiteCreator(evaluationName: String,
   /**
    * Create a job to be run later
    */
-  def addJobForEvaluationAlgorithm(run: EvaluationAlgorithmRun, extraInformation: Map[String, String] = Map[String, String]()) {
+  def addJobForEvaluationAlgorithm(run: EvaluationAlgorithmRun[_, _], extraInformation: Map[String, String] = Map[String, String]()) {
     jobs += buildEvaluationJob(run, extraInformation)
   }
 
@@ -60,7 +60,7 @@ class EvaluationSuiteCreator(evaluationName: String,
     executionHost.executeJobs(jobs.toList)
   }
 
-  def buildEvaluationJob(run: EvaluationAlgorithmRun, extraInformation: Map[String, String]): TorqueJob = new TorqueJob(
+  def buildEvaluationJob(run: EvaluationAlgorithmRun[_, _], extraInformation: Map[String, String]): TorqueJob = new TorqueJob(
     submittedByUser = evaluationCreator,
     jobId = Random.nextInt.abs,
     jobDescription = evaluationName,

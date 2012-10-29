@@ -38,7 +38,7 @@ class MemoryEfficientLocation(var id: Int) extends Vertex[Int, Int] with Externa
   protected var targetIdArray = Array[Int]()
   var stateChangedSinceSignal = if (id == 0) true else false
 
-  override def addEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = {
+  override def addEdge(e: Edge[_], graphEditor: GraphEditor[Any, Any]): Boolean = {
     var edgeAdded = false
     val targetId = e.id.targetId.asInstanceOf[Int]
     if (!targetIdArray.contains(targetId)) {
@@ -53,8 +53,8 @@ class MemoryEfficientLocation(var id: Int) extends Vertex[Int, Int] with Externa
 
   def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 
-  def deliverSignal(signal: SignalMessage[_]): Boolean = {
-    val s = signal.signal.asInstanceOf[Int]
+  def deliverSignal(signal: Any, sourceId: Option[Any]): Boolean = {
+    val s = signal.asInstanceOf[Int]
     if (s < state) {
       stateChangedSinceSignal = true
       state = s
@@ -64,14 +64,14 @@ class MemoryEfficientLocation(var id: Int) extends Vertex[Int, Int] with Externa
 
   def scoreCollect = 0 // because signals are directly collected at arrival
 
-  def executeCollectOperation(graphEditor: GraphEditor) {
+  def executeCollectOperation(graphEditor: GraphEditor[Any, Any]) {
   }
 
-  override def executeSignalOperation(graphEditor: GraphEditor) {
+  override def executeSignalOperation(graphEditor: GraphEditor[Any, Any]) {
     if (!targetIdArray.isEmpty) {
       val signal = state + 1 //default weight = 1
       targetIdArray.foreach(targetId => {
-        graphEditor.sendSignal(signal, EdgeId(null, targetId))
+        graphEditor.sendSignal(signal, targetId, null)
       })
     }
     stateChangedSinceSignal = false
@@ -85,31 +85,18 @@ class MemoryEfficientLocation(var id: Int) extends Vertex[Int, Int] with Externa
     }
   }
 
-  def scoreCollect(signals: IndexedSeq[SignalMessage[_]]) = signals.size
-
   def edgeCount = targetIdArray.size
 
-  def afterInitialization(graphEditor: GraphEditor) = {}
-  def beforeRemoval(graphEditor: GraphEditor) = {}
-  def addIncomingEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = true
-  def removeIncomingEdge(edgeId: EdgeId, graphEditor: GraphEditor): Boolean = true
+  def afterInitialization(graphEditor: GraphEditor[Any, Any]) = {}
+  def beforeRemoval(graphEditor: GraphEditor[Any, Any]) = {}
 
-  override def removeEdge(targetId: Any, graphEditor: GraphEditor): Boolean = {
+  override def removeEdge(targetId: Any, graphEditor: GraphEditor[Any, Any]): Boolean = {
     throw new UnsupportedOperationException
   }
 
-  override def removeAllEdges(graphEditor: GraphEditor): Int = {
+  override def removeAllEdges(graphEditor: GraphEditor[Any, Any]): Int = {
     throw new UnsupportedOperationException
   }
-
-  def getOutgoingEdgeMap: Option[Map[Any, Edge[_]]] = None
-  def getOutgoingEdges: Option[Iterable[Edge[_]]] = None
-
-  /**
-   * Returns the most recent signal sent via the edge with the id @edgeId. None if this function is not
-   * supported or if there is no such signal.
-   */
-  def getMostRecentSignal(id: EdgeId): Option[Any] = None
 
   override def toString = "MemoryEfficientLocation (" + id + ", " + state + ")"
 

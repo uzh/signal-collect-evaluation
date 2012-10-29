@@ -32,9 +32,9 @@ import org.apache.commons.io.FileUtils
 /**
  * Loads the specified range of splits of the web graph.
  */
-class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") extends OptimizedGraphProvider {
+class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") extends OptimizedGraphProvider[Int, Float] {
 
-  def populate(graphEditor: GraphEditor, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
+  def populate(graphEditor: GraphEditor[Int, Float], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
     println("started loading " + splitsToParse + " splits by WebGraphParserGzip")
     for (workerId <- (0 until numberOfWorkers).par) {
       for (splitId <- workerId until splitsToParse by numberOfWorkers) {
@@ -70,11 +70,11 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
 
   var startTimeLoading: Date = null
 
-  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]): GraphEditor => Unit = {
+  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]): GraphEditor[Int, Float] => Unit = {
     graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt.gz", combinedVertexBuilder)
   }
 
-  def parseFile(graphEditor: GraphEditor, filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[_, _]) {
+  def parseFile(graphEditor: GraphEditor[Int, Float], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
     //initialize input reader
     startTimeLoading = new Date()
     println("started parsing " + filename)

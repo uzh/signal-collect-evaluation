@@ -36,10 +36,10 @@ class PageRankForWebGraph(
     memoryStats: Boolean = true,
     jvmParams: String = "",
     jdkBinaryPath: String = "",
-    graphBuilder: GraphBuilder = GraphBuilder,
-    graphProvider: OptimizedGraphProvider,
+    graphBuilder: GraphBuilder[Int, Float] = new GraphBuilder[Int, Float](),
+    graphProvider: OptimizedGraphProvider[Int, Float],
     numberOfWorkers: Int = 24,
-    runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun {
+    runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun[Int, Float] {
 
   override def jvmParameters = jvmParams
 

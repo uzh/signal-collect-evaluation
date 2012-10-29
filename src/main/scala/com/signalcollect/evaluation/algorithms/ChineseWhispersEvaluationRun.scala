@@ -29,21 +29,21 @@ import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.graphproviders.GraphProvider
 
 class ChineseWhispersEvaluationRun(
-    graphBuilder: GraphBuilder = GraphBuilder,
-    graphProvider: GraphProvider[Int],
+    graphBuilder: GraphBuilder[Int, Any] = new GraphBuilder[Int, Any](),
+    graphProvider: GraphProvider[Int, Any],
     executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
-    jvmParams: String = "") extends EvaluationAlgorithmRun {
+    jvmParams: String = "") extends EvaluationAlgorithmRun[Int, Any] {
 
-  val builder = graphBuilder
+  val builder: GraphBuilder[Int, Any] = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
 
   def loadGraph = {
     graph = builder.build
     graphProvider.populate(graph,
-      (id) => new ChineseWhispersVertex(id.asInstanceOf[Int]),
+      (id) => new ChineseWhispersVertex[Int](id),
       (srcId, targetId) => {
-        new ChineseWhispersEdge(srcId.asInstanceOf[Int], targetId.asInstanceOf[Int])
-        new ChineseWhispersEdge(targetId.asInstanceOf[Int], srcId.asInstanceOf[Int])
+        new ChineseWhispersEdge(srcId, targetId)
+        new ChineseWhispersEdge(targetId, srcId)
       })
   }
 

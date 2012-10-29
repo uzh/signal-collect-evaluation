@@ -21,6 +21,9 @@ import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
  */
 @RunWith(classOf[JUnitRunner])
 class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
+
+  sequential
+
   "PageRank algorithm" should {
     "deliver correct results on a 5-cycle graph" in {
       println("PageRank algorithm on a 5-cycle graph")
@@ -33,15 +36,14 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
         }
         correct
       }
-
-      val graph = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, (a: Any, b: Any) => a.asInstanceOf[Float] + b.asInstanceOf[Float])).withLoggingLevel(LoggingLevel.Debug).build
+      val graph = GraphBuilder.withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000)).withLoggingLevel(LoggingLevel.Debug).build
       for (i <- 0 until 5) {
         val v = new MemoryMinimalPage(i)
         v.setTargetIdArray(Array((i + 1) % 5))
         graph.addVertex(v)
       }
 
-      graph.execute(ExecutionConfiguration.withCollectThreshold(0).withSignalThreshold(0.00001))
+      graph.execute(ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous).withCollectThreshold(0).withSignalThreshold(0.0000001))
       var allcorrect = graph.aggregate(new AggregationOperation[Boolean] {
         val neutralElement = true
         def aggregate(a: Boolean, b: Boolean): Boolean = a && b
@@ -49,5 +51,6 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
       })
       allcorrect
     }
+
   }
 }

@@ -24,110 +24,151 @@ import com.signalcollect.interfaces._
 import com.signalcollect._
 import scala.collection.mutable.IndexedSeq
 import java.io.{ ObjectInput, ObjectOutput, Externalizable }
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 
 /**
  * Dummy for debugging loading.
  * Will never execute any computation
  */
 class DummyPage(vId: Int) extends MemoryMinimalPage(vId) {
-  override def executeCollectOperation(graphEditor: GraphEditor) {}
+  override def executeCollectOperation(graphEditor: GraphEditor[Any, Any]) {}
   override def scoreSignal = 0
 }
 
-class MemoryMinimalPage(var id: Int) extends Vertex[Int, Float] with Externalizable {
+class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
 
   var state = 0.15f
   var lastSignalState: Float = 0
+  var outEdges = 0
 
   def setState(s: Float) {
     state = s
   }
 
-  protected var targetIdArray: Array[Int] = null
+  protected var targetIdArray: Array[Byte] = null
 
-  override def addEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = {
+  override def addEdge(e: Edge[_], graphEditor: GraphEditor[Any, Any]): Boolean = {
     throw new UnsupportedOperationException
   }
 
-  def setTargetIdArray(links: Array[Int]) = targetIdArray = links
+  def setTargetIdArray(links: Array[Int]) = {
+    outEdges = links.length
+    targetIdArray = CompactIntSet.create(links)
+  }
 
-  def deliverSignal(signal: SignalMessage[_]): Boolean = {
-    state += 0.85f * signal.signal.asInstanceOf[Float]
+  def deliverSignal(signal: Any, sourceId: Option[Any]): Boolean = {
+    val s = signal.asInstanceOf[Float]
+    val newState = (state + 0.85 * s).toFloat
+    if ((newState - state) < s) {
+      state = newState
+    }
     true
   }
 
-  override def executeSignalOperation(graphEditor: GraphEditor) {
+  override def executeSignalOperation(graphEditor: GraphEditor[Any, Any]) {
     val tIds = targetIdArray
-    val tIdLength = tIds.length
+    val tIdLength = outEdges
     if (tIds.length != 0) {
       val signal = (state - lastSignalState) / tIdLength
-      var i = 0
-      while (i < tIdLength) {
-        graphEditor.sendSignal(signal, EdgeId(null, tIds(i)))
-        i += 1
-      }
+      CompactIntSet.foreach(targetIdArray, graphEditor.sendSignal(signal, _, None))
+      //      var i = 0
+      //      while (i < tIdLength) {
+      //        graphEditor.sendSignal(signal, tIds(i), None)
+      //        i += 1
+      //      }
     }
     lastSignalState = state
   }
 
-  def executeCollectOperation(graphEditor: GraphEditor) {
+  def executeCollectOperation(graphEditor: GraphEditor[Any, Any]) {
   }
 
   override def scoreSignal: Double = {
     val score = state - lastSignalState
-    if (score > 0) score else 0
+    if (score > 0 && edgeCount > 0) score else 0
   }
 
   def scoreCollect = 0 // because signals are directly collected at arrival
 
-  def edgeCount = targetIdArray.length
+  def edgeCount = outEdges
 
-  def afterInitialization(graphEditor: GraphEditor) = {}
-  def beforeRemoval(graphEditor: GraphEditor) = {}
+  def afterInitialization(graphEditor: GraphEditor[Any, Any]) = {}
+  def beforeRemoval(graphEditor: GraphEditor[Any, Any]) = {}
 
-  override def removeEdge(targetId: Any, graphEditor: GraphEditor): Boolean = {
+  override def removeEdge(targetId: Any, graphEditor: GraphEditor[Any, Any]): Boolean = {
     throw new UnsupportedOperationException
   }
 
-  override def removeAllEdges(graphEditor: GraphEditor): Int = {
+  override def removeAllEdges(graphEditor: GraphEditor[Any, Any]): Int = {
     throw new UnsupportedOperationException
   }
-
-  def this() = this(-1) //default constructor for serialization
-
-  def writeExternal(out: ObjectOutput) {
-    out.writeInt(id)
-    out.writeFloat(state)
-    out.writeFloat(lastSignalState)
-    // Write links
-    out.writeInt(targetIdArray.length)
-    for (i <- 0 until targetIdArray.length) {
-      out.writeInt(targetIdArray(i))
-    }
-    //write delta buffer
-    out.close
-  }
-
-  def readExternal(in: ObjectInput) {
-    id = in.readInt
-    state = in.readFloat
-    lastSignalState = in.readFloat
-    //read Links
-    val numberOfLinks = in.readInt
-    targetIdArray = new Array[Int](numberOfLinks)
-    for (i <- 0 until numberOfLinks) {
-      targetIdArray(i) = in.readInt
-    }
-    in.close
-  }
-
-  def getVertexIdsOfSuccessors: Iterable[_] = targetIdArray
-
-  def getVertexIdsOfPredecessors: Option[Iterable[_]] = None
-  def getOutgoingEdgeMap: Option[Map[Any, Edge[_]]] = None
-  def getOutgoingEdges: Option[Iterable[Edge[_]]] = None
 
   override def toString = "MemoryMinimal (" + id + ", " + state + ")"
+}
+
+// Only supports unsigned integers.
+object CompactIntSet {
+  def create(ints: Array[Int]): Array[Byte] = {
+    val sorted = ints.sorted
+    var i = 0
+    var previous = 0
+    while (i < sorted.length) {
+      val tmp = sorted(i)
+      sorted(i) = sorted(i) - previous - 1
+      previous = tmp
+      i += 1
+    }
+    val baos = new ByteArrayOutputStream()
+    val dos = new DataOutputStream(baos)
+    i = 0
+    while (i < sorted.length) {
+      writeUnsignedVarInt(sorted(i), dos)
+      i += 1
+    }
+    dos.flush
+    baos.flush
+    baos.toByteArray
+  }
+
+  def foreach(encoded: Array[Byte], f: Int => Unit) {
+    var i = 0
+    var previousInt = 0
+    var currentInt = 0
+    var shift = 0
+    while (i < encoded.length) {
+      val readByte = encoded(i)
+      currentInt |= (readByte & leastSignificant7BitsMask) << shift
+      shift += 7
+      if ((readByte & hasAnotherByte) == 0) {
+        // Next byte is no longer part of this Int.
+        previousInt += currentInt + 1
+        f(previousInt)
+        currentInt = 0
+        shift = 0
+      }
+      i += 1
+    }
+  }
+
+  private val hasAnotherByte = Integer.parseInt("10000000", 2)
+  private val leastSignificant7BitsMask = Integer.parseInt("01111111", 2)
+  private val everythingButLeastSignificant7Bits = ~leastSignificant7BitsMask
+
+  // Same as https://developers.google.com/protocol-buffers/docs/encoding
+  private def writeUnsignedVarInt(i: Int, out: DataOutputStream) {
+    var remainder = i
+    // While this is not the last byte, write one bit to indicate if the
+    // next byte is part of this number and 7 bytes of the number itself.
+    while ((remainder & everythingButLeastSignificant7Bits) != 0) {
+      // First bit of byte indicates that the next byte is still part of this number, if set.
+      out.writeByte((remainder & leastSignificant7BitsMask) | hasAnotherByte)
+      remainder >>>= 7
+    }
+    // Final byte.
+    out.writeByte(remainder & 0x7F)
+  }
+
 }
 
 /** Builds a PageRank compute graph and executes the computation */

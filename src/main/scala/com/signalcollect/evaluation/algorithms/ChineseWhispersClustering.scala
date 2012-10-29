@@ -29,11 +29,11 @@ import com.signalcollect.graphproviders.synthetic._
  * Initially each entity assumes it belongs to its own cluster and therefore uses
  * its own ID as cluster label.
  */
-class ChineseWhispersVertex(id: Any, selfPreference: Double = 1.0) extends DataGraphVertex(id, id) {
+class ChineseWhispersVertex[Id](id: Id, selfPreference: Double = 1.0) extends DataGraphVertex(id, id) {
 
-  type Signal = (Any, Double)
+  type Signal = (Id, Double)
 
-  def collect(oldState: Any, mostRecentSignals: Iterable[(Any, Double)], graphEditor: GraphEditor): Any = {
+  def collect(oldState: Id, mostRecentSignals: Iterable[(Id, Double)]): Id = {
     //group most recent signals by clustering label
     val grouped = (((state, selfPreference)) :: mostRecentSignals.toList).groupBy(_._1)
     //sort the grouped list by the sum of all clustering label weights
@@ -47,7 +47,7 @@ class ChineseWhispersVertex(id: Any, selfPreference: Double = 1.0) extends DataG
  * Connects two entities in a Chinese Whispers algorithm and sets the signal to be
  * the source vertex's state plus together with the weight of the connection.
  */
-class ChineseWhispersEdge(t: Any, weight: Double = 1.0) extends DefaultEdge(t) {
+class ChineseWhispersEdge[Id](t: Id, weight: Double = 1.0) extends DefaultEdge[Id](t) {
   override def signal(sourceVertex: Vertex[_, _]) = (sourceVertex.state, weight)
 }
 
@@ -63,10 +63,10 @@ object ChineseWhispersClustering extends App {
 //    graph.addVertex(new ChineseWhispersVertex(i))
 //  }
 
-  val loader = new LogNormalGraph(5000)
+  val loader = new LogNormalGraph[Any](5000)
   
-  val graph = GraphBuilder.build
-  loader.populate(graph, (id: Int) => new ChineseWhispersVertex(id), (sourceId: Int, targetId: Int) => new ChineseWhispersEdge(targetId))
+  val graph = new GraphBuilder[Int, Any]().build
+  loader.populate(graph, (id: Int) => new ChineseWhispersVertex[Int](id), (sourceId: Int, targetId: Int) => new ChineseWhispersEdge[Int](targetId))
 
   //  graph.addVertex(new ChineseWhispersVertex(1))
   //  graph.addVertex(new ChineseWhispersVertex(2))

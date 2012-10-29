@@ -24,7 +24,6 @@ import com.signalcollect.evaluation.jobsubmission._
 import com.signalcollect.nodeprovisioning.torque._
 import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms.PageRankEvaluationRun
-//import com.signalcollect.evaluation.algorithms.SsspEvaluationRun
 import com.signalcollect.configuration._
 import com.signalcollect._
 import com.signalcollect.nodeprovisioning.torque.TorqueNodeProvisioner
@@ -32,11 +31,10 @@ import com.signalcollect.graphproviders.synthetic._
 import com.signalcollect.nodeprovisioning.local.LocalNodeProvisioner
 import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local.LocalNode
-//import com.signalcollect.factory.storage.AboveAverage
-//import com.signalcollect.evaluation.algorithms.VertexColoringEvaluationRun
 import com.signalcollect.evaluation.algorithms.ChineseWhispersEvaluationRun
 import com.signalcollect.evaluation.util.ParallelFileGraphLoader
 import com.signalcollect.evaluation.util.GoogleGraphLoader
+import com.typesafe.config.Config
 
 /**
  * Runs a PageRank algorithm on a graph of a fixed size
@@ -73,8 +71,8 @@ object MulticoreScalabilityEvaluation extends App {
               for (numberOfWorkers <- List(24)) {
 //      for (numberOfWorkers <- List(24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)) {
         //    for (numberOfWorkers <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)) {
-        val graphBuilder = GraphBuilder.withNodeProvisioner(new LocalNodeProvisioner {
-          override def getNodes: List[Node] = {
+        val graphBuilder = new GraphBuilder[Int, Float]().withNodeProvisioner(new LocalNodeProvisioner {
+          override def getNodes(akkaConfig: Config): List[Node] = {
             List(new LocalNode {
               override def numberOfCores = numberOfWorkers
             })
