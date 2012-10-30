@@ -58,7 +58,7 @@ class CompactIntSetSpec extends SpecificationWithJUnit with Serializable {
       number must_== Int.MaxValue
     }
     
-    "correctly encode and decode an array with only value Int.MaxValue" in {
+    "correctly encode and decode an array with multiple values" in {
       var numbers = List[Int]()
       val set = CompactIntSet.create(Array(0, 1, 500, Int.MaxValue))
       CompactIntSet.foreach(set, i => numbers = i :: numbers)
