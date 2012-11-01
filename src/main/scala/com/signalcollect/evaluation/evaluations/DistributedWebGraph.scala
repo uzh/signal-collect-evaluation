@@ -35,12 +35,12 @@ object DistributedWebGraph extends App {
   /*
    * Config
    */
-  val runName = "3072 splits on 4 machines, KRYO NOVO - COMPRESSION DISABLED - BULK SIZE 1000 - NEW SIGNALING TIMING"
+  val runName = "288 splits on " + numberOfNodes + " machines"
 
   val locationSplits = "/home/torque/tmp/webgraph-tmp"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
-  val numberOfNodes = 4
+  val numberOfNodes = 12
 
   val evaluation: EvaluationSuiteCreator = new EvaluationSuiteCreator(evaluationName = runName,
     executionHost = new LocalHost()
@@ -68,12 +68,12 @@ object DistributedWebGraph extends App {
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(3072)) { //10
+        for (splits <- List(288)) { //10
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
             jdkBinaryPath = jvm,
-            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000)).withAkkaMessageCompression(false).withWorkerFactory(factory.worker.CollectFirstAkka).withNodeProvisioner(new TorqueNodeProvisioner(
+            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).withAkkaMessageCompression(false).withNodeProvisioner(new TorqueNodeProvisioner(
               torqueHost = new TorqueHost(
                 torqueHostname = "kraken.ifi.uzh.ch",
                 localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar",

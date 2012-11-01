@@ -42,7 +42,7 @@ class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[St
         graphEditor.loadGraph(Some(workerId), (new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder))
       }
     }
-    println("done loading " + splitsToParse + " splits.")
+    println("Load commands for " + splitsToParse + " splits sent.")
     val usedMemory = (Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory) / 131072
     println("Used memory in MB " + usedMemory)
   }

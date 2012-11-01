@@ -36,9 +36,9 @@ object LoadWebGraph extends App {
   /*
    * Config
    */
-  val runName = "BULKING ENABLED - NEW EDGE FORMAT - 768/960 splits"
+  val runName = "768/960 splits to check if everything is still efficient and to see if we can do the full graph on 4 machines"
 
-  val localMode = false
+  val localMode = true
   val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
   val loggerFile = if (localMode) Some("/Users/" + System.getProperty("user.name") + "/status.txt") else Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
@@ -72,7 +72,7 @@ object LoadWebGraph extends App {
       " -Xms64000m" +
       " -Xmn8000m" +
       " -d64"
-  val repetitions = 3
+  val repetitions = 5
   for (
     jvmParams <- List(
       " -XX:+UnlockExperimentalVMOptions" +
@@ -91,7 +91,7 @@ object LoadWebGraph extends App {
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(768, 960)) { //480
+        for (splits <- List(10)) { //480
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
@@ -105,7 +105,7 @@ object LoadWebGraph extends App {
                 }
               }).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000))
             } else {
-              new GraphBuilder[Int, Float]().withWorkerFactory(factory.worker.CollectFirstAkka).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000))
+              new GraphBuilder[Int, Float]().withMessageBusFactory(new BulkAkkaMessageBusFactory(10000))
             },
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 4 else 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)
