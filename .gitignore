@@ -1,7 +1,9 @@
 .*
 !/.gitignore
-webgraph/*
+project/target/
+project/project/
+project/scala*/
 target/*
+webgraph/*
 *.hprof
-
 *.config
