@@ -35,12 +35,14 @@ object DistributedWebGraph extends App {
   /*
    * Config
    */
-  val runName = "288 splits on " + numberOfNodes + " machines"
+  val numberOfNodes = 10
+  val splitsList = List(3840)
+  val compression = true
+  
+  val runName = splitsList + " splits on " + numberOfNodes + " machines, compression=" + compression
 
   val locationSplits = "/home/torque/tmp/webgraph-tmp"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
-
-  val numberOfNodes = 12
 
   val evaluation: EvaluationSuiteCreator = new EvaluationSuiteCreator(evaluationName = runName,
     executionHost = new LocalHost()
@@ -68,15 +70,15 @@ object DistributedWebGraph extends App {
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(288)) { //10
+        for (splits <- splitsList) { //10
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
             jdkBinaryPath = jvm,
-            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).withAkkaMessageCompression(false).withNodeProvisioner(new TorqueNodeProvisioner(
+            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).withAkkaMessageCompression(compression).withNodeProvisioner(new TorqueNodeProvisioner(
               torqueHost = new TorqueHost(
                 torqueHostname = "kraken.ifi.uzh.ch",
-                localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar",
+                localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
                 torqueUsername = System.getProperty("user.name")), numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = numberOfNodes * 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)

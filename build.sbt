@@ -12,6 +12,8 @@ scalaVersion := "2.10.0-RC1"
 
 resolvers += "Typesafe Snapshot Repository" at "http://repo.typesafe.com/typesafe/snapshots/"
 
+EclipseKeys.withSource := true
+
 /** Dependencies */
 libraryDependencies ++= Seq(
  "org.scala-lang" % "scala-library" % "2.10.0-RC1"  % "compile",
