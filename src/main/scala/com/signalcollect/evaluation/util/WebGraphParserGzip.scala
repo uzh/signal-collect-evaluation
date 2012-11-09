@@ -36,7 +36,7 @@ class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[St
 
   def populate(graphEditor: GraphEditor[Int, Float], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
     println("started loading " + splitsToParse + " splits by WebGraphParserGzip")
-    for (workerId <- (0 until numberOfWorkers).par) {
+    for (workerId <- 0 until numberOfWorkers) {
       for (splitId <- workerId until splitsToParse by numberOfWorkers) {
         println("sending load command for " + splitId + " to worker " + workerId)
         graphEditor.loadGraph(Some(workerId), (new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder))

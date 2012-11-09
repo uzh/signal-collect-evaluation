@@ -37,14 +37,20 @@ object DistributedWebGraph extends App {
    */
   val numberOfNodes = 10
   val splitsList = List(3840)
-  val compression = true
-  
-  val runName = splitsList + " splits on " + numberOfNodes + " machines, compression=" + compression
+  val akkaCompression = false
+  val repetitions = 1
+
+  val runName = splitsList + " splits on " +
+    numberOfNodes + " machines, queue size #workers*1000, " +
+    repetitions + " repetitions, " +
+    "compression: " + akkaCompression +
+    " :( saaaad"
 
   val locationSplits = "/home/torque/tmp/webgraph-tmp"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
-  val evaluation: EvaluationSuiteCreator = new EvaluationSuiteCreator(evaluationName = runName,
+  val evaluation: EvaluationSuiteCreator = new EvaluationSuiteCreator(
+    evaluationName = runName,
     executionHost = new LocalHost()
   )
 
@@ -54,7 +60,7 @@ object DistributedWebGraph extends App {
       " -Xmn8000m" +
       " -d64" // +
   //" -Dsun.io.serialization.extendedDebugInfo=true"
-  val repetitions = 1
+
   for (
     jvmParams <- List(
       " -XX:+UnlockExperimentalVMOptions" +
@@ -75,7 +81,7 @@ object DistributedWebGraph extends App {
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
             jdkBinaryPath = jvm,
-            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).withAkkaMessageCompression(compression).withNodeProvisioner(new TorqueNodeProvisioner(
+            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).withAkkaMessageCompression(akkaCompression).withNodeProvisioner(new TorqueNodeProvisioner(
               torqueHost = new TorqueHost(
                 torqueHostname = "kraken.ifi.uzh.ch",
                 localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",

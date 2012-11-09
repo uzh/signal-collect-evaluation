@@ -72,11 +72,6 @@ class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
     if (tIds.length != 0) {
       val signal = (state - lastSignalState) / tIdLength
       CompactIntSet.foreach(targetIdArray, graphEditor.sendSignal(signal, _, None))
-      //      var i = 0
-      //      while (i < tIdLength) {
-      //        graphEditor.sendSignal(signal, tIds(i), None)
-      //        i += 1
-      //      }
     }
     lastSignalState = state
   }

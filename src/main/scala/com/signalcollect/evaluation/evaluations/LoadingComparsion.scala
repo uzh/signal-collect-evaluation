@@ -30,5 +30,5 @@ object LoadingComparsion extends App {
   
   
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
-  evaluation.runEvaluation()
+  evaluation.runEvaluation
 }

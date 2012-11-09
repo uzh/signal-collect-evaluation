@@ -56,7 +56,7 @@ class EvaluationSuiteCreator(evaluationName: String,
   /**
    * Dispatch jobs for execution
    */
-  def runEvaluation() = {
+  def runEvaluation = {
     executionHost.executeJobs(jobs.toList)
   }
 

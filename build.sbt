@@ -10,8 +10,6 @@ organization := "com.signalcollect"
 
 scalaVersion := "2.10.0-RC1"
 
-resolvers += "Typesafe Snapshot Repository" at "http://repo.typesafe.com/typesafe/snapshots/"
-
 EclipseKeys.withSource := true
 
 /** Dependencies */

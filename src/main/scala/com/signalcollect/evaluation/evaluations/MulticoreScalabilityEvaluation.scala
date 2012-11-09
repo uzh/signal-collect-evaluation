@@ -114,7 +114,7 @@ object MulticoreScalabilityEvaluation extends App {
 
   }
   slowEval.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
-  slowEval.runEvaluation()
+  slowEval.runEvaluation
   fastEval.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
-  fastEval.runEvaluation()
+  fastEval.runEvaluation
 }

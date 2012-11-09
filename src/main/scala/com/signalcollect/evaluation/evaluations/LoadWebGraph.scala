@@ -36,9 +36,9 @@ object LoadWebGraph extends App {
   /*
    * Config
    */
-  val runName = "768/960 splits to check if everything is still efficient and to see if we can do the full graph on 4 machines"
+  val runName = "768 splits to check if everything is still efficient"
 
-  val localMode = true
+  val localMode = false
   val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
   val loggerFile = if (localMode) Some("/Users/" + System.getProperty("user.name") + "/status.txt") else Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
@@ -48,7 +48,7 @@ object LoadWebGraph extends App {
     } else {
       new TorqueHost(
         torqueHostname = "kraken.ifi.uzh.ch",
-        localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar",
+        localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
         torqueUsername = System.getProperty("user.name"))
     })
 
@@ -58,7 +58,7 @@ object LoadWebGraph extends App {
   //XX:ParallelCMSThreads=n +
   //-XX:+CMSIncrementalMode +
   //-XX:+CMSIncrementalPacing +
-  //-XX:+AggressiveHeap -> crahes, i guess
+  //-XX:+AggressiveHeap -> crashes, i guess
 
   // BEST SO FAR: "-XX:+UnlockExperimentalVMOptions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSIncrementalPacing -XX:+CMSIncrementalMode -XX:ParallelGCThreads=20 -XX:ParallelCMSThreads=20 -XX:+UseNUMA -XX:+UseFastAccessorMethods", 
   //"-XX:+UnlockExperimentalVMOptions -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSIncrementalPacing -XX:+CMSIncrementalMode -XX:ParallelGCThreads=20 -XX:ParallelCMSThreads=20 -XX:+UseNUMA -XX:+UseFastAccessorMethods"
@@ -72,7 +72,7 @@ object LoadWebGraph extends App {
       " -Xms64000m" +
       " -Xmn8000m" +
       " -d64"
-  val repetitions = 5
+  val repetitions = 1
   for (
     jvmParams <- List(
       " -XX:+UnlockExperimentalVMOptions" +
@@ -91,7 +91,7 @@ object LoadWebGraph extends App {
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(10)) { //480
+        for (splits <- List(768)) { //480
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
@@ -114,7 +114,7 @@ object LoadWebGraph extends App {
       }
     }
   }
-
+ 
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
   evaluation.runEvaluation
 }
