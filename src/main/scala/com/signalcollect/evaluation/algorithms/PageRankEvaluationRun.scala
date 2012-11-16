@@ -35,8 +35,11 @@ class PageRankEvaluationRun(
   jvmParams: String = "",
   reportMemoryStats: Boolean = false) extends EvaluationAlgorithmRun[Int, Float] {
 
-  def loadGraph = {
+  def buildGraph {
     graph = graphBuilder.build
+  }
+  
+  def loadGraph = {
     graphProvider.populate(graph,
       (id) => new PageRankVertex(id.asInstanceOf[Int], 0.85),
       (srcId, targetId) => new PageRankEdge(targetId.asInstanceOf[Int]))

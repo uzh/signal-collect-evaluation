@@ -27,7 +27,8 @@ abstract class EvaluationAlgorithmRun[Id, Signal] extends Serializable {
   var graph: Graph[Id, Signal] = _
   def jvmParameters: String = ""
   def jdkBinPath: String = ""
-  def loadGraph: Unit
+  def loadGraph
+  def buildGraph
   def execute: ExecutionInformation
   def postExecute = {}
   def shutdown: Unit = graph.shutdown

@@ -37,8 +37,11 @@ class ChineseWhispersEvaluationRun(
   val builder: GraphBuilder[Int, Any] = graphBuilder
   var edgeTuples: Traversable[(Int, Int)] = null
 
+  def buildGraph {
+    graph = graphBuilder.build
+  }
+  
   def loadGraph = {
-    graph = builder.build
     graphProvider.populate(graph,
       (id) => new ChineseWhispersVertex[Int](id),
       (srcId, targetId) => {

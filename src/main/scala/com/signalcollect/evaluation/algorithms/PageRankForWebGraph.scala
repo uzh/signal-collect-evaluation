@@ -47,39 +47,12 @@ class PageRankForWebGraph(
 
   override def memoryStatsEnabled = memoryStats
 
+  def buildGraph {
+    graph = graphBuilder.build
+  }
+
   def loadGraph = {
-    val localHostName = java.net.InetAddress.getLocalHost().getHostName()
-    if (localHostName.contains("kraken") || localHostName.contains("claudio")) {
-      val localFileDir = "/home/torque/tmp/webgraph-tmp"
-      val remoteFileDir = "/home/user/" + System.getProperty("user.name") + "/webgraph"
-
-      def existsLocalCopy: Boolean = {
-        val f = new File(localFileDir)
-        f.exists
-      }
-
-      def createDirectory {
-        val f = new File(localFileDir)
-        if (!f.exists) {
-          f.mkdir
-        }
-      }
-
-      def copyAllSplits {
-        val source = new File(remoteFileDir)
-        val dest = new File(localFileDir)
-        FileUtils.copyDirectory(source, dest)
-      }
-
-      if (!existsLocalCopy) {
-        createDirectory
-        println("Copying splits to local machine ...")
-        copyAllSplits
-        println("Done")
-      }
-    }
     try {
-      graph = graphBuilder.build
       graphProvider.populate(graph,
         (id, outgoingEdges) => {
           val vertex = new MemoryMinimalPage(id)

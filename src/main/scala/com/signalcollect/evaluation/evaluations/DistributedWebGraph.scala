@@ -42,9 +42,9 @@ object DistributedWebGraph extends App {
 
   val runName = splitsList + " splits on " +
     numberOfNodes + " machines, queue size #workers*1000, " +
-    repetitions + " repetitions, " +
-    "compression: " + akkaCompression +
-    " :( saaaad"
+    repetitions + " repetitions," +
+    " compression: " + akkaCompression +
+    " new throttling strategy, new graph loading measurement"
 
   val locationSplits = "/home/torque/tmp/webgraph-tmp"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
@@ -81,11 +81,18 @@ object DistributedWebGraph extends App {
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
             jdkBinaryPath = jvm,
-            graphBuilder = new GraphBuilder[Int, Float]().withConsole(true).withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).withAkkaMessageCompression(akkaCompression).withNodeProvisioner(new TorqueNodeProvisioner(
-              torqueHost = new TorqueHost(
-                torqueHostname = "kraken.ifi.uzh.ch",
-                localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
-                torqueUsername = System.getProperty("user.name")), numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
+            graphBuilder = new GraphBuilder[Int, Float]().
+              withConsole(true).
+              withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
+              withAkkaMessageCompression(akkaCompression).
+              withHeartbeatInterval(20).
+              withThrottleInboxThresholdPerWorker(1000).
+              //withThrottleWorkerQueueThresholdInMilliseconds(-25).
+              withNodeProvisioner(new TorqueNodeProvisioner(
+                torqueHost = new TorqueHost(
+                  torqueHostname = "kraken.ifi.uzh.ch",
+                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
+                  torqueUsername = System.getProperty("user.name")), numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = numberOfNodes * 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)
           ))

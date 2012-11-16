@@ -70,6 +70,8 @@ class EvaluationSuiteCreator(evaluationName: String,
       var statsMap = extraInformation
 
       //Load Graph
+      run.buildGraph
+      run.awaitIdle
       val graphLoadingStart = System.nanoTime
       run.loadGraph
       run.awaitIdle

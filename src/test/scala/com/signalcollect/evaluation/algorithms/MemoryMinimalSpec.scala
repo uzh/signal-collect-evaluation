@@ -49,6 +49,7 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
         def aggregate(a: Boolean, b: Boolean): Boolean = a && b
         def extract(v: Vertex[_, _]): Boolean = pageRankFiveCycleVerifier(v)
       })
+      graph.shutdown
       allcorrect
     }
 

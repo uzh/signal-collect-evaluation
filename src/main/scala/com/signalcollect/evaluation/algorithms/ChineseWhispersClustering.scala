@@ -59,12 +59,12 @@ object ChineseWhispersClustering extends App {
 
   //  val graph = GraphBuilder.build
 
-//  for (i <- 0 until 11) {
-//    graph.addVertex(new ChineseWhispersVertex(i))
-//  }
+  //  for (i <- 0 until 11) {
+  //    graph.addVertex(new ChineseWhispersVertex(i))
+  //  }
 
   val loader = new LogNormalGraph[Any](5000)
-  
+
   val graph = new GraphBuilder[Int, Any]().build
   loader.populate(graph, (id: Int) => new ChineseWhispersVertex[Int](id), (sourceId: Int, targetId: Int) => new ChineseWhispersEdge[Int](targetId))
 
