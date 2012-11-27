@@ -44,7 +44,7 @@ import com.typesafe.config.Config
  */
 object MulticoreScalabilityEvaluation extends App {
 
-  val evalName = "With toSignal as Object Ref"
+  val evalName = "profiling @specialized"
   val jvmParameters = "-XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC"
 
   val slowEval = new EvaluationSuiteCreator(evaluationName = evalName,

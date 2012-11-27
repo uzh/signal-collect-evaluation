@@ -35,16 +35,16 @@ object DistributedWebGraph extends App {
   /*
    * Config
    */
-  val numberOfNodes = 10
+  val numberOfNodes = 8
   val splitsList = List(3840)
-  val akkaCompression = false
+  val akkaCompression = true
   val repetitions = 1
 
   val runName = splitsList + " splits on " +
-    numberOfNodes + " machines, queue size #workers*1000, " +
+    numberOfNodes + " machines, " +
     repetitions + " repetitions," +
     " compression: " + akkaCompression +
-    " new throttling strategy, new graph loading measurement"
+    ", profiling, heartbeat 100ms"
 
   val locationSplits = "/home/torque/tmp/webgraph-tmp"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
@@ -70,8 +70,8 @@ object DistributedWebGraph extends App {
         " -XX:+CMSIncrementalMode" +
         " -XX:ParallelGCThreads=20" +
         " -XX:ParallelCMSThreads=20" +
-        " -XX:MaxInlineSize=1024" // +
-    //" -agentpath:./profiler/libyjpagent.so"
+        " -XX:MaxInlineSize=1024" +
+        " -agentpath:./profiler/libyjpagent.so"
     )
   ) {
     for (repetition <- 1 to repetitions) {
@@ -83,11 +83,9 @@ object DistributedWebGraph extends App {
             jdkBinaryPath = jvm,
             graphBuilder = new GraphBuilder[Int, Float]().
               withConsole(true).
-              withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
+              withMessageBusFactory(new BulkAkkaMessageBusFactory[Int, Float](10000)).
               withAkkaMessageCompression(akkaCompression).
-              withHeartbeatInterval(20).
-              withThrottleInboxThresholdPerWorker(1000).
-              //withThrottleWorkerQueueThresholdInMilliseconds(-25).
+              withHeartbeatInterval(100).
               withNodeProvisioner(new TorqueNodeProvisioner(
                 torqueHost = new TorqueHost(
                   torqueHostname = "kraken.ifi.uzh.ch",
@@ -100,7 +98,6 @@ object DistributedWebGraph extends App {
       }
     }
   }
-
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
   evaluation.runEvaluation
 }
