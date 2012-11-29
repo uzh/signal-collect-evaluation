@@ -83,7 +83,7 @@ object DistributedWebGraph extends App {
             jdkBinaryPath = jvm,
             graphBuilder = new GraphBuilder[Int, Float]().
               withConsole(true).
-              withMessageBusFactory(new BulkAkkaMessageBusFactory[Int, Float](10000)).
+              withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
               withAkkaMessageCompression(akkaCompression).
               withHeartbeatInterval(100).
               withNodeProvisioner(new TorqueNodeProvisioner(
