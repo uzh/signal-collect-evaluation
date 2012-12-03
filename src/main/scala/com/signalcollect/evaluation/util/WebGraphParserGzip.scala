@@ -39,7 +39,7 @@ class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[St
     for (workerId <- 0 until numberOfWorkers) {
       for (splitId <- workerId until splitsToParse by numberOfWorkers) {
         println("sending load command for " + splitId + " to worker " + workerId)
-        graphEditor.loadGraph(Some(workerId), (new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder))
+        graphEditor.modifyGraph((new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder), Some(workerId))
         println("load command for " + splitId + " was sent to worker " + workerId)
       }
     }

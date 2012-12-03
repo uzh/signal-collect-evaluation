@@ -28,7 +28,7 @@ import com.signalcollect.graphproviders.GraphProvider
 class QuasigroupGraphLoader(numberOfWorkers: Int, edgeFilename: String = "quasigroup100", directed: Boolean = true) extends GraphProvider[Int, Int] {
   def populate(graphEditor: GraphEditor[Int, Int], vertexBuilder: (Int) => Vertex[Int, _], edgeBuilder: (Int, Int) => Edge[Int]) {
     for (i <- (0 until numberOfWorkers).par) {
-      graphEditor.loadGraph(Some(i), ge => {
+      graphEditor.modifyGraph(ge => {
         val edgeSource = scala.io.Source.fromFile(edgeFilename)
         edgeSource.getLines.foreach({ line =>
           if (!line.startsWith("c") && !line.startsWith("p")) {
@@ -45,7 +45,7 @@ class QuasigroupGraphLoader(numberOfWorkers: Int, edgeFilename: String = "quasig
             }
           }
         })
-      })
+      }, Some(i))
     }
   }
 

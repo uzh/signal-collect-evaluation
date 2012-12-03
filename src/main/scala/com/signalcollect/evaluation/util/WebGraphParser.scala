@@ -32,26 +32,25 @@ class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String
 
   def populate(graphEditor: GraphEditor[Int, Float], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
     for (workerId <- splitsToParse.par) {
-      graphEditor.loadGraph(Some(workerId), (new WebGraphParserHelper(inputFolder, externalLoggingFilePath)).parserForSplit(workerId, combinedVertexBuilder))
+      graphEditor.modifyGraph((new WebGraphParserHelper(inputFolder, externalLoggingFilePath)).parserForSplit(workerId, combinedVertexBuilder), Some(workerId))
     }
     val memoryUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory().asInstanceOf[Double] / 1073741824
   }
 
-  
 }
 
 /**
  * Prevents closure capture of the DefaultGraph class.
  */
 case class WebGraphParserHelper(inputFolder: String, externalLoggingFilePath: Option[String] = None) {
-  
+
   def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]): GraphEditor[Int, Float] => Unit = {
-    graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt.gz", combinedVertexBuilder)
+    graphEditor => parseFile(graphEditor, "input_pt_"+splitNumber+".txt.gz", combinedVertexBuilder)
   }
-  
+
   def parseFile(graphEditor: GraphEditor[Int, Float], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
     //initialize input reader
-    logStatus("started parsing " + filename)
+    logStatus("started parsing "+filename)
     val fstream = new FileInputStream(inputFolder + System.getProperty("file.separator") + filename)
     val in = new DataInputStream(new GZIPInputStream(fstream))
     val input = new BufferedReader(new InputStreamReader(in))
@@ -74,15 +73,15 @@ case class WebGraphParserHelper(inputFolder: String, externalLoggingFilePath: Op
       verticesRead += 1
 
       if (verticesRead % 100000 == 0) {
-        logStatus(filename + ": loaded " + verticesRead)
+        logStatus(filename+": loaded "+verticesRead)
       }
 
       line = input.readLine
     }
     input.close
     in.close
-    logStatus("done parsing " + filename)
-    
+    logStatus("done parsing "+filename)
+
   }
 
   protected def getInt(s: String): Int = {
@@ -94,7 +93,7 @@ case class WebGraphParserHelper(inputFolder: String, externalLoggingFilePath: Op
       val timeFormat = new SimpleDateFormat("HH:mm:ss")
       val logFileWiter = new FileWriter(externalLoggingFilePath.get, true)
       val logger = new BufferedWriter(logFileWiter)
-      logger.write(timeFormat.format(new Date) + " - " + msg + "\n")
+      logger.write(timeFormat.format(new Date)+" - "+msg+"\n")
       logger.close
     } else {
       println(msg)

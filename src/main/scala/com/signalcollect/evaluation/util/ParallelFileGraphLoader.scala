@@ -27,7 +27,7 @@ class ParallelFileGraphLoader[Signal](numberOfWorkers: Int, vertexFilename: Stri
   def populate(graphEditor: GraphEditor[Int, Signal], vertexBuilder: (Int) => Vertex[Int, _], edgeBuilder: (Int, Int) => Edge[Int]) {
     //Load the vertices
     for (i <- (0 until numberOfWorkers).par) {
-      graphEditor.loadGraph(Some(i), graph => {
+      graphEditor.modifyGraph(graph => {
         val vertexSource = scala.io.Source.fromFile(vertexFilename)
         vertexSource.getLines.foreach({ line =>
           val vertexId = line.toInt
@@ -35,12 +35,12 @@ class ParallelFileGraphLoader[Signal](numberOfWorkers: Int, vertexFilename: Stri
             graph.addVertex(vertexBuilder(vertexId))
           }
         })
-      })
+      }, Some(i))
     }
 
     //Load the edges
     for (i <- (0 until numberOfWorkers).par) {
-      graphEditor.loadGraph(Some(i), graph => {
+      graphEditor.modifyGraph(graph => {
         val edgeSource = scala.io.Source.fromFile(edgeFilename)
         edgeSource.getLines.foreach({ line =>
           val ids = line.split(",")
@@ -53,7 +53,7 @@ class ParallelFileGraphLoader[Signal](numberOfWorkers: Int, vertexFilename: Stri
             }
           }
         })
-      })
+      }, Some(i))
     }
   }
   

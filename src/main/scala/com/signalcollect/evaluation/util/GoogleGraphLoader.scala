@@ -48,7 +48,7 @@ class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google
 
     //Load the edges
     for (i <- (0 until numberOfWorkers).par) {
-      graphEditor.loadGraph(Some(i), graph => {
+      graphEditor.modifyGraph(graph => {
         val edgeSource = scala.io.Source.fromFile(edgeFilename)
         edgeSource.getLines.foreach({ line =>
           if (!line.startsWith("#")) {
@@ -65,7 +65,7 @@ class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google
             }
           }
         })
-      })
+      }, Some(i))
     }
   }
 
