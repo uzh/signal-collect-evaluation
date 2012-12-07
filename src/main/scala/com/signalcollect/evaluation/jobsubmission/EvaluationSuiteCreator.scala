@@ -88,10 +88,17 @@ class EvaluationSuiteCreator(evaluationName: String,
       //Execute the algorithm
       val externallyMeasuredExecutionStartTime = System.nanoTime
       val stats = run.execute
+      println(stats.individualWorkerStatistics map (_.verticesAdded))
+      println(stats)
       val externallyMeasuredExecutionStopTime = System.nanoTime
       val externallyMeasuredExecutionTime = externallyMeasuredExecutionStopTime - externallyMeasuredExecutionStartTime
       val externallyMeasuredExecutionTimeInMilliseconds = externallyMeasuredExecutionTime / 1000000l
 
+      val postExecute = run.postExecute
+      for (stat <- postExecute) {
+        statsMap += stat
+      }
+      
       statsMap += (("externallyMeasuredExecutionTimeInMilliseconds", externallyMeasuredExecutionTimeInMilliseconds.toString))
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))

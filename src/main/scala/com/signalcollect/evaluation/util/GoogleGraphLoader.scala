@@ -23,8 +23,8 @@ import scala.util.Random
 import scala.math._
 import com.signalcollect.graphproviders.GraphProvider
 
-class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google.txt", directed: Boolean = true) extends GraphProvider[Int, Float] {
-  def populate(graphEditor: GraphEditor[Int, Float], vertexBuilder: (Int) => Vertex[Int, _], edgeBuilder: (Int, Int) => Edge[Int]) {
+class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google.txt", directed: Boolean = true) extends GraphProvider[Int, Double] {
+  def populate(graphEditor: GraphEditor[Int, Double], vertexBuilder: (Int) => Vertex[Int, _], edgeBuilder: (Int, Int) => Edge[Int]) {
     //    //Load the vertices
     //    for (i <- (0 until numberOfWorkers).par) {
     //      graph.loadGraph(Some(i), graph => {
@@ -44,7 +44,7 @@ class GoogleGraphLoader(numberOfWorkers: Int, edgeFilename: String = "web-Google
     //# FromNodeId	ToNodeId
     //0	11342
 
-//    graph.awaitIdle
+    //    graph.awaitIdle
 
     //Load the edges
     for (i <- (0 until numberOfWorkers).par) {

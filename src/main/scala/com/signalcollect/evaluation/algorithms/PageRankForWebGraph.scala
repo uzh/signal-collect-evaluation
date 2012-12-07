@@ -31,6 +31,10 @@ import com.signalcollect.graphproviders._
 import com.signalcollect.evaluation.util.OptimizedGraphProvider
 import java.io.File
 import org.apache.commons.io.FileUtils
+import com.signalcollect.Vertex
+import com.signalcollect.interfaces.AggregationOperation
+import scala.annotation.tailrec
+import com.signalcollect.TopKFinder
 
 class PageRankForWebGraph(
     memoryStats: Boolean = true,
@@ -76,8 +80,14 @@ class PageRankForWebGraph(
     stats
   }
 
+  override def postExecute: List[(String, String)] = {
+    val top10 = graph.aggregate(new TopKFinder[Int, Float](10, { (a: Float, b: Float) => a > b }))
+    List(("top10Vertices", top10.toString))
+  }
+
   def algorithmName = "PageRank"
 
   def graphStructure = graph.toString
-
 }
+  
+  

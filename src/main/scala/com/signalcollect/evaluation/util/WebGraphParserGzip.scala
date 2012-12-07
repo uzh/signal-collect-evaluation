@@ -64,10 +64,16 @@ class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[St
 
 }
 
+object WebGraphLoadingTest extends App {
+  val inputFolder = "/Users/stutz/workspace/signal-collect"
+  val tester = new WebGraphParserHelperGzip(inputFolder, None, true)
+  tester.parseFile(null.asInstanceOf[GraphEditor[Int, Float]], "input_pt_2879.txt.gz", null.asInstanceOf[(Int, Array[Int]) => Vertex[Int, _]])
+}
+
 /**
  * Prevents closure capture of the DefaultGraph class.
  */
-case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None) {
+case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None, testMode: Boolean = false) {
 
   var startTimeLoading: Date = null
 
@@ -86,6 +92,7 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
     val in = new DataInputStream(bufferedInput)
 
     var verticesRead = 0
+    var edgesRead = 0
 
     try {
       while (true) {
@@ -97,11 +104,12 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
           outlinks(i) = in.readInt
           i += 1
         }
-        val vertex = combinedVertexBuilder(id, outlinks)
-
-        graphEditor.addVertex(vertex, true)
-
+        if (!testMode) {
+          val vertex = combinedVertexBuilder(id, outlinks)
+          graphEditor.addVertex(vertex, true)
+        }
         verticesRead += 1
+        edgesRead += numberOfLinks
 
         if (verticesRead % 100000 == 0) {
           logStatus(filename + ": loaded " + verticesRead)
@@ -111,6 +119,11 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
     } catch {
       case e: EOFException      => {} //Reached end of file.
       case exception: Exception => exception.printStackTrace()
+    }
+    println("vertices in split: " + verticesRead)
+    println("edges in split: " + edgesRead)
+    if (verticesRead != 490803 && verticesRead != 490802) {
+      println(filename + " has a weird number of vertices")
     }
     in.close
     logStatus("done parsing " + filename)

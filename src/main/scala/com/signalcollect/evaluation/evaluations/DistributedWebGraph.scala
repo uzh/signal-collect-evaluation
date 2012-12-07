@@ -29,14 +29,15 @@ import com.signalcollect._
 import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local._
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
+import com.signalcollect.factory.worker.DistributedWorker
 
 object DistributedWebGraph extends App {
 
   /*
    * Config
    */
-  val numberOfNodes = 8
-  val splitsList = List(3840)
+  val numberOfNodes = 10
+  val splitsList = List(2880)
   val akkaCompression = true
   val repetitions = 1
 
@@ -44,9 +45,9 @@ object DistributedWebGraph extends App {
     numberOfNodes + " machines, " +
     repetitions + " repetitions," +
     " compression: " + akkaCompression +
-    ", profiling, heartbeat 100ms"
+    ", testing topk finder and new split files, heartbeat 100ms"
 
-  val locationSplits = "/home/torque/tmp/webgraph-tmp"
+  val locationSplits = "/home/torque/tmp/2880"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
   val evaluation: EvaluationSuiteCreator = new EvaluationSuiteCreator(
@@ -70,8 +71,8 @@ object DistributedWebGraph extends App {
         " -XX:+CMSIncrementalMode" +
         " -XX:ParallelGCThreads=20" +
         " -XX:ParallelCMSThreads=20" +
-        " -XX:MaxInlineSize=1024" +
-        " -agentpath:./profiler/libyjpagent.so"
+        " -XX:MaxInlineSize=1024" // +
+    //" -agentpath:./profiler/libyjpagent.so"
     )
   ) {
     for (repetition <- 1 to repetitions) {
@@ -82,7 +83,9 @@ object DistributedWebGraph extends App {
             jvmParams = jvmParams + baseOptions,
             jdkBinaryPath = jvm,
             graphBuilder = new GraphBuilder[Int, Float]().
+//              withLoggingLevel(LoggingLevel.Debug).
               withConsole(true).
+              withWorkerFactory(DistributedWorker).
               withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
               withAkkaMessageCompression(akkaCompression).
               withHeartbeatInterval(100).

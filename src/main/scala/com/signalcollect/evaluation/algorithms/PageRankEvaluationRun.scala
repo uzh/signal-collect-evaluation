@@ -29,11 +29,11 @@ import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.graphproviders.GraphProvider
 
 class PageRankEvaluationRun(
-  graphBuilder: GraphBuilder[Int, Float] = new GraphBuilder[Int, Float](),
-  graphProvider: GraphProvider[Int, Float],
-  executionConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.Synchronous).withSignalThreshold(0.01),
+  graphBuilder: GraphBuilder[Int, Double] = new GraphBuilder[Int, Double](),
+  graphProvider: GraphProvider[Int, Double],
+  executionConfiguration: ExecutionConfiguration,
   jvmParams: String = "",
-  reportMemoryStats: Boolean = false) extends EvaluationAlgorithmRun[Int, Float] {
+  reportMemoryStats: Boolean = false) extends EvaluationAlgorithmRun[Int, Double] {
 
   def buildGraph {
     graph = graphBuilder.build

@@ -36,10 +36,10 @@ object LoadWebGraph extends App {
   /*
    * Config
    */
-  val runName = "768 splits to check if everything is still efficient"
+  val runName = "2880 splits to check if everything is still efficient"
 
   val localMode = false
-  val locationSplits = if (localMode) "/Users/" + System.getProperty("user.name") + "/webgraph/" else "/home/torque/tmp/webgraph-tmp"
+  val locationSplits = "/home/torque/tmp/2880"
   val loggerFile = if (localMode) Some("/Users/" + System.getProperty("user.name") + "/status.txt") else Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
 
   val evaluation: EvaluationSuiteCreator = new EvaluationSuiteCreator(evaluationName = runName,
@@ -91,7 +91,7 @@ object LoadWebGraph extends App {
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- List(768)) { //480
+        for (splits <- List(2880)) { //480
           evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
             memoryStats = false,
             jvmParams = jvmParams + baseOptions,
