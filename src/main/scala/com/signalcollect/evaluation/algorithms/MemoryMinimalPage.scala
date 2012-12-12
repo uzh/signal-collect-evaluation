@@ -178,17 +178,17 @@ object MemoryMinimalPageRankTest extends App {
 
   val v2 = new MemoryMinimalPage(2)
   val edges2 = new Array[Int](1)
-  edges1(0) = 3
+  edges2(0) = 3
   v2.setTargetIdArray(edges2)
   graph.addVertex(v2)
 
   val v3 = new MemoryMinimalPage(3)
   val edges3 = new Array[Int](1)
-  edges1(0) = 1
+  edges3(0) = 1
   v3.setTargetIdArray(edges3)
   graph.addVertex(v3)
 
-  val stats = graph.execute //(ExecutionConfiguration())
+  val stats = graph.execute(ExecutionConfiguration.withSignalThreshold(0.0)) //(ExecutionConfiguration())
   graph.awaitIdle
   println(stats)
   graph.foreachVertex(println(_))
