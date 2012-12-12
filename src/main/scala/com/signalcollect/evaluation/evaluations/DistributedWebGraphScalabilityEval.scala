@@ -75,9 +75,9 @@ object DistributedWebGraphScalabilityEval extends App {
     //" -agentpath:./profiler/libyjpagent.so"
     )
   ) {
-    for (repetition <- 1 to repetitions) {
-      for (jvm <- List("")) {
-        for (krakenNodes <- numberOfNodes) {
+    for (krakenNodes <- numberOfNodes) {
+      for (repetition <- 1 to repetitions) {
+        for (jvm <- List("")) {
           for (splits <- splitsList) {
             evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
               memoryStats = false,
