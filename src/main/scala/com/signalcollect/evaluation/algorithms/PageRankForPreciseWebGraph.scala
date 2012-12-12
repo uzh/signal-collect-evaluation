@@ -36,14 +36,14 @@ import com.signalcollect.interfaces.AggregationOperation
 import scala.annotation.tailrec
 import com.signalcollect.TopKFinder
 
-class PageRankForWebGraph(
+class PageRankForPreciseWebGraph(
     memoryStats: Boolean = true,
     jvmParams: String = "",
     jdkBinaryPath: String = "",
-    graphBuilder: GraphBuilder[Int, Float] = new GraphBuilder[Int, Float](),
-    graphProvider: OptimizedGraphProvider[Int, Float],
+    graphBuilder: GraphBuilder[Int, Double] = new GraphBuilder[Int, Double](),
+    graphProvider: OptimizedGraphProvider[Int, Double],
     numberOfWorkers: Int = 24,
-    runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)) extends EvaluationAlgorithmRun[Int, Float] {
+    runConfiguration: ExecutionConfiguration = ExecutionConfiguration(ExecutionMode.PureAsynchronous)) extends EvaluationAlgorithmRun[Int, Double] {
 
   override def jvmParameters = jvmParams
 
@@ -59,7 +59,7 @@ class PageRankForWebGraph(
     try {
       graphProvider.populate(graph,
         (id, outgoingEdges) => {
-          val vertex = new MemoryMinimalPage(id)
+          val vertex = new MemoryMinimalPrecisePage(id)
           vertex.setTargetIdArray(outgoingEdges)
           vertex
         })
@@ -81,7 +81,7 @@ class PageRankForWebGraph(
   }
 
   override def postExecute: List[(String, String)] = {
-    //    val top10 = graph.aggregate(new TopKFinder[Int, Float](10, { (a: Float, b: Float) => a > b }))
+    //    val top10 = graph.aggregate(new TopKFinder[Int, Double](10, { (a: Double, b: Double) => a > b }))
     //    List(("top10Vertices", top10.toString))
     List()
   }

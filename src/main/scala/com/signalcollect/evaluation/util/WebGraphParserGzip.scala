@@ -32,9 +32,9 @@ import org.apache.commons.io.FileUtils
 /**
  * Loads the specified range of splits of the web graph.
  */
-class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") extends OptimizedGraphProvider[Int, Float] {
+class WebGraphParserGzip[VertexState](inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") extends OptimizedGraphProvider[Int, VertexState] {
 
-  def populate(graphEditor: GraphEditor[Int, Float], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def populate(graphEditor: GraphEditor[Int, VertexState], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
     println("started loading " + splitsToParse + " splits by WebGraphParserGzip")
     for (workerId <- 0 until numberOfWorkers) {
       for (splitId <- workerId until splitsToParse by numberOfWorkers) {
@@ -64,12 +64,6 @@ class WebGraphParserGzip(inputFolder: String, externalLoggingFilePath: Option[St
 
 }
 
-object WebGraphLoadingTest extends App {
-  val inputFolder = "/Users/stutz/workspace/signal-collect"
-  val tester = new WebGraphParserHelperGzip(inputFolder, None, true)
-  tester.parseFile(null.asInstanceOf[GraphEditor[Int, Float]], "input_pt_2879.txt.gz", null.asInstanceOf[(Int, Array[Int]) => Vertex[Int, _]])
-}
-
 /**
  * Prevents closure capture of the DefaultGraph class.
  */
@@ -77,11 +71,11 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
 
   var startTimeLoading: Date = null
 
-  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]): GraphEditor[Int, Float] => Unit = {
+  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]): GraphEditor[Int, _] => Unit = {
     graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt.gz", combinedVertexBuilder)
   }
 
-  def parseFile(graphEditor: GraphEditor[Int, Float], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def parseFile(graphEditor: GraphEditor[Int, _], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
     //initialize input reader
     startTimeLoading = new Date()
     println("started parsing " + filename)
@@ -119,11 +113,6 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
     } catch {
       case e: EOFException      => {} //Reached end of file.
       case exception: Exception => exception.printStackTrace()
-    }
-    println("vertices in split: " + verticesRead)
-    println("edges in split: " + edgesRead)
-    if (verticesRead != 490803 && verticesRead != 490802) {
-      println(filename + " has a weird number of vertices")
     }
     in.close
     logStatus("done parsing " + filename)

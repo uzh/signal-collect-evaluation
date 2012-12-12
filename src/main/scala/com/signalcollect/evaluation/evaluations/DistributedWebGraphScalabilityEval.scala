@@ -31,21 +31,21 @@ import com.signalcollect.nodeprovisioning.local._
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 import com.signalcollect.factory.worker.DistributedWorker
 
-object DistributedWebGraph extends App {
+object DistributedWebGraphScalabilityEval extends App {
 
   /*
    * Config
    */
-  val numberOfNodes = 10
+  val numberOfNodes = List(12, 10, 8, 6, 4)
   val splitsList = List(2880)
   val akkaCompression = true
-  val repetitions = 1
+  val repetitions = 10
 
   val runName = splitsList + " splits on " +
     numberOfNodes + " machines, " +
     repetitions + " repetitions," +
     " compression: " + akkaCompression +
-    ", testing topk finder and new split files, heartbeat 100ms"
+    ", evaluation run, varying number of kraken nodes"
 
   val locationSplits = "/home/torque/tmp/2880"
   val loggerFile = Some("/home/user/" + System.getProperty("user.name") + "/status.txt")
@@ -76,27 +76,28 @@ object DistributedWebGraph extends App {
     )
   ) {
     for (repetition <- 1 to repetitions) {
-      for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
-        for (splits <- splitsList) { //10
-          evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
-            memoryStats = false,
-            jvmParams = jvmParams + baseOptions,
-            jdkBinaryPath = jvm,
-            graphBuilder = new GraphBuilder[Int, Float]().
-//              withLoggingLevel(LoggingLevel.Debug).
-              withConsole(true).
-              withWorkerFactory(DistributedWorker).
-              withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
-              withAkkaMessageCompression(akkaCompression).
-              withHeartbeatInterval(100).
-              withNodeProvisioner(new TorqueNodeProvisioner(
-                torqueHost = new TorqueHost(
-                  torqueHostname = "kraken.ifi.uzh.ch",
-                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
-                  torqueUsername = System.getProperty("user.name")), numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
-            graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = numberOfNodes * 24),
-            runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)
-          ))
+      for (jvm <- List("")) {
+        for (krakenNodes <- numberOfNodes) {
+          for (splits <- splitsList) {
+            evaluation.addJobForEvaluationAlgorithm(new PageRankForWebGraph(
+              memoryStats = false,
+              jvmParams = jvmParams + baseOptions,
+              jdkBinaryPath = jvm,
+              graphBuilder = new GraphBuilder[Int, Float]().
+                withConsole(false).
+                withWorkerFactory(DistributedWorker).
+                withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
+                withAkkaMessageCompression(akkaCompression).
+                withHeartbeatInterval(100).
+                withNodeProvisioner(new TorqueNodeProvisioner(
+                  torqueHost = new TorqueHost(
+                    torqueHostname = "kraken.ifi.uzh.ch",
+                    localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
+                    torqueUsername = System.getProperty("user.name")), numberOfNodes = krakenNodes, jvmParameters = baseOptions + jvmParams)),
+              graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = krakenNodes * 24),
+              runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)
+            ))
+          }
         }
       }
     }

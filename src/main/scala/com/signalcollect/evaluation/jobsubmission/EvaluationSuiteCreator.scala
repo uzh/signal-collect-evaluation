@@ -32,6 +32,7 @@ import com.signalcollect.evaluation.resulthandling._
 import com.signalcollect.evaluation.algorithms._
 import collection.JavaConversions._
 import java.lang.management.ManagementFactory
+import java.text.DecimalFormat
 
 class EvaluationSuiteCreator(evaluationName: String,
                              evaluationCreator: String = System.getProperty("user.name"),
@@ -98,7 +99,8 @@ class EvaluationSuiteCreator(evaluationName: String,
       for (stat <- postExecute) {
         statsMap += stat
       }
-      
+      println("stats.parameters.signalThreshold = " + stats.parameters.signalThreshold)
+
       statsMap += (("externallyMeasuredExecutionTimeInMilliseconds", externallyMeasuredExecutionTimeInMilliseconds.toString))
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))
@@ -109,6 +111,7 @@ class EvaluationSuiteCreator(evaluationName: String,
         gcCount += gc.getCollectionCount
         gcTimeMilliseconds += gc.getCollectionTime
       }
+      val df = new DecimalFormat("#.#######");
       statsMap += (("gcCount", gcCount.toString))
       statsMap += (("gcTimeMilliseconds", gcTimeMilliseconds.toString))
       if (stats != null) {
@@ -132,8 +135,8 @@ class EvaluationSuiteCreator(evaluationName: String,
         statsMap += (("collectOperationsExecuted", stats.aggregatedWorkerStatistics.collectOperationsExecuted.toString))
         statsMap += (("signalOperationsExecuted", stats.aggregatedWorkerStatistics.signalOperationsExecuted.toString))
         statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
-        statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString))
-        statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString))
+        statsMap += (("signalThreshold", stats.parameters.signalThreshold.toString.replace('.', ',')))
+        statsMap += (("collectThreshold", stats.parameters.collectThreshold.toString.replace('.', ',')))
       }
 
       val endDate = new Date
