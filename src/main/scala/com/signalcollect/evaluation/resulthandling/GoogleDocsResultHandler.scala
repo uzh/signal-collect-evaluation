@@ -83,6 +83,7 @@ class GoogleDocsResultHandler(username: String, password: String, spreadsheetNam
     try {
       action()
     } catch {
+      case i: InvalidEntryException => null.asInstanceOf[G] // ignore, they make no sense and the entry is still successfully written
       case e: Exception =>
         // just retry a few times
         try {
