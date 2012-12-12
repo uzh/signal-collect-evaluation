@@ -100,11 +100,17 @@ class GoogleDocsResultHandler(username: String, password: String, spreadsheetNam
               action()
             } catch {
               case e: Exception =>
-                println("Spreadsheet API exception: " + e)
-                println("Spreadsheet API retry in 100 seconds")
-                Thread.sleep(100000)
-                println("Retrying.")
-                action()
+                try {
+                  println("Spreadsheet API exception: " + e)
+                  println("Spreadsheet API retry in 100 seconds")
+                  Thread.sleep(100000)
+                  println("Retrying.")
+                  action()
+                } catch {
+                  case e: Exception =>
+                    println("Google API did not acknowledge write.")
+                    null.asInstanceOf[G]
+                }
             }
         }
     }
