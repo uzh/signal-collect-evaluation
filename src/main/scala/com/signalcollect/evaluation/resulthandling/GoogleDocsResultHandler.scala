@@ -26,6 +26,7 @@ import com.google.gdata.client.spreadsheet._
 import com.google.gdata.data._
 import com.google.gdata.data.spreadsheet._
 import com.signalcollect.nodeprovisioning.torque._
+import com.google.gdata.util.InvalidEntryException
 
 class GoogleDocsResultHandler(username: String, password: String, spreadsheetName: String, worksheetName: String) extends ResultHandler {
 
@@ -91,6 +92,7 @@ class GoogleDocsResultHandler(username: String, password: String, spreadsheetNam
           println("Retrying.")
           action()
         } catch {
+          case i: InvalidEntryException => null.asInstanceOf[G] // ignore, they make no sense and the entry is still successfully written
           case e: Exception =>
             try {
               println("Spreadsheet API exception: " + e)
@@ -99,6 +101,7 @@ class GoogleDocsResultHandler(username: String, password: String, spreadsheetNam
               println("Retrying.")
               action()
             } catch {
+              case i: InvalidEntryException => null.asInstanceOf[G] // ignore, they make no sense and the entry is still successfully written
               case e: Exception =>
                 try {
                   println("Spreadsheet API exception: " + e)
@@ -107,8 +110,9 @@ class GoogleDocsResultHandler(username: String, password: String, spreadsheetNam
                   println("Retrying.")
                   action()
                 } catch {
+                  case i: InvalidEntryException => null.asInstanceOf[G] // ignore, they make no sense and the entry is still successfully written
                   case e: Exception =>
-                    println("Google API did not acknowledge write.")
+                    println("Google API did not acknowledge write: " + e)
                     null.asInstanceOf[G]
                 }
             }
