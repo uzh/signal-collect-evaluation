@@ -11,7 +11,7 @@ import com.signalcollect._
 object LoadingComparsion extends App {
 
   val evaluation = new EvaluationSuiteCreator(evaluationName = "Loading Evaluation",
-  executionHost = new TorqueHost(torqueHostname = "kraken.ifi.uzh.ch", localJarPath = "./target/signal-collect-evaluation-2.0.0-SNAPSHOT-jar-with-dependencies.jar", torqueUsername = System.getProperty("user.name")))
+  executionHost = new TorqueHost(jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"), localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar"))
   
   val centralizedLoading = new PageRankEvaluationRun(executionConfiguration = ExecutionConfiguration(ExecutionMode.OptimizedAsynchronous), graphProvider = new LogNormalGraph(graphSize = 200000))
   

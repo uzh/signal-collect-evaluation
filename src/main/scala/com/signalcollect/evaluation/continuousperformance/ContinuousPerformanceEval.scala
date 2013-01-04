@@ -36,7 +36,7 @@ object ContinuousPerformanceEval extends App {
   /*
    * Config
    */
-  val numberOfNodes = List(8)
+  val numberOfNodes = List(4)
   val splitsList = List(2880)
   val akkaCompression = true
   val repetitions = 1
@@ -87,9 +87,10 @@ object ContinuousPerformanceEval extends App {
                 withHeartbeatInterval(100).
                 withNodeProvisioner(new TorqueNodeProvisioner(
                   torqueHost = new TorqueHost(
-                    torqueHostname = "kraken.ifi.uzh.ch",
-                    localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
-                    torqueUsername = "strebel"), numberOfNodes = krakenNodes, jvmParameters = baseOptions + jvmParams)),
+                    jobSubmitter = new LocalJobSubmitter("strebel@ifi.uzh.ch"), 
+                    localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar"), 
+                    numberOfNodes = krakenNodes, 
+                    jvmParameters = baseOptions + jvmParams)),
               graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = krakenNodes * 24),
               runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)
             ))

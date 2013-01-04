@@ -49,10 +49,8 @@ object MulticoreScalabilityEvaluation extends App {
   val evalName = "removed the condition on the processing"
   val jvmParameters = " -XX:+UseNUMA -XX:+UseCondCardMark -XX:+UseParallelGC" //-agentpath:./profiler/libyjpagent.so"
   val kraken = new TorqueHost(
-    torqueHostname = "kraken.ifi.uzh.ch",
-    localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
-    torqueUsername = System.getProperty("user.name"),
-    priority = TorquePriority.superfast)
+                  jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
+                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar", priority = TorquePriority.superfast)
 
   val superfastEval = new EvaluationSuiteCreator(evaluationName = evalName,
     executionHost = kraken)

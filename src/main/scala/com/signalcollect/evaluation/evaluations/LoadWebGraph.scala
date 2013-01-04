@@ -47,9 +47,8 @@ object LoadWebGraph extends App {
       new LocalHost()
     } else {
       new TorqueHost(
-        torqueHostname = "kraken.ifi.uzh.ch",
-        localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
-        torqueUsername = System.getProperty("user.name"))
+        jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
+        localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar")
     })
 
   // To test: -XX:+AggressiveOpts
@@ -82,12 +81,12 @@ object LoadWebGraph extends App {
         " -XX:+CMSIncrementalMode" +
         " -XX:ParallelGCThreads=20" +
         " -XX:ParallelCMSThreads=20" +
-//        " -Xincgc" +
-//        " -XX:-DontCompileHugeMethods" +
+        //        " -Xincgc" +
+        //        " -XX:-DontCompileHugeMethods" +
         " -XX:MaxInlineSize=1024" //+
-//        " -XX:FreqInlineSize=1024"
-    //" -agentpath:./profiler/libyjpagent.so"
-    )
+        //        " -XX:FreqInlineSize=1024"
+        //" -agentpath:./profiler/libyjpagent.so"
+        )
   ) {
     for (repetition <- 1 to repetitions) {
       for (jvm <- List("")) { //, "./jdk1.8.0/bin/"
@@ -108,13 +107,12 @@ object LoadWebGraph extends App {
               new GraphBuilder[Int, Float]().withMessageBusFactory(new BulkAkkaMessageBusFactory(10000))
             },
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 4 else 24),
-            runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)
-          ))
+            runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)))
         }
       }
     }
   }
- 
+
   evaluation.setResultHandlers(List(new ConsoleResultHandler(true), new GoogleDocsResultHandler(args(0), args(1), "evaluation", "data")))
   evaluation.runEvaluation
 }
