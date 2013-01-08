@@ -66,9 +66,9 @@ class PageRankForPreciseWebGraph(
     } catch {
       case t: Throwable =>
         // Ensure that the cause and message of the exception are printed, then propagate further.
-        t.printStackTrace()
-        println("Message:" + t.getMessage())
-        println("Cause:" + t.getCause())
+        t.printStackTrace
+        println("Message:" + t.getMessage)
+        println("Cause:" + t.getCause)
         throw t
     }
   }
@@ -80,9 +80,17 @@ class PageRankForPreciseWebGraph(
     stats
   }
 
-  override def postExecute: List[(String, String)] = {
-    //    val top10 = graph.aggregate(new TopKFinder[Int, Double](10, { (a: Double, b: Double) => a > b }))
-    //    List(("top10Vertices", top10.toString))
+  override def postExecute(stats: Map[String, String]): List[(String, String)] = {
+    println("starting aggregation ... ")
+    val top1000 = graph.aggregate(new TopKFinder[Int, Double](1000))
+    println("writing to file:")
+    val out = new java.io.FileWriter("./precision-ranking" + stats("signalThreshold").replace(',', '-'))
+    println("file created")
+    for (tuple <- top1000) {
+      out.write(tuple._1 + " " + tuple._2 + "\n")
+    }
+    out.close
+    println("writing done")
     List()
   }
 

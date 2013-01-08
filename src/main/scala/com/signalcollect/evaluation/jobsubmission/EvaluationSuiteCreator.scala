@@ -95,12 +95,6 @@ class EvaluationSuiteCreator(evaluationName: String,
       val externallyMeasuredExecutionTime = externallyMeasuredExecutionStopTime - externallyMeasuredExecutionStartTime
       val externallyMeasuredExecutionTimeInMilliseconds = externallyMeasuredExecutionTime / 1000000l
 
-      val postExecute = run.postExecute
-      for (stat <- postExecute) {
-        statsMap += stat
-      }
-      println("stats.parameters.signalThreshold = " + stats.parameters.signalThreshold)
-
       statsMap += (("externallyMeasuredExecutionTimeInMilliseconds", externallyMeasuredExecutionTimeInMilliseconds.toString))
       statsMap += (("algorithm", run.algorithmName))
       statsMap += (("graphStructure", run.graphStructure))
@@ -157,6 +151,12 @@ class EvaluationSuiteCreator(evaluationName: String,
         val usedMemory = ((runtime.totalMemory - runtime.freeMemory) / 1073741824.0).ceil.toInt
         statsMap += (("memory", usedMemory.toString()))
       }
+
+      val postExecute = run.postExecute(statsMap)
+      for (stat <- postExecute) {
+        statsMap += stat
+      }
+      println("stats.parameters.signalThreshold = " + stats.parameters.signalThreshold)
 
       run.shutdown
 

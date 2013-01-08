@@ -36,11 +36,11 @@ object DistributedWebGraphPrecisionEval extends App {
   /*
    * Config
    */
-  val numberOfNodes = 12
+  val numberOfNodes = 6
   val signalThresholds = List(0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001)
   val splitsList = List(2880)
   val akkaCompression = true
-  val repetitions = 10
+  val repetitions = 1
 
   val runName = splitsList + " splits on " +
     numberOfNodes + " machines, " +
@@ -60,7 +60,7 @@ object DistributedWebGraphPrecisionEval extends App {
     " -Xmx64000m" +
       " -Xms64000m" +
       " -Xmn8000m" +
-      " -d64" // +
+      " -d64" //+
   //" -Dsun.io.serialization.extendedDebugInfo=true"
 
   for (
@@ -84,16 +84,18 @@ object DistributedWebGraphPrecisionEval extends App {
             jvmParams = jvmParams + baseOptions,
             jdkBinaryPath = "",
             graphBuilder = new GraphBuilder[Int, Double]().
-              withConsole(false).
+              //withConsole(true).
+              withLoggingLevel(LoggingLevel.Debug).
               withWorkerFactory(DistributedWorker).
               withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
               withAkkaMessageCompression(akkaCompression).
               withHeartbeatInterval(100).
               withNodeProvisioner(new TorqueNodeProvisioner(
                 torqueHost = new TorqueHost(
-                  jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
-                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar"),
-                  numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
+                  torqueHostname = "kraken.ifi.uzh.ch",
+                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
+                  priority = TorquePriority.fast,
+                  torqueUsername = System.getProperty("user.name")), numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = numberOfNodes * 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous).withSignalThreshold(signalThreshold)
           ))
