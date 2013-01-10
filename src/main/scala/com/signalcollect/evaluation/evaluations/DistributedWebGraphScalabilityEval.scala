@@ -90,9 +90,9 @@ object DistributedWebGraphScalabilityEval extends App {
                 withAkkaMessageCompression(akkaCompression).
                 withHeartbeatInterval(100).
                 withNodeProvisioner(new TorqueNodeProvisioner(
-                torqueHost = new TorqueHost(
-                  jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
-                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar"),
+                  torqueHost = new TorqueHost(
+                    jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
+                    localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar"),
                   numberOfNodes = krakenNodes, jvmParameters = baseOptions + jvmParams)),
               graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = krakenNodes * 24),
               runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous).withSignalThreshold(0.01)

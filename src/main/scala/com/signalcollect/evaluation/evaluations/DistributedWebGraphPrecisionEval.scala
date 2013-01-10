@@ -92,10 +92,9 @@ object DistributedWebGraphPrecisionEval extends App {
               withHeartbeatInterval(100).
               withNodeProvisioner(new TorqueNodeProvisioner(
                 torqueHost = new TorqueHost(
-                  torqueHostname = "kraken.ifi.uzh.ch",
-                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar",
-                  priority = TorquePriority.fast,
-                  torqueUsername = System.getProperty("user.name")), numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
+                  jobSubmitter = new TorqueJobSubmitter(username = System.getProperty("user.name"), hostname = "kraken.ifi.uzh.ch"),
+                  localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar"),
+                numberOfNodes = numberOfNodes, jvmParameters = baseOptions + jvmParams)),
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = numberOfNodes * 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous).withSignalThreshold(signalThreshold)
           ))

@@ -80,7 +80,7 @@ class PageRankForWebGraph(
     stats
   }
 
-  override def postExecute: List[(String, String)] = {
+  override def postExecute(stats: Map[String, String]): List[(String, String)] = {
     //    val top10 = graph.aggregate(new TopKFinder[Int, Float](10, { (a: Float, b: Float) => a > b }))
     //    List(("top10Vertices", top10.toString))
     List()
