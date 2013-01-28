@@ -32,6 +32,9 @@ import scala.collection.mutable.IndexedSeq
  *  @param t: the identifier of the target vertex
  */
 class Path(t: Any) extends OptionalSignalEdge(t) {
+  
+  type Source = Location
+  
   /**
    * The signal function calculates the distance of the shortest currently
    *  known path from the SSSP source vertex which passes through the source
@@ -39,9 +42,8 @@ class Path(t: Any) extends OptionalSignalEdge(t) {
    *  where this edge starts plus the length of the path represented by this
    *  edge (= the weight of this edge).
    */
-  def signal(sourceVertex: Vertex[_, _]) = {
-    sourceVertex.asInstanceOf[Location].state map (_ + weight.toInt)
-  }
+  def signal = source.state map (_ + weight.toInt)
+
 }
 
 /**
@@ -60,9 +62,9 @@ class Location(id: Any, initialState: Option[Int] = None) extends DataGraphVerte
    * up to now (= state) or one of the paths that had been advertised via a signal
    * by a neighbor.
    */
-  def collect(oldState: Option[Int], mostRecentSignals: Iterable[Int]): Option[Int] = {
-    val currentShortestPath = oldState.getOrElse(Int.MaxValue)
-    Some(mostRecentSignals.foldLeft(currentShortestPath)(math.min(_, _)))
+  def collect: Option[Int] = {
+    val currentShortestPath = state.getOrElse(Int.MaxValue)
+    Some(signals.foldLeft(currentShortestPath)(math.min(_, _)))
   }
 
   override def scoreSignal: Double = {

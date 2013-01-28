@@ -82,7 +82,7 @@ class PageRankForPreciseWebGraph(
 
   override def postExecute(stats: Map[String, String]): List[(String, String)] = {
     println("starting aggregation ... ")
-    val top1000 = graph.aggregate(new TopKFinder[Int, Double](1000))
+    val top1000 = graph.aggregate(new TopKFinder[Double](1000))
     println("writing to file:")
     val out = new java.io.FileWriter("./precision-ranking" + stats("signalThreshold").replace(',', '-'))
     println("file created")
