@@ -36,7 +36,7 @@ class MemoryMinimalPageSpec extends SpecificationWithJUnit with Serializable {
         }
         correct
       }
-      val graph = GraphBuilder.withMessageBusFactory(new BulkAkkaMessageBusFactory(1000)).withLoggingLevel(LoggingLevel.Debug).build
+      val graph = GraphBuilder.withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, false)).withLoggingLevel(LoggingLevel.Debug).build
       for (i <- 0 until 5) {
         val v = new MemoryMinimalPage(i)
         v.setTargetIdArray(Array((i + 1) % 5))

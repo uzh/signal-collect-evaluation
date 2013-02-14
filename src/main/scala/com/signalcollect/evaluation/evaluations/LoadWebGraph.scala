@@ -102,9 +102,9 @@ object LoadWebGraph extends App {
                     override def numberOfCores = 4
                   })
                 }
-              }).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000))
+              }).withMessageBusFactory(new BulkAkkaMessageBusFactory(1000, false))
             } else {
-              new GraphBuilder[Int, Float]().withMessageBusFactory(new BulkAkkaMessageBusFactory(10000))
+              new GraphBuilder[Int, Float]().withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false))
             },
             graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = if (localMode) 4 else 24),
             runConfiguration = ExecutionConfiguration.withExecutionMode(ExecutionMode.PureAsynchronous)))

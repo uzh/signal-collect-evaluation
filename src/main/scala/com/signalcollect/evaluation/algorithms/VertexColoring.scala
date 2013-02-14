@@ -24,11 +24,9 @@
 //import com.signalcollect.graphproviders.synthetic.Grid
 //import scala.collection.mutable.IndexedSeq
 //import scala.collection.mutable.ArrayBuffer
-//import com.signalcollect.interfaces.MessageBus
-//import com.signalcollect.interfaces.SignalMessage
+//import com.signalcollect.interfaces._
 //import scala.collection.mutable.HashMap
 //import com.signalcollect.graphproviders.synthetic.Chain
-//import com.signalcollect.interfaces.EdgeId
 //
 ///**
 // * 	This algorithm attempts to find a vertex coloring.
@@ -42,19 +40,19 @@
 // * @param id: the vertex id
 // * @param numColors: the number of colors (labels) used to color the graph
 // */
-//class ColoredVertex(val id: Int, numColors: Int, var state: Int) extends Vertex[Int, Int] {
+//class DsanFast(val id: Int, numColors: Int, var state: Int) extends Vertex[Byte, Int] {
 //
-//  type Signal = Int
+//  type Signal = Byte
 //
-//  var lastSignalState: Int = -1
+//  var lastSignalState: Byte = -1
 //
-//  def setState(s: Int) {
+//  def setState(s: Byte) {
 //    state = s
 //  }
-//  
+//
 //  protected var targetIdArray = Array[Int]()
 //
-//  override def addEdge(e: Edge[_], graphEditor: GraphEditor): Boolean = {
+//  override def addEdge(e: Edge[_], graphEditor: GraphEditor[_, _]): Boolean = {
 //    var edgeAdded = false
 //    val targetId = e.id.targetId.asInstanceOf[Int]
 //    if (!targetIdArray.contains(targetId)) {
@@ -69,20 +67,18 @@
 //
 //  def setTargetIdArray(links: Array[Int]) = targetIdArray = links
 //
-//  def executeSignalOperation(graphEditor: GraphEditor) {
+//  def executeSignalOperation(graphEditor: GraphEditor[_, _]) {
 //    println("signaling " + id + " signal:" + state)
-//    if (!targetIdArray.isEmpty) {
-//      val signal = state
-//      targetIdArray.foreach(targetId => {
-//        graphEditor.sendSignal(signal, EdgeId(id, targetId))
-//      })
+//    var i = 0
+//    while (i < targetIdArray.length) {
+//      graphEditor.sendSignal(state, targetIdArray(i), Some(id))
 //    }
 //    lastSignalState = state
 //  }
 //
 //  protected val mostRecentSignalMap = new HashMap[Int, Int]()
 //
-//  override def executeCollectOperation(graphEditor: GraphEditor) {
+//  override def executeCollectOperation(graphEditor: GraphEditor[_, _]) {
 //    val castS = signals.asInstanceOf[Iterable[SignalMessage[Signal]]]
 //    // faster than scala foreach
 //    val i = castS.iterator

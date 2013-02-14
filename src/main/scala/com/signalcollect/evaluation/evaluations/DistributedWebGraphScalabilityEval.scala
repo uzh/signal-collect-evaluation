@@ -86,7 +86,7 @@ object DistributedWebGraphScalabilityEval extends App {
               graphBuilder = new GraphBuilder[Int, Float]().
                 withConsole(false).
                 withWorkerFactory(DistributedWorker).
-                withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
+                withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
                 withAkkaMessageCompression(akkaCompression).
                 withHeartbeatInterval(100).
                 withNodeProvisioner(new TorqueNodeProvisioner(

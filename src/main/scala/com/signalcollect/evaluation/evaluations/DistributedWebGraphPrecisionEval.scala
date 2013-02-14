@@ -87,7 +87,7 @@ object DistributedWebGraphPrecisionEval extends App {
               //withConsole(true).
               withLoggingLevel(LoggingLevel.Debug).
               withWorkerFactory(DistributedWorker).
-              withMessageBusFactory(new BulkAkkaMessageBusFactory(10000)).
+              withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
               withAkkaMessageCompression(akkaCompression).
               withHeartbeatInterval(100).
               withNodeProvisioner(new TorqueNodeProvisioner(
