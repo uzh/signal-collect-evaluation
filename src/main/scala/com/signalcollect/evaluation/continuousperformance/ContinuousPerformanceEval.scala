@@ -88,7 +88,7 @@ object ContinuousPerformanceEval extends App {
                 withNodeProvisioner(new TorqueNodeProvisioner(
                   torqueHost = new TorqueHost(
                     jobSubmitter = new LocalJobSubmitter("strebel@ifi.uzh.ch"), 
-                    localJarPath = "./target/signal-collect-evaluation-assembly-2.0.0-SNAPSHOT.jar"), 
+                    localJarPath = args(3)), 
                     numberOfNodes = krakenNodes, 
                     jvmParameters = baseOptions + jvmParams)),
               graphProvider = new WebGraphParserGzip(locationSplits, loggerFile, splitsToParse = splits, numberOfWorkers = krakenNodes * 24),
