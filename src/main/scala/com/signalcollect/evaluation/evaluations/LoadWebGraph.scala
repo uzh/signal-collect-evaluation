@@ -30,6 +30,7 @@ import com.signalcollect.nodeprovisioning.Node
 import com.signalcollect.nodeprovisioning.local._
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 import com.typesafe.config.Config
+import com.signalcollect.configuration.AkkaConfigTemplate
 
 object LoadWebGraph extends App {
 
@@ -97,7 +98,7 @@ object LoadWebGraph extends App {
             jdkBinaryPath = jvm,
             graphBuilder = if (localMode) {
               new GraphBuilder[Int, Float]().withNodeProvisioner(new LocalNodeProvisioner {
-                override def getNodes(akkaConfig: Config): List[Node] = {
+                override def getNodes(akkaConfigTemplate: AkkaConfigTemplate): List[Node] = {
                   List(new LocalNode {
                     override def numberOfCores = 4
                   })

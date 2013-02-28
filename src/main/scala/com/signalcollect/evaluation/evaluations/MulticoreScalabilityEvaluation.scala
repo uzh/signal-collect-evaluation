@@ -37,6 +37,7 @@ import com.signalcollect.evaluation.util.GoogleGraphLoader
 import com.typesafe.config.Config
 import com.signalcollect.factory.worker.DistributedWorker
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
+import com.signalcollect.configuration.AkkaConfigTemplate
 
 /**
  * Runs a PageRank algorithm on a graph of a fixed size
@@ -65,7 +66,7 @@ object MulticoreScalabilityEvaluation extends App {
       for (numberOfWorkers <- workers) {
         val graphBuilder = new GraphBuilder[Int, Double]().
           withNodeProvisioner(new LocalNodeProvisioner {
-            override def getNodes(akkaConfig: Config): List[Node] = {
+            override def getNodes(akkaConfigTemplate: AkkaConfigTemplate): List[Node] = {
               List(new LocalNode {
                 override def numberOfCores = numberOfWorkers
               })
