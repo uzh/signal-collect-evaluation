@@ -12,7 +12,6 @@ import com.signalcollect.evaluation.algorithms._
 import com.signalcollect.nodeprovisioning.torque.LocalHost
 import com.signalcollect.nodeprovisioning.local.LocalNodeProvisioner
 import com.signalcollect.nodeprovisioning.Node
-import com.signalcollect.nodeprovisioning.local.LocalNode
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 
 /**

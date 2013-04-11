@@ -28,9 +28,10 @@ import com.google.gdata.data.spreadsheet._
 import com.signalcollect.nodeprovisioning.torque._
 import com.google.gdata.util.InvalidEntryException
 
-class GoogleDocsResultHandler(username: String, password: String, spreadsheetName: String, worksheetName: String) extends ResultHandler {
+class GoogleDocsResultHandler(username: String, password: String, spreadsheetName: String, worksheetName: String) extends Function1[Map[String, String], Unit]
+  with Serializable {
 
-  def addEntry(data: Map[String, String]) = {
+  def apply(data: Map[String, String]) = {
     val service: SpreadsheetService = actionWithExponentialRetry[SpreadsheetService](() => new SpreadsheetService("uzh-signalcollect-2.0.0"))
     actionWithExponentialRetry(() => service.setUserCredentials(username, password))
     val spreadsheet = actionWithExponentialRetry(() => getSpreadsheet(spreadsheetName, service))
