@@ -108,7 +108,6 @@ object SingleNodePageRank extends App {
       statsMap += (("collectSteps", stats.executionStatistics.collectSteps.toString))
       statsMap += (("numberOfVertices", stats.aggregatedWorkerStatistics.numberOfVertices.toString))
       statsMap += (("numberOfEdges", stats.aggregatedWorkerStatistics.numberOfOutgoingEdges.toString))
-      statsMap += (("totalMessagesReceived", stats.aggregatedWorkerStatistics.messagesReceived.toString))
       statsMap += (("collectOperationsExecuted", stats.aggregatedWorkerStatistics.collectOperationsExecuted.toString))
       statsMap += (("signalOperationsExecuted", stats.aggregatedWorkerStatistics.signalOperationsExecuted.toString))
       statsMap += (("stepsLimit", stats.parameters.stepsLimit.toString))
