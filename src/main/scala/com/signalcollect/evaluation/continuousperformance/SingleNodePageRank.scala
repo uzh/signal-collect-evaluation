@@ -18,7 +18,7 @@ object SingleNodePageRank extends App {
 
   val kraken = new TorqueHost(
     jobSubmitter = new LocalJobSubmitter("strebel@ifi.uzh.ch"),
-    localJarPath = "/home/user/strebel/continuousPerformanceEval/signal-collect-evaluation/target/signal-collect-evaluation-assembly-2.1.0-SNAPSHOT.jar", jvmParameters = jvmParameters, priority = TorquePriority.fast)
+    localJarPath = "/home/user/strebel/continuousPerformanceEval/signal-collect-evaluation/target/signal-collect-evaluation-assembly-2.1.0-SNAPSHOT.jar", jvmParameters = jvmParameters, priority = TorquePriority.superfast)
   val localHost = new LocalHost
   val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "continuous", "data")
   val runsPerEvaluationRun = 10
