@@ -18,10 +18,13 @@ object SingleNodePageRank extends App {
 
   val kraken = new TorqueHost(
     jobSubmitter = new LocalJobSubmitter("strebel@ifi.uzh.ch"),
-    localJarPath = "/home/user/strebel/continuousPerformanceEval/signal-collect-evaluation/target/signal-collect-evaluation-assembly-2.1.0-SNAPSHOT.jar", jvmParameters = jvmParameters, priority = TorquePriority.superfast)
+    localJarPath = args(2), jvmParameters = jvmParameters, priority = TorquePriority.superfast)
   val localHost = new LocalHost
   val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "continuous", "data")
   val runsPerEvaluationRun = 10
+  
+  val lastCommit = if (args.size>=4) args(3) else "unknown"
+  val lastCommitURL = if (args.size>=5) args(4) else "unknown"
 
   var evaluation = new Evaluation(evaluationName = "continuous performance eval", executionHost = kraken).addResultHandler(googleDocs)
 
@@ -92,6 +95,8 @@ object SingleNodePageRank extends App {
     val timeFormat = new SimpleDateFormat("HH:mm:ss")
     statsMap += (("startDate", dateFormat.format(startDate)))
     statsMap += (("startTime", timeFormat.format(startDate)))
+    statsMap += (("commit", "=HYPERLINK( \"" + lastCommitURL + "\" ; \"" + lastCommit +"\" )"))
+
 
     if (stats != null) {
       statsMap += (("numberOfWorkers", stats.numberOfWorkers.toString))
