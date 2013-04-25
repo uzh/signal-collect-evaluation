@@ -22,20 +22,24 @@ object SingleNodePageRank extends App {
   val localHost = new LocalHost
   val googleDocs = new GoogleDocsResultHandler(args(0), args(1), "continuous", "data")
   val runsPerEvaluationRun = 10
-
   val lastCommit = if (args.size >= 4) args(3) else "unknown"
+  
 
-  var evaluation = new Evaluation(evaluationName = "continuous performance eval", executionHost = kraken).addResultHandler(googleDocs)
+  var evaluation = new Evaluation(evaluationName = "continous performance evaluation", executionHost = kraken).addResultHandler(googleDocs)
 
   for (i <- 0 until runsPerEvaluationRun) {
     evaluation = evaluation.addEvaluationRun(runPageRank)
   }
+  
+  evaluation.addExtraStats(Map("commit" -> lastCommit))
 
   evaluation.execute
 
   def runPageRank(): List[Map[String, String]] = {
-
-    def runEvaluation(lastCommitId:String): Map[String, String] = {
+		  
+    val lastCommit = if (args.size >= 4) args(3) else "unknown"
+      
+    def runEvaluation(): Map[String, String] = {
 
       def cleanGarbage {
         for (i <- 1 to 10) {
@@ -92,7 +96,6 @@ object SingleNodePageRank extends App {
       var statsMap = Map[String, String]()
       statsMap += (("startDate", dateFormat.format(startDate)))
       statsMap += (("startTime", timeFormat.format(startDate)))
-      statsMap += (("commit", lastCommitId))
 
       if (stats != null) {
         statsMap += (("numberOfWorkers", stats.numberOfWorkers.toString))
@@ -125,11 +128,11 @@ object SingleNodePageRank extends App {
     
     //run warm up
     for(_ <- 0 until 20) {
-      runEvaluation(lastCommit)
+      runEvaluation()
     }
     
     //measure
-    result = runEvaluation(lastCommit) :: result
+    result = runEvaluation() :: result
 
     result
   }
