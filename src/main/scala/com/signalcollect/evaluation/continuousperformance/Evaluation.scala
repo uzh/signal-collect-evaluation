@@ -43,7 +43,7 @@ case class Evaluation(
         }
         println("Done.")
       }
-      Job(jobFunction, jobId)
+      Job(jobFunction, jobId.toString)
     }
     executionHost.executeJobs(jobs)
   }
