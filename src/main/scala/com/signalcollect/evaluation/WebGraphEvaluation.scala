@@ -24,10 +24,10 @@ import com.signalcollect.interfaces.VertexToWorkerMapper
 
 case object CreateUponUndeliverable {
   def handle(signal: Float, targetId: Int, sourceId: Option[Int], graphEditor: GraphEditor[Int, Float]) {
-//    val v = new MemoryMinimalPage(targetId)
-//    v.setTargetIdArray(Array())
-//    graphEditor.addVertex(v)
-//    graphEditor.sendSignal(signal, targetId, sourceId)
+    //    val v = new MemoryMinimalPage(targetId)
+    //    v.setTargetIdArray(Array())
+    //    graphEditor.addVertex(v)
+    //    graphEditor.sendSignal(signal, targetId, sourceId)
   }
 }
 
@@ -53,15 +53,17 @@ class WebGraphEvaluation extends TorqueDeployableAlgorithm {
     val spreadsheetPassword = parameters(spreadsheetPasswordKey)
     val spreadsheetName = parameters(spreadsheetNameKey)
     val worksheetName = parameters(worksheetNameKey)
+    println(s"Creating the graph builder ...")
     val graphBuilder = (new GraphBuilder[Int, Float]).
       withPreallocatedNodes(nodeActors).
-      //withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
-      withAkkaMessageCompression(true).
-      withHeartbeatInterval(100) //.
+      withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
+      withAkkaMessageCompression(false).
+      withHeartbeatInterval(1000) //.
     //      withConsole(true, 8080)
 
+    println(s"Building the graph")
     val g = graphBuilder.build
-
+    println(s"Setting the undeliverable signal handler")
     g.setUndeliverableSignalHandler(CreateUponUndeliverable.handle _)
 
     var commonResults = parameters
@@ -78,13 +80,15 @@ class WebGraphEvaluation extends TorqueDeployableAlgorithm {
       g.loadGraph(CompressedSplitLoader(dataset, splitId, buildVertex _), Some(splitId))
     }
 
+    println(s"Loading the graph ...")
     val loadingTime = measureTime {
-      for (splitId <- 0 until 100) {
+      for (splitId <- 0 until 2880) { //2880
         loadSplit(g, dataset, splitId)
       }
+      println(s"Awaiting idle ...")
       g.awaitIdle
+      println(s"Done")
     }
-
     commonResults += (("loadingTime", loadingTime.toString))
     println(s"Finished loading")
 
@@ -153,9 +157,9 @@ class WebGraphEvaluation extends TorqueDeployableAlgorithm {
     runResult += (("signalThreshold", stats.parameters.signalThreshold.toString.replace('.', ',')))
     runResult += (("collectThreshold", stats.parameters.collectThreshold.toString.replace('.', ',')))
     runResult += ((s"totalRunningTime", executionTime.toString))
-    runResult += ((s"totalMemory", bytesToGigabytes(Runtime.getRuntime.totalMemory).toString))
-    runResult += ((s"freeMemory", bytesToGigabytes(Runtime.getRuntime.freeMemory).toString))
-    runResult += ((s"usedMemory", bytesToGigabytes(Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory).toString))
+    runResult += ((s"totalMemory", bytesToGigabytes(Runtime.getRuntime.totalMemory).toString + "GB"))
+    runResult += ((s"freeMemory", bytesToGigabytes(Runtime.getRuntime.freeMemory).toString + "GB"))
+    runResult += ((s"usedMemory", bytesToGigabytes(Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory).toString + "GB"))
     runResult += ((s"executionHostname", java.net.InetAddress.getLocalHost.getHostName))
     runResult += (("gcTimeAfter", gcTimeAfter.toString))
     runResult += (("gcCountAfter", gcCountAfter.toString))
