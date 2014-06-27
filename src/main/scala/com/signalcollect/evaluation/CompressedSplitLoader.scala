@@ -9,9 +9,9 @@ import com.signalcollect.evaluation.algorithms.MemoryMinimalPage
 import java.io.BufferedInputStream
 import java.io.DataInputStream
 
-case class CompressedSplitLoader(
+case class CompressedSplitLoader[SignalType](
   inputFolder: String, splitId: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _])
-  extends Iterator[GraphEditor[Int, Float] => Unit] {
+  extends Iterator[GraphEditor[Int, SignalType] => Unit] {
 
   def splitPath = inputFolder + System.getProperty("file.separator") + "input_pt_" + splitId + ".txt.gz"
   var gzipIn: GZIPInputStream = _
@@ -61,7 +61,7 @@ case class CompressedSplitLoader(
     nextVertex != null
   }
 
-  def next: GraphEditor[Int, Float] => Unit = {
+  def next: GraphEditor[Int, SignalType] => Unit = {
     if (!isInitialized) {
       initialize
     }
@@ -69,7 +69,7 @@ case class CompressedSplitLoader(
       throw new Exception("next was called when hasNext is false.")
     }
     val v = nextVertex // This is actually important, so the closure doesn't capture the mutable var.
-    val loader: GraphEditor[Int, Float] => Unit = { ge =>
+    val loader: GraphEditor[Int, SignalType] => Unit = { ge =>
       ge.addVertex(v)
     }
     nextVertex = readNextVertex

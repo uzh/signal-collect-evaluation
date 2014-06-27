@@ -26,6 +26,7 @@ import scala.collection.mutable.IndexedSeq
 import java.io.{ ObjectInput, ObjectOutput, Externalizable }
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
+import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 
 class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
 
@@ -71,8 +72,7 @@ class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
   }
 
   override def scoreSignal: Double = {
-    val score = state - lastSignalState
-    if (score > 0 && edgeCount > 0) score else 0
+    state.toDouble - lastSignalState.toDouble
   }
 
   def scoreCollect = 0 // because signals are directly collected at arrival
@@ -159,35 +159,50 @@ object CompactIntSet {
 
 /** Builds a PageRank compute graph and executes the computation */
 object MemoryMinimalPageRankTest extends App {
-  val graph = GraphBuilder.build
-//  val v1 = new MemoryMinimalPage(1)
-//  val edges1 = Array[Int](2,3)
-//  v1.setTargetIdArray(edges1)
-//  graph.addVertex(v1)
+  val graph = GraphBuilder.
+    withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
+    withMessageSerialization(true).
+    withKryoRegistrations(
+      List("com.signalcollect.evaluation.algorithms.MemoryMinimalPage")).build
+  //  val v1 = new MemoryMinimalPage(1)
+  //  val edges1 = Array[Int](2,3)
+  //  v1.setTargetIdArray(edges1)
+  //  graph.addVertex(v1)
 
-  val v1 = new MemoryMinimalPage(1)
-  val edges1 = Array[Int](2)
-  v1.setTargetIdArray(edges1)
-  graph.addVertex(v1)
-  
-  val v2 = new MemoryMinimalPage(2)
-  val edges2 = Array[Int](3)
-  v2.setTargetIdArray(edges2)
-  graph.addVertex(v2)
+  val cirleVertices = 100000
+  var vId = 0
+  while (vId < cirleVertices) {
+    val v = new MemoryMinimalPage(vId)
+    val edges = Array[Int]((vId + 1) % cirleVertices)
+    v.setTargetIdArray(edges)
+    graph.addVertex(v)
+    vId += 1
+  }
 
-  val v3 = new MemoryMinimalPage(3)
-  val edges3 = Array[Int](4)
-  v3.setTargetIdArray(edges3)
-  graph.addVertex(v3)
+  //  val v1 = new MemoryMinimalPage(1)
+  //  val edges1 = Array[Int](2)
+  //  v1.setTargetIdArray(edges1)
+  //  graph.addVertex(v1)
+  //
+  //  val v2 = new MemoryMinimalPage(2)
+  //  val edges2 = Array[Int](3)
+  //  v2.setTargetIdArray(edges2)
+  //  graph.addVertex(v2)
+  //
+  //  val v3 = new MemoryMinimalPage(3)
+  //  val edges3 = Array[Int](4)
+  //  v3.setTargetIdArray(edges3)
+  //  graph.addVertex(v3)
+  //
+  //  val v4 = new MemoryMinimalPage(4)
+  //  val edges4 = Array[Int](1)
+  //  v4.setTargetIdArray(edges4)
+  //  graph.addVertex(v4)
 
-  val v4 = new MemoryMinimalPage(4)
-  val edges4 = Array[Int](1)
-  v4.setTargetIdArray(edges4)
-  graph.addVertex(v4)
-  
-  val stats = graph.execute(ExecutionConfiguration.withSignalThreshold(0.0)) //(ExecutionConfiguration())
+  val stats = graph.execute(
+    ExecutionConfiguration.withSignalThreshold(0.0))
   graph.awaitIdle
   println(stats)
-  graph.foreachVertex(println(_))
+  //graph.foreachVertex(println(_))
   graph.shutdown
 }
