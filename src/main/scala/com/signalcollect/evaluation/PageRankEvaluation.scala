@@ -79,7 +79,6 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       withEagerIdleDetection(eagerIdleDetectionEnabled).
       withThrottlingEnabled(throttlingEnabled).
       withMessageBusFactory(new BulkAkkaMessageBusFactory(100, false)).
-      withAkkaMessageCompression(false).
       withHeartbeatInterval(1000)
     println(s"Building the graph")
     val g = graphBuilder.build
@@ -122,7 +121,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
           while (currentLine != null) {
             if (loadedSoFar % 10000 == 0) {
               val millisecondsSinceLoadingStart = System.currentTimeMillis - startingTime
-              val seconds = (millisecondsSinceLoadingStart / 100).round / 10
+              val seconds = (millisecondsSinceLoadingStart / 100.0).round / 10
               println(s"Loaded $loadedSoFar edges after $seconds seconds.")
             }
             val split = currentLine.split("\\s+")
