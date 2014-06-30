@@ -1,32 +1,32 @@
 package com.signalcollect.evaluation
 
-import java.io.File
-import java.lang.management.GarbageCollectorMXBean
-import java.lang.management.ManagementFactory
-import java.util.Date
-import scala.Option.option2Iterable
-import scala.io.Source
-import com.signalcollect.GraphBuilder
-import com.signalcollect.deployment.TorqueDeployableAlgorithm
-import akka.actor.ActorRef
-import com.signalcollect.evaluation.resulthandling.GoogleDocsResultHandler
-import collection.JavaConversions._
-import com.signalcollect.Graph
-import com.signalcollect.ExecutionConfiguration
-import com.signalcollect.configuration.ExecutionMode
-import com.signalcollect.evaluation.util.WebGraphParserGzip
-import com.signalcollect.messaging.BulkMessageBus
-import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
-import com.signalcollect.GraphEditor
-import com.signalcollect.interfaces.VertexToWorkerMapper
-import com.signalcollect._
-import java.io.FileInputStream
 import java.io.BufferedReader
 import java.io.FileReader
-import com.signalcollect.examples.PlaceholderEdge
+import java.lang.management.ManagementFactory
+import java.util.Date
+
+import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.ArrayBuffer
+
+import com.signalcollect.Edge
+import com.signalcollect.ExecutionConfiguration
+import com.signalcollect.Graph
+import com.signalcollect.GraphBuilder
+import com.signalcollect.GraphEditor
+import com.signalcollect.SumOfStates
+import com.signalcollect.Vertex
+import com.signalcollect.configuration.ExecutionMode
+import com.signalcollect.deployment.TorqueDeployableAlgorithm
 import com.signalcollect.evaluation.algorithms.MemoryMinimalPrecisePage
-import com.signalcollect.factory.scheduler.LowLatency
+import com.signalcollect.evaluation.resulthandling.GoogleDocsResultHandler
+import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
+
+import EvalHelpers.bytesToGigabytes
+import EvalHelpers.getGcCollectionCount
+import EvalHelpers.getGcCollectionTime
+import EvalHelpers.measureTime
+import EvalHelpers.roundToMillisecondFraction
+import akka.actor.ActorRef
 
 object EfficientPageRankHandlers {
   def nonExistingVertex: (Edge[Int], Int) => Option[Vertex[Int, _]] = {
@@ -78,8 +78,8 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
 //      withMessageSerialization(true).
       withEagerIdleDetection(eagerIdleDetectionEnabled).
       withThrottlingEnabled(throttlingEnabled).
-      withMessageBusFactory(new BulkAkkaMessageBusFactory(100, false)).
-      withHeartbeatInterval(1000)
+      withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
+      withHeartbeatInterval(100)
     println(s"Building the graph")
     val g = graphBuilder.build
     try {
@@ -174,11 +174,12 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
 
       val result = executeEvaluationRun(commonResults, g)
       println("All done, reporting results.")
-      val leaderExecutionStartingTime = parameters(leaderExecutionStartingTimeKey).toLong
-      val totalTime = System.currentTimeMillis - leaderExecutionStartingTime
+      //val leaderExecutionStartingTime = parameters(leaderExecutionStartingTimeKey).toLong
+      //val totalTime = System.currentTimeMillis - leaderExecutionStartingTime
       val resultReporter = new GoogleDocsResultHandler(spreadsheetUsername, spreadsheetPassword, spreadsheetName, worksheetName)
       val sumOfRanks = g.aggregate(SumOfStates[Double]).get
-      resultReporter(result + ("totalTime" -> totalTime.toString) + ("sumOfRanks" -> sumOfRanks.toString))
+      // + ("totalTime" -> totalTime.toString)
+      resultReporter(result + ("sumOfRanks" -> sumOfRanks.toString))
     } finally {
       g.shutdown
     }
