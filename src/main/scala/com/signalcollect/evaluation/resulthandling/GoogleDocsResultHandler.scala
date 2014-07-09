@@ -25,7 +25,6 @@ import scala.collection.JavaConversions._
 import com.google.gdata.client.spreadsheet._
 import com.google.gdata.data._
 import com.google.gdata.data.spreadsheet._
-import com.signalcollect.nodeprovisioning.torque._
 import com.google.gdata.util.InvalidEntryException
 
 class GoogleDocsResultHandler(username: String, password: String, spreadsheetName: String, worksheetName: String) extends Function1[Map[String, String], Unit]

@@ -8,7 +8,7 @@ version := "2.1.0-SNAPSHOT"
 
 organization := "com.signalcollect"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.1"
 
 scalacOptions ++= Seq("-optimize", "-Yinline-warnings", "-feature", "-deprecation", "-Xelide-below", "INFO" )
 
@@ -26,10 +26,10 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
 
 /** Dependencies */
 libraryDependencies ++= Seq(
- "org.scala-lang" % "scala-library" % "2.10.4"  % "compile",
+ "org.scala-lang" % "scala-library" % "2.11.1"  % "compile",
  "com.google.collections" % "google-collections" % "1.0" ,
  "commons-io" % "commons-io" % "2.4",
  "commons-codec" % "commons-codec" % "1.7"  % "compile",
  "junit" % "junit" % "4.8.2"  % "test",
- "org.specs2" %% "specs2" % "2.3.3"  % "test"
+ "org.specs2" %% "specs2" % "2.3.11"  % "test"
   )
