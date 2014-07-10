@@ -28,11 +28,35 @@ import akka.event.Logging
 import com.signalcollect.ExecutionInformation
 import com.signalcollect.evaluation.resulthandling.GoogleDocsResultHandler
 import scala.collection.immutable.HashMap
-import com.signalcollect.deployment.DeployableAlgorithm
+import com.signalcollect.ExecutionConfiguration
+import com.signalcollect.configuration.ExecutionMode
 
-object PageRankEvaluation extends DeployableAlgorithm {
+object SimplePageRankEvaluation extends EvaluationTemplate {
 
-  override def deploy: Boolean = false
+  override def beforeStart {
+    super.beforeStart
+    addStat("dataset", "SimplePageRank")
+  }
+  
+  override def execute(g: Graph[Any, Any]): (ExecutionInformation, Graph[Any, Any]) = {
+    val executionMode = ExecutionMode.Synchronous
+    addStat("executionMode", executionMode.toString)
+    val stats = g.execute(ExecutionConfiguration.withExecutionMode(executionMode))
+    (stats, g)
+  }
+
+  override def configureGraphBuilder(gb: GraphBuilder[Any, Any]): GraphBuilder[Any, Any] = {
+    val eagerIdleDetection = false
+    val throttling = true
+    val heartbeat = 50
+    addStat("eagerIdle", eagerIdleDetection.toString)
+    addStat("throttling", throttling.toString)
+    addStat("heartbeatInterval", heartbeat.toString)
+    gb
+      .withEagerIdleDetection(eagerIdleDetection)
+      .withThrottlingEnabled(throttling)
+      .withHeartbeatInterval(heartbeat)
+  }
 
   override def loadGraph(graph: Graph[Any, Any]): Graph[Any, Any] = {
     log.info("add vertices")
@@ -46,19 +70,4 @@ object PageRankEvaluation extends DeployableAlgorithm {
     graph.addEdge(3, new PageRankEdge(2))
     graph
   }
-  override def configureGraphBuilder(gb: GraphBuilder[Any, Any]): GraphBuilder[Any, Any] = {
-    gb.withLoggingLevel(Logging.DebugLevel)
-  }
-
-  override def reportResults(stats: ExecutionInformation, graph: Graph[Any, Any]) = {
-    log.debug("handler called")
-    val handler = new GoogleDocsResultHandler("tobi.signalcollect", "s&oNY123", "yarnevaluation", "yarn")
-    log.debug("created handler")
-    var stats: Map[String, String] = new HashMap[String, String]().asInstanceOf[Map[String,String]]
-    stats += (("test", "test"))
-    stats += (("other", "shit"))
-    log.debug(s"stats are $stats")
-    handler(stats)
-  }
-
 }
