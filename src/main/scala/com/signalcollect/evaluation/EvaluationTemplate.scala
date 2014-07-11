@@ -41,7 +41,7 @@ abstract class EvaluationTemplate extends Algorithm {
     val totalTime = System.currentTimeMillis - startTime
     val numberOfEdges = info.aggregatedWorkerStatistics.numberOfOutgoingEdges.toString
     val numberOfVertices = info.aggregatedWorkerStatistics.numberOfVertices.toString
-    val handler = new GoogleDocsResultHandler("tobi.signalcollect", "changeme", "yarnevaluation", "yarn")
+    val handler = new GoogleDocsResultHandler("tobi.signalcollect", "s&oNY123", "yarnevaluation", "yarn")
 
     addStat("totalTime", totalTime.toString)
     addStat("executionTime", executionTime.toString)

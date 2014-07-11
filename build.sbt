@@ -14,6 +14,8 @@ scalacOptions ++= Seq("-optimize", "-Yinline-warnings", "-feature", "-deprecatio
 
 parallelExecution in Test := false
 
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+
 EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
 
 EclipseKeys.withSource := true
@@ -26,9 +28,10 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
 
 /** Dependencies */
 libraryDependencies ++= Seq(
+ "com.google.guava" % "guava" % "13.0.1" force(),
+ "com.google.gdata" % "core" % "1.47.1",
  "org.scala-lang" % "scala-library" % "2.11.1"  % "compile",
- "com.google.collections" % "google-collections" % "1.0" ,
- "commons-io" % "commons-io" % "2.4",
+ "commons-io" % "commons-io" % "2.4" force(),
  "commons-codec" % "commons-codec" % "1.7"  % "compile",
  "junit" % "junit" % "4.8.2"  % "test",
  "org.specs2" %% "specs2" % "2.3.11"  % "test"

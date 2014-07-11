@@ -31,7 +31,7 @@ class GoogleDocsResultHandler(username: String, password: String, spreadsheetNam
   with Serializable {
 
   def apply(data: Map[String, String]) = {
-    val service: SpreadsheetService = actionWithExponentialRetry[SpreadsheetService](() => new SpreadsheetService("uzh-signalcollect-2.0.0"))
+    val service: SpreadsheetService = actionWithExponentialRetry[SpreadsheetService](() => new SpreadsheetService("uzh-signalcollect-yarn"))
     actionWithExponentialRetry(() => service.setUserCredentials(username, password))
     val spreadsheet = actionWithExponentialRetry(() => getSpreadsheet(spreadsheetName, service))
     val worksheet = actionWithExponentialRetry(() => getWorksheetInSpreadsheet(worksheetName, spreadsheet))
