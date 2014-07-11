@@ -34,12 +34,22 @@ object EfficientPageRankHandlers {
       //Some(new MemoryMinimalPage(vertexId))
       throw new Exception(s"Vertex with id $vertexId does not exist, cannot add an edge to it.")
   }
+
   def undeliverableSignal: (Double, Int, Option[Int], GraphEditor[Int, Double]) => Unit = {
     case (signal, id, sourceId, ge) =>
       val v = new MemoryMinimalPrecisePage(id.asInstanceOf[Int])
       v.setTargetIdArray(Array[Int]())
       ge.addVertex(v)
       ge.sendSignal(signal, id, sourceId)
+  }
+
+  def loadSplit(g: GraphEditor[Int, Double], dataset: String, splitId: Int) {
+    def buildVertex(id: Int, outgoingEdges: Array[Int]): Vertex[Int, _] = {
+      val vertex = new MemoryMinimalPrecisePage(id)
+      vertex.setTargetIdArray(outgoingEdges)
+      vertex
+    }
+    g.loadGraph(CompressedSplitLoader[Double](dataset, splitId, buildVertex _), Some(splitId))
   }
 }
 
@@ -58,9 +68,13 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
   def eagerIdleDetectionKey = "eager-idle-detection"
   def throttlingEnabledKey = "throttling-enabled"
   def leaderExecutionStartingTimeKey = "leaderExecutionStartingTime"
+  def executionModeKey = "execution-mode"
+  def hearteatIntervalKey = "heartbeat-interval"
+  def bulkSizeKey = "bulksize"
+  def signalThresholdKey = "signal-threshold"
 
   def execute(parameters: Map[String, String], nodeActors: Array[ActorRef]) {
-    println(s"Received parameters $parameters")
+    println(s"Received parameters:\n${parameters.map { case (k, v) => s"\t$k = $v" }.mkString("\n")}")
     val evaluationDescription = parameters(evaluationDescriptionKey)
     val warmupRuns = parameters(warmupRunsKey).toInt
     val dataset = parameters(datasetKey)
@@ -71,30 +85,24 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     val graphFormat = parameters(graphFormatKey)
     val eagerIdleDetectionEnabled = parameters(eagerIdleDetectionKey).toBoolean
     val throttlingEnabled = parameters(throttlingEnabledKey).toBoolean
+    val executionMode = ExecutionMode.withName(parameters(executionModeKey))
+    val heartbeatInterval = parameters(hearteatIntervalKey).toInt
+    val bulksize = parameters(bulkSizeKey).toInt
+    val signalThreshold = parameters(signalThresholdKey).toDouble
     println(s"Creating the graph builder ...")
     val graphBuilder = (new GraphBuilder[Int, Double]).
       withPreallocatedNodes(nodeActors).
-//      withSchedulerFactory(LowLatency).
-//      withMessageSerialization(true).
+      //      withSchedulerFactory(LowLatency).
+      //      withMessageSerialization(true).
       withEagerIdleDetection(eagerIdleDetectionEnabled).
       withThrottlingEnabled(throttlingEnabled).
-      withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
-      withHeartbeatInterval(100)
+      withMessageBusFactory(new BulkAkkaMessageBusFactory(bulksize, false)).
+      withHeartbeatInterval(heartbeatInterval)
     println(s"Building the graph")
     val g = graphBuilder.build
     try {
-      println(s"Setting the undeliverable signal handler")
-
-      def loadSplit(g: GraphEditor[Int, Double], dataset: String, splitId: Int) {
-        def buildVertex(id: Int, outgoingEdges: Array[Int]): Vertex[Int, _] = {
-          val vertex = new MemoryMinimalPrecisePage(id)
-          vertex.setTargetIdArray(outgoingEdges)
-          vertex
-        }
-        g.loadGraph(CompressedSplitLoader[Double](dataset, splitId, buildVertex _), Some(splitId))
-      }
-
       println(s"Loading the graph ...")
+      import EfficientPageRankHandlers._
       val loadingTime = measureTime {
         if (graphFormat != "tsv") {
           for (splitId <- 0 until 2880) { //2880
@@ -162,6 +170,9 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       val jvmArguments = ManagementFactory.getRuntimeMXBean.getInputArguments
 
       var commonResults = parameters
+      commonResults += "bulksize" -> bulksize.toString
+      commonResults += "heartbeatInterval" -> heartbeatInterval.toString
+      commonResults += "executionMode" -> executionMode.toString
       commonResults += "numberOfNodes" -> g.numberOfNodes.toString
       commonResults += "numberOfWorkers" -> g.numberOfWorkers.toString
       commonResults += "java.runtime.version" -> System.getProperty("java.runtime.version")
@@ -172,7 +183,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       commonResults += (("eagerIdleDetection", eagerIdleDetectionEnabled.toString))
       commonResults += (("throttling", throttlingEnabled.toString))
 
-      val result = executeEvaluationRun(commonResults, g)
+      val result = executeEvaluationRun(commonResults, signalThreshold, executionMode, g)
       println("All done, reporting results.")
       //val leaderExecutionStartingTime = parameters(leaderExecutionStartingTimeKey).toLong
       //val totalTime = System.currentTimeMillis - leaderExecutionStartingTime
@@ -185,7 +196,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     }
   }
 
-  def executeEvaluationRun(commonResults: Map[String, String], g: Graph[Int, Double]): Map[String, String] = {
+  def executeEvaluationRun(commonResults: Map[String, String], signalThreshold: Double, executionMode: ExecutionMode.Value, g: Graph[Int, Double]): Map[String, String] = {
     val gcs = ManagementFactory.getGarbageCollectorMXBeans.toList
     val compilations = ManagementFactory.getCompilationMXBean
     var runResult = commonResults
@@ -195,10 +206,11 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     val compileTimeBefore = compilations.getTotalCompilationTime
     val startTime = System.nanoTime
     val stats = g.execute(ExecutionConfiguration.
-      withExecutionMode(ExecutionMode.OptimizedAsynchronous).
-      withSignalThreshold(0.01))
+      withExecutionMode(executionMode).
+      withSignalThreshold(signalThreshold))
     val finishTime = System.nanoTime
-
+    println(stats)
+    println(s"Individual worker statistics:\n" + stats.individualWorkerStatistics.mkString("\n"))
     val executionTime = roundToMillisecondFraction(finishTime - startTime)
     val gcTimeAfter = getGcCollectionTime(gcs)
     val gcCountAfter = getGcCollectionCount(gcs)

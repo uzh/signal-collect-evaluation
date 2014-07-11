@@ -7,3 +7,5 @@ target/*
 webgraph/*
 *.hprof
 *.config
+
+*.sh
