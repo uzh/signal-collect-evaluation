@@ -10,7 +10,7 @@ import java.io.BufferedInputStream
 import java.io.DataInputStream
 
 case class CompressedSplitLoader[SignalType](
-  inputFolder: String, splitId: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _])
+  inputFolder: String, splitId: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, SignalType])
   extends Iterator[GraphEditor[Int, SignalType] => Unit] {
 
   def splitPath = inputFolder + System.getProperty("file.separator") + "input_pt_" + splitId + ".txt.gz"
@@ -20,7 +20,7 @@ case class CompressedSplitLoader[SignalType](
 
   var isInitialized = false
 
-  protected def readNextVertex: Vertex[Int, _] = {
+  protected def readNextVertex: Vertex[Int, _, Int, SignalType] = {
     try {
       val id = in.readInt
       val numberOfLinks = in.readInt
@@ -37,14 +37,14 @@ case class CompressedSplitLoader[SignalType](
         in.close
         bufferedInput.close
         gzipIn.close
-        null.asInstanceOf[Vertex[Int, _]]
+        null.asInstanceOf[Vertex[Int, _, Int, SignalType]]
       case t: Throwable =>
         println(s"Error during reading of split #$splitId:\n" + t.getStackTrace.mkString("\n"))
-        null.asInstanceOf[Vertex[Int, _]]
+        null.asInstanceOf[Vertex[Int, _, Int, SignalType]]
     }
   }
 
-  var nextVertex: Vertex[Int, _] = null
+  var nextVertex: Vertex[Int, _, Int, SignalType] = null
 
   def initialize {
     gzipIn = new GZIPInputStream(new FileInputStream(splitPath))

@@ -28,9 +28,15 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 import com.signalcollect.configuration.ExecutionMode
+import com.signalcollect.factory.storage.IntLongStorageFactory
+import com.signalcollect.factory.storage.IntLongStorageFactory
+import com.signalcollect.factory.storage.IntDoubleStorageFactory
+import scala.io.StdIn
 
-class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double] {
+class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double, Int, Double] {
 
+  println(this)
+  
   var state = 0.15
   var lastSignalState: Double = 0
   var outEdges = 0
@@ -41,7 +47,7 @@ class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double] {
 
   protected var targetIdArray: Array[Byte] = null
 
-  override def addEdge(e: Edge[_], graphEditor: GraphEditor[Any, Any]): Boolean = {
+  override def addEdge(e: Edge[Int], graphEditor: GraphEditor[Int, Double]): Boolean = {
     throw new UnsupportedOperationException
   }
 
@@ -50,26 +56,26 @@ class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double] {
     targetIdArray = CompactIntSet.create(links)
   }
 
-  def deliverSignal(signal: Any, sourceId: Option[Any], ge: GraphEditor[Any, Any]): Boolean = {
-    val s = signal.asInstanceOf[Double]
-    val newState = state + 0.85 * s
-    //    if ((newState - state) < s) {
-    state = newState
-    //    }
+  override def deliverSignalWithSourceId(signal: Double, sourceId: Int, ge: GraphEditor[Int, Double]): Boolean = {
+    throw new Exception("This PageRank algorithm should never receive a source ID.")
+  }
+
+  override def deliverSignalWithoutSourceId(signal: Double, ge: GraphEditor[Int, Double]): Boolean = {
+    state = state + 0.85 * signal
     true
   }
 
-  override def executeSignalOperation(graphEditor: GraphEditor[Any, Any]) {
+  override def executeSignalOperation(graphEditor: GraphEditor[Int, Double]) {
     val tIds = targetIdArray
     val tIdLength = outEdges
     //    if (tIds.length != 0) {
     val signal = (state - lastSignalState) / tIdLength
-    CompactIntSet.foreach(targetIdArray, graphEditor.sendSignal(signal, _, None))
+    CompactIntSet.foreach(targetIdArray, graphEditor.sendSignal(signal, _))
     //    }
     lastSignalState = state
   }
 
-  def executeCollectOperation(graphEditor: GraphEditor[Any, Any]) {
+  def executeCollectOperation(graphEditor: GraphEditor[Int, Double]) {
   }
 
   override def scoreSignal: Double = {
@@ -81,14 +87,14 @@ class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double] {
 
   def edgeCount = outEdges
 
-  def afterInitialization(graphEditor: GraphEditor[Any, Any]) = {}
-  def beforeRemoval(graphEditor: GraphEditor[Any, Any]) = {}
+  def afterInitialization(graphEditor: GraphEditor[Int, Double]) = {}
+  def beforeRemoval(graphEditor: GraphEditor[Int, Double]) = {}
 
-  override def removeEdge(targetId: Any, graphEditor: GraphEditor[Any, Any]): Boolean = {
+  override def removeEdge(targetId: Int, graphEditor: GraphEditor[Int, Double]): Boolean = {
     throw new UnsupportedOperationException
   }
 
-  override def removeAllEdges(graphEditor: GraphEditor[Any, Any]): Int = {
+  override def removeAllEdges(graphEditor: GraphEditor[Int, Double]): Int = {
     throw new UnsupportedOperationException
   }
 
@@ -97,20 +103,23 @@ class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double] {
 
 /** Builds a PageRank compute graph and executes the computation */
 object MemoryMinimalPrecisePageRankTest extends App {
-  val graph = GraphBuilder.
-    withMessageBusFactory(new BulkAkkaMessageBusFactory(100, false)).
-    withMessageSerialization(true).
+  val graph = new GraphBuilder[Int, Double]().
+    //withStorageFactory(IntDoubleStorageFactory).
+    withMessageBusFactory(new BulkAkkaMessageBusFactory[Int, Double](10000, false)).
+    //withMessageSerialization(true).
     withKryoRegistrations(
-      List("com.signalcollect.evaluation.algorithms.MemoryMinimalPrecisePage")).build
+      List("com.signalcollect.evaluation.algorithms.MemoryMinimalPrecisePage",
+        "com.signalcollect.factory.storage.IntDoubleStorageFactory$")).build
 
-  val cirleVertices = 100000
-  var vId = 0
-  while (vId < cirleVertices) {
+  val circleVertices = 10000
+  var cnt = 0
+  while (cnt < circleVertices) {
+    val vId = cnt
     val v = new MemoryMinimalPrecisePage(vId)
-    val edges = Array[Int]((vId + 1) % cirleVertices)
+    val edges = Array[Int]((vId + 1) % circleVertices)
     v.setTargetIdArray(edges)
     graph.addVertex(v)
-    vId += 1
+    cnt += 1
   }
   val v1 = new MemoryMinimalPrecisePage(1001)
   val edges1 = Array[Int](0, 1002)
@@ -118,9 +127,13 @@ object MemoryMinimalPrecisePageRankTest extends App {
   graph.addVertex(v1)
 
   val v2 = new MemoryMinimalPrecisePage(1002)
-  val edges2 = Array[Int](1001, 0, 1, 2, 3)
+  val edges2: Array[Int] = (0 to 10000).toArray
+  //val edges2 = Array[Int](1001, 0, 1, 2, 3)
   v2.setTargetIdArray(edges2)
   graph.addVertex(v2)
+
+  println("Press any key to continue")
+  StdIn.readLine
 
   val stats = graph.execute(
     ExecutionConfiguration.withSignalThreshold(0.0).

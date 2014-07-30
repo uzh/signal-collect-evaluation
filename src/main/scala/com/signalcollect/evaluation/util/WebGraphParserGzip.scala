@@ -32,9 +32,9 @@ import org.apache.commons.io.FileUtils
 /**
  * Loads the specified range of splits of the web graph.
  */
-class WebGraphParserGzip[VertexState](inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") {
+class WebGraphParserGzip[VertexState, Signal](inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") {
 
-  def populate(graph: Graph[Int, VertexState], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def populate(graph: Graph[Int, Signal], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Signal]) {
     println("started loading " + splitsToParse + " splits by WebGraphParserGzip")
     for (splitId <- 100 until 140) {
       //    for (splitId <- 0 until splitsToParse) {
@@ -75,15 +75,15 @@ class WebGraphParserGzip[VertexState](inputFolder: String, externalLoggingFilePa
 /**
  * Prevents closure capture of the DefaultGraph class.
  */
-case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None, testMode: Boolean = false) {
+case class WebGraphParserHelperGzip[Signal](inputFolder: String, externalLoggingFilePath: Option[String] = None, testMode: Boolean = false) {
 
   var startTimeLoading: Date = null
 
-  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]): GraphEditor[Int, _] => Unit = {
+  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Signal]): GraphEditor[Int, Signal] => Unit = {
     graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt.gz", combinedVertexBuilder)
   }
 
-  def parseFile(graphEditor: GraphEditor[Int, _], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def parseFile(graphEditor: GraphEditor[Int, Signal], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Signal]) {
     //initialize input reader
     startTimeLoading = new Date()
     println("started parsing " + filename)

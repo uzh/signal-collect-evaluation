@@ -4,10 +4,8 @@ import java.io.BufferedReader
 import java.io.FileReader
 import java.lang.management.ManagementFactory
 import java.util.Date
-
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.ArrayBuffer
-
 import com.signalcollect.Edge
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.Graph
@@ -20,31 +18,55 @@ import com.signalcollect.deployment.TorqueDeployableAlgorithm
 import com.signalcollect.evaluation.algorithms.MemoryMinimalPrecisePage
 import com.signalcollect.evaluation.resulthandling.GoogleDocsResultHandler
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
-
 import EvalHelpers.bytesToGigabytes
 import EvalHelpers.getGcCollectionCount
 import EvalHelpers.getGcCollectionTime
 import EvalHelpers.measureTime
 import EvalHelpers.roundToMillisecondFraction
 import akka.actor.ActorRef
+import com.signalcollect.interfaces.UndeliverableSignalHandler
+import com.signalcollect.interfaces.UndeliverableSignalHandlerFactory
+import com.signalcollect.interfaces.EdgeAddedToNonExistentVertexHandlerFactory
+import com.signalcollect.interfaces.EdgeAddedToNonExistentVertexHandler
+import com.signalcollect.evaluation.algorithms.MemoryMinimalPage
+
+object PrecisePageRankUndeliverableSignalHandlerFactory extends UndeliverableSignalHandlerFactory[Int, Double] {
+  def createInstance: UndeliverableSignalHandler[Int, Double] = {
+    PrecisePageRankUndeliverableSignalHandler
+  }
+}
+
+object PrecisePageRankUndeliverableSignalHandler extends UndeliverableSignalHandler[Int, Double] {
+  def vertexForSignalNotFound(signal: Double, inexistentTargetId: Int, senderId: Option[Int], graphEditor: GraphEditor[Int, Double]) {
+    val v = new MemoryMinimalPrecisePage(inexistentTargetId)
+    v.setTargetIdArray(Array[Int]())
+    graphEditor.addVertex(v)
+    graphEditor.sendSignal(signal, inexistentTargetId)
+  }
+}
+
+object PrecisePageRankEdgeAddedToNonExistentVertexHandlerFactory extends EdgeAddedToNonExistentVertexHandlerFactory[Int, Double] {
+  def createInstance: EdgeAddedToNonExistentVertexHandler[Int, Double] = {
+    PrecisePageRankEdgeAddedToNonExistentVertexHandler
+  }
+}
+
+object PrecisePageRankEdgeAddedToNonExistentVertexHandler extends EdgeAddedToNonExistentVertexHandler[Int, Double] {
+  def handleImpossibleEdgeAddition(edge: Edge[Int], vertexId: Int): Option[Vertex[Int, _, Int, Double]] = {
+    Some(new MemoryMinimalPrecisePage(vertexId))
+    //throw new Exception(s"Vertex with id $vertexId does not exist, cannot add an edge to it.")
+  }
+}
 
 object EfficientPageRankHandlers {
-  def nonExistingVertex: (Edge[Int], Int) => Option[Vertex[Int, _]] = {
+  def nonExistingVertex: (Edge[Int], Int) => Option[Vertex[Int, _, Int, Double]] = {
     (edgedId, vertexId) =>
       //Some(new MemoryMinimalPage(vertexId))
       throw new Exception(s"Vertex with id $vertexId does not exist, cannot add an edge to it.")
   }
 
-  def undeliverableSignal: (Double, Int, Option[Int], GraphEditor[Int, Double]) => Unit = {
-    case (signal, id, sourceId, ge) =>
-      val v = new MemoryMinimalPrecisePage(id.asInstanceOf[Int])
-      v.setTargetIdArray(Array[Int]())
-      ge.addVertex(v)
-      ge.sendSignal(signal, id, sourceId)
-  }
-
   def loadSplit(g: GraphEditor[Int, Double], dataset: String, splitId: Int) {
-    def buildVertex(id: Int, outgoingEdges: Array[Int]): Vertex[Int, _] = {
+    def buildVertex(id: Int, outgoingEdges: Array[Int]): Vertex[Int, _, Int, Double] = {
       val vertex = new MemoryMinimalPrecisePage(id)
       vertex.setTargetIdArray(outgoingEdges)
       vertex
@@ -96,6 +118,8 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       //      withMessageSerialization(true).
       withEagerIdleDetection(eagerIdleDetectionEnabled).
       withThrottlingEnabled(throttlingEnabled).
+      withUndeliverableSignalHandlerFactory(PrecisePageRankUndeliverableSignalHandlerFactory).
+      withEdgeAddedToNonExistentVertexHandlerFactory(PrecisePageRankEdgeAddedToNonExistentVertexHandlerFactory).
       withMessageBusFactory(new BulkAkkaMessageBusFactory(bulksize, false)).
       withHeartbeatInterval(heartbeatInterval)
     println(s"Building the graph")
@@ -111,13 +135,6 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
           println(s"Awaiting idle ...")
           g.awaitIdle
         } else {
-          import EfficientPageRankHandlers._
-          g.setEdgeAddedToNonExistentVertexHandler {
-            nonExistingVertex
-          }
-          g.setUndeliverableSignalHandler {
-            undeliverableSignal
-          }
           val datasetFileName = s"./${parameters(datasetKey)}"
           val fr = new FileReader(datasetFileName)
           val br = new BufferedReader(fr)

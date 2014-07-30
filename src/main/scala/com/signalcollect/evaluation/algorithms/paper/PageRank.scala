@@ -16,10 +16,7 @@ class PageRankEdge(targetId: Any)
 }
 
 object PageRankExample extends App {
-  val graph = GraphBuilder.
-    withStorageFactory(
-      factory.storage.JavaMapStorage).
-      build
+  val graph = GraphBuilder.build
   graph.addVertex(new PageRankVertex(1, 0.15))
   graph.addVertex(new PageRankVertex(2, 0.15))
   graph.addVertex(new PageRankVertex(3, 0.15))

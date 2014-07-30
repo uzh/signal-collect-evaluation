@@ -28,7 +28,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 
-class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
+class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float, Int, Float] {
 
   var state = 0.15f
   var lastSignalState: Float = 0
@@ -40,7 +40,7 @@ class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
 
   protected var targetIdArray: Array[Byte] = null
 
-  override def addEdge(e: Edge[_], graphEditor: GraphEditor[Any, Any]): Boolean = {
+  override def addEdge(e: Edge[Int], graphEditor: GraphEditor[Int, Float]): Boolean = {
     throw new UnsupportedOperationException
   }
 
@@ -49,7 +49,11 @@ class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
     targetIdArray = CompactIntSet.create(links)
   }
 
-  def deliverSignal(signal: Any, sourceId: Option[Any], ge: GraphEditor[Any, Any]): Boolean = {
+  override def deliverSignalWithSourceId(signal: Float, sourceId: Int, ge: GraphEditor[Int, Float]): Boolean = {
+    throw new Exception("This PageRank algorithm should never receive a source ID.")
+  }
+
+  override def deliverSignalWithoutSourceId(signal: Float, ge: GraphEditor[Int, Float]): Boolean = {
     val s = signal.asInstanceOf[Float]
     val newState = (state + 0.85 * s).toFloat
     if ((newState - state) < s) {
@@ -58,17 +62,17 @@ class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
     true
   }
 
-  override def executeSignalOperation(graphEditor: GraphEditor[Any, Any]) {
+  override def executeSignalOperation(graphEditor: GraphEditor[Int, Float]) {
     val tIds = targetIdArray
     val tIdLength = outEdges
     if (tIds.length != 0) {
       val signal = (state - lastSignalState) / tIdLength
-      CompactIntSet.foreach(targetIdArray, graphEditor.sendSignal(signal, _, None))
+      CompactIntSet.foreach(targetIdArray, graphEditor.sendSignal(signal, _))
     }
     lastSignalState = state
   }
 
-  def executeCollectOperation(graphEditor: GraphEditor[Any, Any]) {
+  def executeCollectOperation(graphEditor: GraphEditor[Int, Float]) {
   }
 
   override def scoreSignal: Double = {
@@ -79,14 +83,14 @@ class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float] {
 
   def edgeCount = outEdges
 
-  def afterInitialization(graphEditor: GraphEditor[Any, Any]) = {}
-  def beforeRemoval(graphEditor: GraphEditor[Any, Any]) = {}
+  def afterInitialization(graphEditor: GraphEditor[Int, Float]) = {}
+  def beforeRemoval(graphEditor: GraphEditor[Int, Float]) = {}
 
-  override def removeEdge(targetId: Any, graphEditor: GraphEditor[Any, Any]): Boolean = {
+  override def removeEdge(targetId: Int, graphEditor: GraphEditor[Int, Float]): Boolean = {
     throw new UnsupportedOperationException
   }
 
-  override def removeAllEdges(graphEditor: GraphEditor[Any, Any]): Int = {
+  override def removeAllEdges(graphEditor: GraphEditor[Int, Float]): Int = {
     throw new UnsupportedOperationException
   }
 
@@ -159,7 +163,7 @@ object CompactIntSet {
 
 /** Builds a PageRank compute graph and executes the computation */
 object MemoryMinimalPageRankTest extends App {
-  val graph = GraphBuilder.
+  val graph = new GraphBuilder[Int, Float]().
     withMessageBusFactory(new BulkAkkaMessageBusFactory(10000, false)).
     withMessageSerialization(true).
     withKryoRegistrations(
