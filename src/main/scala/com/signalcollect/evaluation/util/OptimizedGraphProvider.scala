@@ -4,5 +4,5 @@ import com.signalcollect._
 import scala.Serializable
 
 trait OptimizedGraphProvider[Id, Signal] extends Serializable {
-	def populate(graphEditor: GraphEditor[Id, Signal], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _])
+	def populate(graphEditor: GraphEditor[Id, Signal], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Signal])
 }

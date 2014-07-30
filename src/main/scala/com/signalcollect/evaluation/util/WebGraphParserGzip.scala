@@ -32,18 +32,26 @@ import org.apache.commons.io.FileUtils
 /**
  * Loads the specified range of splits of the web graph.
  */
-class WebGraphParserGzip[VertexState](inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") extends OptimizedGraphProvider[Int, VertexState] {
+class WebGraphParserGzip[VertexState, Signal](inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Int, numberOfWorkers: Int, graphName: String = "WebGraphParser") {
 
-  def populate(graphEditor: GraphEditor[Int, VertexState], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def populate(graph: Graph[Int, Signal], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Signal]) {
     println("started loading " + splitsToParse + " splits by WebGraphParserGzip")
-    for (workerId <- 0 until numberOfWorkers) {
-      for (splitId <- workerId until splitsToParse by numberOfWorkers) {
-        println("sending load command for " + splitId + " to worker " + workerId)
-        graphEditor.modifyGraph((new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder), Some(workerId))
-        println("load command for " + splitId + " was sent to worker " + workerId)
-      }
+    for (splitId <- 100 until 140) {
+      //    for (splitId <- 0 until splitsToParse) {
+      val workerId = splitId % numberOfWorkers
+      //println("sending load command for " + splitId + " to worker " + workerId)
+      graph.modifyGraph((new WebGraphParserHelperGzip(inputFolder, externalLoggingFilePath)).parserForSplit(splitId, combinedVertexBuilder), Some(workerId))
+      //println("load command for " + splitId + " was sent to worker " + workerId)
+      //      if (splitId % numberOfWorkers == numberOfWorkers - 1) {
+      //        println("awaiting idle ...")
+      //        graph.awaitIdle
+      //        println("done.")
+      //      }
     }
-    println("Load commands for " + splitsToParse + " splits sent.")
+    //    }
+    println("Loading in progress, awaiting idle ...")
+    graph.awaitIdle
+    println("Graph has been loaded.")
     val usedMemory = (Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory) / 131072
     println("Used memory in MB " + usedMemory)
   }
@@ -67,15 +75,15 @@ class WebGraphParserGzip[VertexState](inputFolder: String, externalLoggingFilePa
 /**
  * Prevents closure capture of the DefaultGraph class.
  */
-case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath: Option[String] = None, testMode: Boolean = false) {
+case class WebGraphParserHelperGzip[Signal](inputFolder: String, externalLoggingFilePath: Option[String] = None, testMode: Boolean = false) {
 
   var startTimeLoading: Date = null
 
-  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]): GraphEditor[Int, _] => Unit = {
+  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Signal]): GraphEditor[Int, Signal] => Unit = {
     graphEditor => parseFile(graphEditor, "input_pt_" + splitNumber + ".txt.gz", combinedVertexBuilder)
   }
 
-  def parseFile(graphEditor: GraphEditor[Int, _], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def parseFile(graphEditor: GraphEditor[Int, Signal], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Signal]) {
     //initialize input reader
     startTimeLoading = new Date()
     println("started parsing " + filename)
@@ -111,7 +119,7 @@ case class WebGraphParserHelperGzip(inputFolder: String, externalLoggingFilePath
       }
 
     } catch {
-      case e: EOFException      => {} //Reached end of file.
+      case e: EOFException => {} //Reached end of file.
       case exception: Exception => exception.printStackTrace()
     }
     in.close

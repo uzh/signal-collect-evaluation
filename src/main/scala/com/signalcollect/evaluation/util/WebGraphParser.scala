@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream
  */
 class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String] = None, splitsToParse: Range) extends OptimizedGraphProvider[Int, Float] {
 
-  def populate(graphEditor: GraphEditor[Int, Float], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def populate(graphEditor: GraphEditor[Int, Float], combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Float]) {
     for (workerId <- splitsToParse.par) {
       graphEditor.modifyGraph((new WebGraphParserHelper(inputFolder, externalLoggingFilePath)).parserForSplit(workerId, combinedVertexBuilder), Some(workerId))
     }
@@ -44,11 +44,11 @@ class WebGraphParser(inputFolder: String, externalLoggingFilePath: Option[String
  */
 case class WebGraphParserHelper(inputFolder: String, externalLoggingFilePath: Option[String] = None) {
 
-  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]): GraphEditor[Int, Float] => Unit = {
+  def parserForSplit(splitNumber: Int, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Float]): GraphEditor[Int, Float] => Unit = {
     graphEditor => parseFile(graphEditor, "input_pt_"+splitNumber+".txt.gz", combinedVertexBuilder)
   }
 
-  def parseFile(graphEditor: GraphEditor[Int, Float], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _]) {
+  def parseFile(graphEditor: GraphEditor[Int, Float], filename: String, combinedVertexBuilder: (Int, Array[Int]) => Vertex[Int, _, Int, Float]) {
     //initialize input reader
     logStatus("started parsing "+filename)
     val fstream = new FileInputStream(inputFolder + System.getProperty("file.separator") + filename)
