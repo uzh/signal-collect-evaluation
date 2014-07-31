@@ -33,13 +33,15 @@ import com.signalcollect.configuration.ExecutionMode
 
 object SimplePageRankEvaluation extends EvaluationTemplate {
 
+  override def deploy: Boolean = true
+  
   override def beforeStart {
     super.beforeStart
     addStat("dataset", "SimplePageRank")
   }
   
   override def execute(g: Graph[Any, Any]): (ExecutionInformation, Graph[Any, Any]) = {
-    val executionMode = ExecutionMode.Synchronous
+    val executionMode = ExecutionMode.OptimizedAsynchronous 
     addStat("executionMode", executionMode.toString)
     val stats = g.execute(ExecutionConfiguration.withExecutionMode(executionMode))
     (stats, g)

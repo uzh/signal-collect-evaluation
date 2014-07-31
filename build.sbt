@@ -22,8 +22,16 @@ EclipseKeys.withSource := true
 
 jarName in assembly := "signal-collect-evaluation-2.1-SNAPSHOT.jar"
 
-excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
-  cp filter {_.data.getName == "minlog-1.2.jar"}
+mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+  {
+    case PathList("org", "apache", "hadoop", xs @ _*) => MergeStrategy.last
+    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.last
+    case PathList("org", "objectweb", "asm", xs @ _*) => MergeStrategy.last
+    case PathList("com", "thoughtworks", xs @ _*) => MergeStrategy.last
+    case PathList("META-INF", "maven", xs @ _*) => MergeStrategy.last
+    case PathList("log4j.properties") => MergeStrategy.last
+    case x => old(x)
+  }
 }
 
 /** Dependencies */

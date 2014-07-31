@@ -11,6 +11,7 @@ import akka.event.Logging
 import com.signalcollect.deployment.Algorithm
 import java.util.concurrent.TimeUnit
 import com.signalcollect.deployment.DeploymentConfigurationCreator
+import com.signalcollect.deployment.yarn.YarnDeploymentConfigurationCreator
 
 abstract class EvaluationTemplate extends Algorithm {
   var startTime = 0L
@@ -20,9 +21,16 @@ abstract class EvaluationTemplate extends Algorithm {
 
   override def beforeStart {
     stats = new HashMap[String, String]().asInstanceOf[Map[String, String]]
-    val conf = DeploymentConfigurationCreator.getDeploymentConfiguration
-    addStat("numberOfNodes", conf.numberOfNodes.toString)
-    addStat("clusterType", conf.cluster)
+    if (deploy) {
+      val conf = YarnDeploymentConfigurationCreator.getYarnDeploymentConfiguration
+      addStat("numberOfNodes", conf.numberOfNodes.toString)
+      addStat("clusterType", conf.cluster)
+      addStat("memoryPerNode", conf.memoryPerNode.toString)
+      addStat("jvmArguments", conf.jvmArguments)
+      if (conf.hadoopOverrides.hasPath("yarn.resourcemanager.host")) {
+        addStat("host", conf.hadoopOverrides.getString("yarn.resourcemanager.host"))
+      }
+    }
     startTime = System.currentTimeMillis
   }
 
@@ -36,6 +44,7 @@ abstract class EvaluationTemplate extends Algorithm {
   }
 
   override def reportResults(info: ExecutionInformation, graph: Graph[Any, Any]) = {
+    graph.awaitIdle
     val executionTime = info.executionStatistics.computationTime.toMillis.##
     val numberOfWorkers = info.numberOfWorkers.toString
     val totalTime = System.currentTimeMillis - startTime
