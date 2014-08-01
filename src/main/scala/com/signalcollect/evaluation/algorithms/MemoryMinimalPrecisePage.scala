@@ -28,9 +28,6 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import com.signalcollect.factory.messagebus.BulkAkkaMessageBusFactory
 import com.signalcollect.configuration.ExecutionMode
-import com.signalcollect.factory.storage.IntLongStorageFactory
-import com.signalcollect.factory.storage.IntLongStorageFactory
-import com.signalcollect.factory.storage.IntDoubleStorageFactory
 import scala.io.StdIn
 
 class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double, Int, Double] {
