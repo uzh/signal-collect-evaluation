@@ -34,6 +34,16 @@ class MemoryMinimalPage(val id: Int) extends Vertex[Int, Float, Int, Float] {
   var lastSignalState: Float = 0
   var outEdges = 0
 
+  def targetIds: Traversable[Int] = {
+    new Traversable[Int] {
+      def foreach[U](f: Int => U) {
+        if (outEdges != 0) {
+          CompactIntSet.foreach(targetIdArray, f(_))
+        }
+      }
+    }
+  }
+
   def setState(s: Float) {
     state = s
   }
