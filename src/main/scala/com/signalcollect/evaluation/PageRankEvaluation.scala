@@ -29,6 +29,7 @@ import com.signalcollect.interfaces.UndeliverableSignalHandlerFactory
 import com.signalcollect.interfaces.EdgeAddedToNonExistentVertexHandlerFactory
 import com.signalcollect.interfaces.EdgeAddedToNonExistentVertexHandler
 import com.signalcollect.evaluation.algorithms.MemoryMinimalPage
+import com.signalcollect.factory.messagebus.IntIdDoubleSignalMessageBusFactory
 
 object PrecisePageRankUndeliverableSignalHandlerFactory extends UndeliverableSignalHandlerFactory[Int, Double] {
   def createInstance: UndeliverableSignalHandler[Int, Double] = {
@@ -89,6 +90,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
   def graphFormatKey = "graph-format"
   def eagerIdleDetectionKey = "eager-idle-detection"
   def throttlingEnabledKey = "throttling-enabled"
+  def throttlingDuringLoadingEnabledKey = "throttling-during-loading-enabled"
   def leaderExecutionStartingTimeKey = "leaderExecutionStartingTime"
   def executionModeKey = "execution-mode"
   def hearteatIntervalKey = "heartbeat-interval"
@@ -107,6 +109,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     val graphFormat = parameters(graphFormatKey)
     val eagerIdleDetectionEnabled = parameters(eagerIdleDetectionKey).toBoolean
     val throttlingEnabled = parameters(throttlingEnabledKey).toBoolean
+    val throttlingDuringLoadingEnabled = parameters(throttlingDuringLoadingEnabledKey).toBoolean
     val executionMode = ExecutionMode.withName(parameters(executionModeKey))
     val heartbeatInterval = parameters(hearteatIntervalKey).toInt
     val bulksize = parameters(bulkSizeKey).toInt
@@ -118,9 +121,11 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       //      withMessageSerialization(true).
       withEagerIdleDetection(eagerIdleDetectionEnabled).
       withThrottlingEnabled(throttlingEnabled).
+      withThrottlingDuringLoadingEnabled(throttlingDuringLoadingEnabled).
       withUndeliverableSignalHandlerFactory(PrecisePageRankUndeliverableSignalHandlerFactory).
       withEdgeAddedToNonExistentVertexHandlerFactory(PrecisePageRankEdgeAddedToNonExistentVertexHandlerFactory).
-      withMessageBusFactory(new BulkAkkaMessageBusFactory(bulksize, false)).
+      //withMessageBusFactory(new BulkAkkaMessageBusFactory(bulksize, false)).
+      withMessageBusFactory(new IntIdDoubleSignalMessageBusFactory(bulksize)).
       withHeartbeatInterval(heartbeatInterval)
     println(s"Building the graph")
     val g = graphBuilder.build
