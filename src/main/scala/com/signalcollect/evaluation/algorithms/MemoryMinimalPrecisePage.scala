@@ -32,8 +32,6 @@ import scala.io.StdIn
 
 class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double, Int, Double] {
 
-  println(this)
-
   var state = 0.15
   var lastSignalState: Double = 0
   var outEdges = 0
