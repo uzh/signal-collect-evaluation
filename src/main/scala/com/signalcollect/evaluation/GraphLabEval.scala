@@ -11,6 +11,7 @@ import com.signalcollect.evaluation.resulthandling.GoogleDocsResultHandler
 import com.signalcollect.GraphBuilder
 
 class GraphLabEval extends TorqueDeployableAlgorithm {
+  def evaluationDescriptionKey = "evaluationDescription"
   def spreadsheetUsernameKey = "spreadsheetUsername"
   def spreadsheetPasswordKey = "spreadsheetPassword"
   def spreadsheetNameKey = "spreadsheetName"
@@ -23,7 +24,8 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
   def coresKey = "cores"
   def stepsLimitKey = "steps-limit"
   def graphFormatKey = "graph-format"
-  def signalThresholdKey = "signal-threshold"
+  def signalThresholdKey = "threshold"
+  def glExtraKey = "gl-extra-params"
 
   def execute(parameters: Map[String, String], nodeActors: Array[ActorRef]) {
     println("Starting GraphLab execution ...")
@@ -33,6 +35,8 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     assert(parameters.keySet.contains(datasetKey), s"The dataset is not defined.")
     assert(parameters.keySet.contains(resultsFilePathKey), s"The results file path is not defined.")
     assert(parameters.keySet.contains(graphFormatKey), s"The graph format is not defined.")
+
+    val evaluationDescription = parameters(evaluationDescriptionKey)
 
     val stepsLimit = {
       if (parameters.keySet.contains(stepsLimitKey)) {
@@ -47,10 +51,11 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     val spreadsheetName = parameters(spreadsheetNameKey)
     val worksheetName = parameters(worksheetNameKey)
     val tolerance = parameters(signalThresholdKey)
-    
+
     val resultsfileName = s"${parameters(resultsFilePathKey)}/pog_${parameters(datasetKey)}_${stepsLimit match { case Some(x) => x case None => "noLimit" }}.txt"
     val datasetFileName = s"${parameters(datasetKey)}"
     val graphFormat = parameters(graphFormatKey)
+    val glExtra = parameters(glExtraKey)
 
     //--ncpus ${parameters(coresKey)}
     // Env variables for infiniband.
@@ -60,9 +65,9 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     val datasetString = s" --graph $datasetFileName"
     val formatString = s" --format $graphFormat"
     //val outputString = s" --output_file $resultsfileName"
-    val iterString = s" --iterations ${stepsLimit.getOrElse(0)}"
+    val iterString = if (stepsLimit.isDefined) s" --iterations ${stepsLimit.get}" else ""
     val stdOutputString = s" 2> ${parameters(resultsFilePathKey)}stdout_${parameters(datasetKey)}_${stepsLimit match { case Some(x) => x case None => "noLimit" }}.txt"
-    val finalString = initialString + toleranceString + datasetString + formatString + iterString + "\n"
+    val finalString = initialString + toleranceString + datasetString + formatString + iterString + glExtra + "\n"
     println("Executing: " + finalString)
     val startTime = System.currentTimeMillis
     val output = finalString.!!
@@ -74,21 +79,22 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     val executionTimeInMilliseconds: Option[Long] = executionTimeExtractor.findFirstMatchIn(output).
       map(_.group(1).toDouble).map(_ * 1000).map(_.toLong)
 
+    val sumOfRanksExtractor = "Total rank: ([0-9]+(\\.[0-9]*)?(e[0-9]+)?)".r
+    val sumOfRanks: Option[String] = sumOfRanksExtractor.findFirstMatchIn(output).
+      map(_.group(1))
+
     val resultReporter = new GoogleDocsResultHandler(spreadsheetUsername, spreadsheetPassword, spreadsheetName, worksheetName)
     val result: Map[String, String] =
-      Map("system" -> "graphlab",
+      parameters ++ Map("system" -> "graphlab",
         "numberOfNodes" -> parameters(numberOfNodesKey),
         "numberOfWorkers" -> (parameters(coresKey).toInt * parameters(numberOfNodesKey).toInt).toString,
         "dataset" -> parameters(datasetKey),
         "graphFormat" -> parameters(graphFormatKey),
         "stepsLimit" -> { stepsLimit match { case Some(x) => x.toString case None => "noLimit" } },
         "totalTime" -> totalTimeMs.toString,
-        "executionTime" -> executionTimeInMilliseconds.getOrElse("crashed").toString)
+        "executionTime" -> executionTimeInMilliseconds.getOrElse("crashed").toString,
+        "sumOfRanks" -> sumOfRanks.getOrElse("parse problem"))
     //"resultsFile" -> resultsfileName
     resultReporter(result)
   }
 }
-
-
-
-
