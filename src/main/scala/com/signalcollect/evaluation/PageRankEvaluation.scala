@@ -30,6 +30,7 @@ import com.signalcollect.interfaces.EdgeAddedToNonExistentVertexHandlerFactory
 import com.signalcollect.interfaces.EdgeAddedToNonExistentVertexHandler
 import com.signalcollect.evaluation.algorithms.MemoryMinimalPage
 import com.signalcollect.factory.messagebus.IntIdDoubleSignalMessageBusFactory
+import java.io.File
 
 object PrecisePageRankUndeliverableSignalHandlerFactory extends UndeliverableSignalHandlerFactory[Int, Double] {
   def createInstance: UndeliverableSignalHandler[Int, Double] = {
@@ -66,12 +67,13 @@ object EfficientPageRankHandlers {
       throw new Exception(s"Vertex with id $vertexId does not exist, cannot add an edge to it.")
   }
 
+  def buildVertex(id: Int, outgoingEdges: Array[Int]): Vertex[Int, _, Int, Double] = {
+    val vertex = new MemoryMinimalPrecisePage(id)
+    vertex.setTargetIdArray(outgoingEdges)
+    vertex
+  }
+
   def loadSplit(g: GraphEditor[Int, Double], dataset: String, splitId: Int) {
-    def buildVertex(id: Int, outgoingEdges: Array[Int]): Vertex[Int, _, Int, Double] = {
-      val vertex = new MemoryMinimalPrecisePage(id)
-      vertex.setTargetIdArray(outgoingEdges)
-      vertex
-    }
     g.loadGraph(CompressedSplitLoader[Double](dataset, splitId, buildVertex _), Some(splitId))
   }
 }
@@ -133,13 +135,13 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       println(s"Loading the graph ...")
       import EfficientPageRankHandlers._
       val loadingTime = measureTime {
-        if (graphFormat != "tsv") {
+        if (graphFormat == "binary") {
           for (splitId <- 0 until 2880) { //2880
             loadSplit(g, dataset, splitId)
           }
           println(s"Awaiting idle ...")
           g.awaitIdle
-        } else {
+        } else if (graphFormat == "tsv") {
           val datasetFileName = s"./${parameters(datasetKey)}"
           val fr = new FileReader(datasetFileName)
           val br = new BufferedReader(fr)
@@ -180,8 +182,22 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
             v.setTargetIdArray(edgeBuffer.toArray)
             g.addVertex(v)
           }
+        } else if (graphFormat == "adj") {
+          println("Loading ADJ format")
+          val dataset = new File(s"./${parameters(datasetKey)}")
+          if (dataset.isDirectory) {
+            for (file <- dataset.listFiles) {
+              println(s"Dispatching load command for ${file.getName}")
+              g.loadGraph(AdjacencyListLoader[Double](file.getAbsolutePath, EfficientPageRankHandlers.buildVertex), None)
+            }
+          } else {
+            println(s"Dispatching load command for ${dataset.getName}")
+            g.loadGraph(AdjacencyListLoader[Double](dataset.getAbsolutePath, EfficientPageRankHandlers.buildVertex), None)
+          }
+        } else {
+          throw new Exception(s"Unrecognized graph format $graphFormat.")
         }
-        println(s"Waiting for workers to finish processing all edge additions ...")
+        println(s"Waiting for workers to finish graph loading ...")
         g.awaitIdle
         println(s"Done")
       }
@@ -204,6 +220,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       commonResults += (("jvmArguments", jvmArguments.mkString(" ")))
       commonResults += (("eagerIdleDetection", eagerIdleDetectionEnabled.toString))
       commonResults += (("throttling", throttlingEnabled.toString))
+      commonResults += (("loadingThrottling", throttlingDuringLoadingEnabledKey.toString))
 
       val result = executeEvaluationRun(commonResults, signalThreshold, executionMode, g)
       println("All done, reporting results.")
@@ -275,17 +292,3 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
   }
 
 }
-//              if (currentVertex.id == vertexId) {
-//                currentVertex.addTargetId(targetId)
-//              } else {
-//                g.addVertex(currentVertex)
-//                currentVertex = new EfficientPageRankVertex(vertexId)
-//                currentVertex.addTargetId(targetId)
-//              }
-//            }
-//            loadedSoFar += 1
-//            currentLine = br.readLine
-//          }
-//          if (currentVertex != null) {
-//            g.addVertex(currentVertex)
-//          }

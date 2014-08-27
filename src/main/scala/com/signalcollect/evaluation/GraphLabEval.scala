@@ -25,8 +25,6 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
   def graphFormatKey = "graph-format"
 
   def execute(parameters: Map[String, String], nodeActors: Array[ActorRef]) {
-    val g = GraphBuilder.withPreallocatedNodes(nodeActors).build
-    g.shutdown // Free S/C resources.
     println("Starting GraphLab execution ...")
     assert(parameters.keySet.contains(processesPerNodeKey), s"Define the number of nodes on which to run the algorithm.")
     assert(parameters.keySet.contains(coresKey), s"Define the number of cores on which to run the algorithm.")
@@ -53,6 +51,8 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     val graphFormat = parameters(graphFormatKey)
 
     val initialString = s"mpiexec --pernode /home/user/stutz/graphlab-2.2-kraken/release/toolkits/graph_analytics/pagerank --ncpus ${parameters(coresKey)}"
+    //simple_pagerank  warp_engine_pagerank  warp_parfor_pagerank
+    //val initialString = s"mpiexec --pernode /home/user/stutz/graphlab-2.2-kraken/release/demoapps/pagerank/simple_pagerank --ncpus ${parameters(coresKey)}"
     val datasetString = s" --graph $datasetFileName"
     val formatString = s" --format $graphFormat"
     //val outputString = s" --output_file $resultsfileName"
