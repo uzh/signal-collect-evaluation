@@ -76,6 +76,7 @@ object EfficientPageRankHandlers {
   def loadSplit(g: GraphEditor[Int, Double], dataset: String, splitId: Int) {
     g.loadGraph(CompressedSplitLoader[Double](dataset, splitId, buildVertex _), Some(splitId))
   }
+
 }
 
 class PageRankEvaluation extends TorqueDeployableAlgorithm {
@@ -97,7 +98,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
   def executionModeKey = "execution-mode"
   def hearteatIntervalKey = "heartbeat-interval"
   def bulkSizeKey = "bulksize"
-  def signalThresholdKey = "signal-threshold"
+  def thresholdKey = "threshold"
 
   def execute(parameters: Map[String, String], nodeActors: Array[ActorRef]) {
     println(s"Received parameters:\n${parameters.map { case (k, v) => s"\t$k = $v" }.mkString("\n")}")
@@ -115,7 +116,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     val executionMode = ExecutionMode.withName(parameters(executionModeKey))
     val heartbeatInterval = parameters(hearteatIntervalKey).toInt
     val bulksize = parameters(bulkSizeKey).toInt
-    val signalThreshold = parameters(signalThresholdKey).toDouble
+    val threshold = parameters(thresholdKey).toDouble
     println(s"Creating the graph builder ...")
     val graphBuilder = (new GraphBuilder[Int, Double]).
       withPreallocatedNodes(nodeActors).
@@ -222,7 +223,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       commonResults += (("throttling", throttlingEnabled.toString))
       commonResults += (("loadingThrottling", throttlingDuringLoadingEnabled.toString))
 
-      val result = executeEvaluationRun(commonResults, signalThreshold, executionMode, g)
+      val result = executeEvaluationRun(commonResults, threshold, executionMode, g)
       println("All done, reporting results.")
       //val leaderExecutionStartingTime = parameters(leaderExecutionStartingTimeKey).toLong
       //val totalTime = System.currentTimeMillis - leaderExecutionStartingTime
@@ -235,7 +236,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     }
   }
 
-  def executeEvaluationRun(commonResults: Map[String, String], signalThreshold: Double, executionMode: ExecutionMode.Value, g: Graph[Int, Double]): Map[String, String] = {
+  def executeEvaluationRun(commonResults: Map[String, String], threshold: Double, executionMode: ExecutionMode.Value, g: Graph[Int, Double]): Map[String, String] = {
     val gcs = ManagementFactory.getGarbageCollectorMXBeans.toList
     val compilations = ManagementFactory.getCompilationMXBean
     var runResult = commonResults
@@ -246,7 +247,8 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     val startTime = System.nanoTime
     val stats = g.execute(ExecutionConfiguration.
       withExecutionMode(executionMode).
-      withSignalThreshold(signalThreshold))
+      withSignalThreshold(threshold).
+      withCollectThreshold(threshold))
     val finishTime = System.nanoTime
     println(stats)
     println(s"Individual worker statistics:\n" + stats.individualWorkerStatistics.mkString("\n"))
