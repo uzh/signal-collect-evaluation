@@ -220,7 +220,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       commonResults += (("jvmArguments", jvmArguments.mkString(" ")))
       commonResults += (("eagerIdleDetection", eagerIdleDetectionEnabled.toString))
       commonResults += (("throttling", throttlingEnabled.toString))
-      commonResults += (("loadingThrottling", throttlingDuringLoadingEnabledKey.toString))
+      commonResults += (("loadingThrottling", throttlingDuringLoadingEnabled.toString))
 
       val result = executeEvaluationRun(commonResults, signalThreshold, executionMode, g)
       println("All done, reporting results.")

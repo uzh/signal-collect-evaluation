@@ -23,6 +23,7 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
   def coresKey = "cores"
   def stepsLimitKey = "steps-limit"
   def graphFormatKey = "graph-format"
+  def signalThresholdKey = "signal-threshold"
 
   def execute(parameters: Map[String, String], nodeActors: Array[ActorRef]) {
     println("Starting GraphLab execution ...")
@@ -45,20 +46,23 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     val spreadsheetPassword = parameters(spreadsheetPasswordKey)
     val spreadsheetName = parameters(spreadsheetNameKey)
     val worksheetName = parameters(worksheetNameKey)
-
+    val tolerance = parameters(signalThresholdKey)
+    
     val resultsfileName = s"${parameters(resultsFilePathKey)}/pog_${parameters(datasetKey)}_${stepsLimit match { case Some(x) => x case None => "noLimit" }}.txt"
     val datasetFileName = s"${parameters(datasetKey)}"
     val graphFormat = parameters(graphFormatKey)
 
-    val initialString = s"mpiexec --pernode /home/user/stutz/graphlab-2.2-kraken/release/toolkits/graph_analytics/pagerank --ncpus ${parameters(coresKey)}"
-    //simple_pagerank  warp_engine_pagerank  warp_parfor_pagerank
-    //val initialString = s"mpiexec --pernode /home/user/stutz/graphlab-2.2-kraken/release/demoapps/pagerank/simple_pagerank --ncpus ${parameters(coresKey)}"
+    //--ncpus ${parameters(coresKey)}
+    // Env variables for infiniband.
+    val initialString = s"mpiexec -x GRAPHLAB_SUBNET_ID=192.168.32.0 --pernode /home/user/stutz/graphlab-2.2-kraken/release/toolkits/graph_analytics/pagerank"
+    //val initialString = s"mpiexec --pernode /home/user/stutz/graphlab-2.2-kraken/release/toolkits/graph_analytics/pagerank --ncpus ${parameters(coresKey)} --tol=${tolerance}"
+    val toleranceString = s" --tol $tolerance"
     val datasetString = s" --graph $datasetFileName"
     val formatString = s" --format $graphFormat"
     //val outputString = s" --output_file $resultsfileName"
     val iterString = s" --iterations ${stepsLimit.getOrElse(0)}"
     val stdOutputString = s" 2> ${parameters(resultsFilePathKey)}stdout_${parameters(datasetKey)}_${stepsLimit match { case Some(x) => x case None => "noLimit" }}.txt"
-    val finalString = initialString + datasetString + formatString + iterString + "\n"
+    val finalString = initialString + toleranceString + datasetString + formatString + iterString + "\n"
     println("Executing: " + finalString)
     val startTime = System.currentTimeMillis
     val output = finalString.!!
