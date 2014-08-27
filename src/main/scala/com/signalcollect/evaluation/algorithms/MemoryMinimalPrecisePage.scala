@@ -33,7 +33,7 @@ import scala.io.StdIn
 class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double, Int, Double] {
 
   var state = 0.15
-  var lastSignalState: Double = 0
+  var pendingToSignal: Double = 0.15
   var outEdges = 0
 
   def targetIds: Traversable[Int] = {
@@ -66,26 +66,26 @@ class MemoryMinimalPrecisePage(val id: Int) extends Vertex[Int, Double, Int, Dou
   }
 
   override def deliverSignalWithoutSourceId(signal: Double, ge: GraphEditor[Int, Double]): Boolean = {
-    state = state + 0.85 * signal
+    val dampedDelta = 0.85 * signal
+    state += dampedDelta
+    pendingToSignal += dampedDelta
     true
   }
 
   override def executeSignalOperation(graphEditor: GraphEditor[Int, Double]) {
     val tIds = targetIdArray
     val tIdLength = outEdges
-    //    if (tIds.length != 0) {
-    val signal = (state - lastSignalState) / tIdLength
+    val signal = pendingToSignal / tIdLength
     CompactIntSet.foreach(targetIdArray, graphEditor.sendSignal(signal, _))
-    //    }
-    lastSignalState = state
+    pendingToSignal = 0
   }
 
   def executeCollectOperation(graphEditor: GraphEditor[Int, Double]) {
+    throw new UnsupportedOperationException
   }
 
   override def scoreSignal: Double = {
-    val score = state - lastSignalState
-    if (score > 0 && edgeCount > 0) score else 0
+    if (outEdges > 0) pendingToSignal else 0
   }
 
   def scoreCollect = 0 // because signals are directly collected at arrival
@@ -113,8 +113,7 @@ object MemoryMinimalPrecisePageRankTest extends App {
     withMessageBusFactory(new BulkAkkaMessageBusFactory[Int, Double](10000, false)).
     //withMessageSerialization(true).
     withKryoRegistrations(
-      List("com.signalcollect.evaluation.algorithms.MemoryMinimalPrecisePage",
-        "com.signalcollect.factory.storage.IntDoubleStorageFactory$")).build
+      List("com.signalcollect.evaluation.algorithms.MemoryMinimalPrecisePage")).build
 
   val circleVertices = 10000
   var cnt = 0
@@ -137,12 +136,12 @@ object MemoryMinimalPrecisePageRankTest extends App {
   v2.setTargetIdArray(edges2)
   graph.addVertex(v2)
 
-  println("Press any key to continue")
-  StdIn.readLine
+//  println("Press any key to continue")
+//  StdIn.readLine
 
   val stats = graph.execute(
-    ExecutionConfiguration.withSignalThreshold(0.0).
-      withExecutionMode(ExecutionMode.OptimizedAsynchronous)) //(ExecutionConfiguration())
+    ExecutionConfiguration.withSignalThreshold(0.001).
+      withExecutionMode(ExecutionMode.Synchronous)) //(ExecutionConfiguration())
   //val stats = graph.execute //(ExecutionConfiguration())
   graph.awaitIdle
   println(stats)
