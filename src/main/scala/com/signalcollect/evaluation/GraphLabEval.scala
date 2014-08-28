@@ -26,6 +26,7 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
   def graphFormatKey = "graph-format"
   def signalThresholdKey = "threshold"
   def glExtraKey = "gl-extra-params"
+  def infinibandKey = "infiniband"
 
   def execute(parameters: Map[String, String], nodeActors: Array[ActorRef]) {
     println("Starting GraphLab execution ...")
@@ -56,10 +57,18 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     val datasetFileName = s"${parameters(datasetKey)}"
     val graphFormat = parameters(graphFormatKey)
     val glExtra = parameters(glExtraKey)
+    val infiniband = parameters(infinibandKey).toBoolean
 
     //--ncpus ${parameters(coresKey)}
     // Env variables for infiniband.
-    val initialString = s"mpiexec -x GRAPHLAB_SUBNET_ID=192.168.32.0 --pernode /home/user/stutz/graphlab-2.2-kraken/release/toolkits/graph_analytics/pagerank"
+    val infinibandString = if (infiniband) {
+      println("Infiniband enabled.")
+      "-x GRAPHLAB_SUBNET_ID=192.168.32.0 "
+    } else {
+      println("Infiniband disabled.")
+      ""
+    }
+    val initialString = s"mpiexec $infinibandString--pernode /home/user/stutz/graphlab-2.2-kraken/release/toolkits/graph_analytics/pagerank"
     //val initialString = s"mpiexec --pernode /home/user/stutz/graphlab-2.2-kraken/release/toolkits/graph_analytics/pagerank --ncpus ${parameters(coresKey)} --tol=${tolerance}"
     val toleranceString = s" --tol $tolerance"
     val datasetString = s" --graph $datasetFileName"
