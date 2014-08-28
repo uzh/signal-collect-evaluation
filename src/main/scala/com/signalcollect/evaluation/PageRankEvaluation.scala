@@ -99,6 +99,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
   def hearteatIntervalKey = "heartbeat-interval"
   def bulkSizeKey = "bulksize"
   def thresholdKey = "threshold"
+  def useCombinerKey = "use-combiner"
 
   def execute(parameters: Map[String, String], nodeActors: Array[ActorRef]) {
     println(s"Received parameters:\n${parameters.map { case (k, v) => s"\t$k = $v" }.mkString("\n")}")
@@ -117,6 +118,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     val heartbeatInterval = parameters(hearteatIntervalKey).toInt
     val bulksize = parameters(bulkSizeKey).toInt
     val threshold = parameters(thresholdKey).toDouble
+    val useCombiner = parameters(useCombinerKey).toBoolean
     println(s"Creating the graph builder ...")
     val graphBuilder = (new GraphBuilder[Int, Double]).
       withPreallocatedNodes(nodeActors).
@@ -128,7 +130,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
       withUndeliverableSignalHandlerFactory(PrecisePageRankUndeliverableSignalHandlerFactory).
       withEdgeAddedToNonExistentVertexHandlerFactory(PrecisePageRankEdgeAddedToNonExistentVertexHandlerFactory).
       //withMessageBusFactory(new BulkAkkaMessageBusFactory(bulksize, false)).
-      withMessageBusFactory(new IntIdDoubleSignalMessageBusFactory(bulksize)).
+      withMessageBusFactory(if (useCombiner) new IntIdDoubleSignalMessageBusFactory(bulksize) else new BulkAkkaMessageBusFactory(bulksize, false)).
       withHeartbeatInterval(heartbeatInterval)
     println(s"Building the graph")
     val g = graphBuilder.build
@@ -210,6 +212,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
 
       var commonResults = parameters
       commonResults += "bulksize" -> bulksize.toString
+      commonResults += "useCombiner" -> useCombiner.toString
       commonResults += "heartbeatInterval" -> heartbeatInterval.toString
       commonResults += "executionMode" -> executionMode.toString
       commonResults += "numberOfNodes" -> g.numberOfNodes.toString
