@@ -79,7 +79,7 @@ class GraphLabEval extends TorqueDeployableAlgorithm {
     val executionTimeInMilliseconds: Option[Long] = executionTimeExtractor.findFirstMatchIn(output).
       map(_.group(1).toDouble).map(_ * 1000).map(_.toLong)
 
-    val sumOfRanksExtractor = "Total rank: ([0-9]+(\\.[0-9]*)?(e[0-9]+)?)".r
+    val sumOfRanksExtractor = "Total rank: ([0-9]+(\\.[0-9]*)?(e\\+[0-9]+))".r
     val sumOfRanks: Option[String] = sumOfRanksExtractor.findFirstMatchIn(output).
       map(_.group(1))
 
