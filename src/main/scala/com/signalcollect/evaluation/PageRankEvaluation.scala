@@ -1,7 +1,6 @@
 package com.signalcollect.evaluation
 
 import java.io.BufferedReader
-import java.io.FileReader
 import java.lang.management.ManagementFactory
 import java.util.Date
 import scala.collection.JavaConversions.asScalaBuffer
@@ -31,6 +30,9 @@ import com.signalcollect.interfaces.EdgeAddedToNonExistentVertexHandler
 import com.signalcollect.evaluation.algorithms.MemoryMinimalPage
 import com.signalcollect.factory.messagebus.IntIdDoubleSignalMessageBusFactory
 import java.io.File
+import com.signalcollect.loading.Loading
+import com.signalcollect.loading.VertexTupleIterator
+import com.signalcollect.util.FileReader
 
 object PrecisePageRankUndeliverableSignalHandlerFactory extends UndeliverableSignalHandlerFactory[Int, Double] {
   def createInstance: UndeliverableSignalHandler[Int, Double] = {
@@ -145,46 +147,19 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
           println(s"Awaiting idle ...")
           g.awaitIdle
         } else if (graphFormat == "tsv") {
-          val datasetFileName = s"./${parameters(datasetKey)}"
-          val fr = new FileReader(datasetFileName)
-          val br = new BufferedReader(fr)
-          val startingTime = System.currentTimeMillis
-          var loadedSoFar = 0
-          var currentLine = br.readLine
-          val edgeBuffer = new ArrayBuffer[Int]
-          var currentVertexId: Option[Int] = None
-          while (currentLine != null) {
-            if (loadedSoFar % 10000 == 0) {
-              val millisecondsSinceLoadingStart = System.currentTimeMillis - startingTime
-              val seconds = (millisecondsSinceLoadingStart / 100.0).round / 10
-              println(s"Loaded $loadedSoFar edges after $seconds seconds.")
-            }
-            val split = currentLine.split("\\s+")
-            val vertexId = split(0).toInt
-            val targetId = split(1).toInt
-            if (currentVertexId.isEmpty) {
-              currentVertexId = Some(vertexId)
-              edgeBuffer += targetId
-            } else {
-              if (currentVertexId.get == vertexId) {
-                edgeBuffer += targetId
-              } else {
-                val v = new MemoryMinimalPrecisePage(currentVertexId.get)
-                v.setTargetIdArray(edgeBuffer.toArray)
-                g.addVertex(v)
-                edgeBuffer.clear
-                currentVertexId = Some(vertexId)
-                edgeBuffer += targetId
-              }
-            }
-            loadedSoFar += 1
-            currentLine = br.readLine
+          // Substituting ID 0.
+          val substitutingIterator = FileReader.intIterator(s"./${parameters(datasetKey)}").map { id =>
+            assert(id != Int.MaxValue)
+            if (id == 0) Int.MaxValue else id
           }
-          if (currentVertexId.isDefined) {
-            val v = new MemoryMinimalPrecisePage(currentVertexId.get)
-            v.setTargetIdArray(edgeBuffer.toArray)
-            g.addVertex(v)
+          val vertexData = new VertexTupleIterator(substitutingIterator)
+          def vertexCreator(id: Int, edges: List[Int]) = {
+            val v = new MemoryMinimalPrecisePage(id)
+            v.setTargetIdArray(edges.toArray)
+            v
           }
+          val loader = Loading.loader(vertexData, vertexCreator)
+          g.loadGraph(loader, Some(0))
         } else if (graphFormat == "adj") {
           println("Loading ADJ format")
           val dataset = new File(s"./${parameters(datasetKey)}")
