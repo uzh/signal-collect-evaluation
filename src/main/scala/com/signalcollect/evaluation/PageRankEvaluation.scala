@@ -33,6 +33,7 @@ import java.io.File
 import com.signalcollect.loading.Loading
 import com.signalcollect.loading.VertexTupleIterator
 import com.signalcollect.util.FileReader
+import com.signalcollect.loading.AdjacencyListLoader
 
 object PrecisePageRankUndeliverableSignalHandlerFactory extends UndeliverableSignalHandlerFactory[Int, Double] {
   def createInstance: UndeliverableSignalHandler[Int, Double] = {
