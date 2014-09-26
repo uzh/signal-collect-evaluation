@@ -214,7 +214,7 @@ object MemoryMinimalPageRankTest extends App {
   //  graph.addVertex(v4)
 
   val stats = graph.execute(
-    ExecutionConfiguration.withSignalThreshold(0.0))
+    ExecutionConfiguration().withSignalThreshold(0.0))
   graph.awaitIdle
   println(stats)
   //graph.foreachVertex(println(_))

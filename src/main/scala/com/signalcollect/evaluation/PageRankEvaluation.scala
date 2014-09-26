@@ -224,7 +224,7 @@ class PageRankEvaluation extends TorqueDeployableAlgorithm {
     val gcCountBefore = getGcCollectionCount(gcs)
     val compileTimeBefore = compilations.getTotalCompilationTime
     val startTime = System.nanoTime
-    val stats = g.execute(ExecutionConfiguration.
+    val stats = g.execute(ExecutionConfiguration().
       withExecutionMode(executionMode).
       withSignalThreshold(threshold).
       withCollectThreshold(threshold))

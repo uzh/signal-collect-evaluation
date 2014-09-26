@@ -140,7 +140,7 @@ object MemoryMinimalPrecisePageRankTest extends App {
 //  StdIn.readLine
 
   val stats = graph.execute(
-    ExecutionConfiguration.withSignalThreshold(0.001).
+    ExecutionConfiguration().withSignalThreshold(0.001).
       withExecutionMode(ExecutionMode.Synchronous)) //(ExecutionConfiguration())
   //val stats = graph.execute //(ExecutionConfiguration())
   graph.awaitIdle
